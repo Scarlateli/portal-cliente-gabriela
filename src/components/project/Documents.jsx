@@ -11,8 +11,22 @@ export function Documents({ db, project, isStudio }) {
   const fileRef = useRef(null);
   const onPick = (e) => {
     const f = e.target.files && e.target.files[0];
-    if (f) db.addDocument(project.id, { name: f.name, type, size: (f.size / 1048576).toFixed(1).replace('.', ',') + ' MB' });
+    if (f)
+      db.addDocument(
+        project.id,
+        { name: f.name, type, size: (f.size / 1048576).toFixed(1).replace('.', ',') + ' MB' },
+        f,
+      );
     e.target.value = '';
+  };
+  const openDoc = async (d) => {
+    if (!d.storagePath) return;
+    try {
+      const url = await db.fileUrl(d.storagePath);
+      if (url) window.open(url, '_blank', 'noopener');
+    } catch {
+      /* ignora — sem arquivo disponível */
+    }
   };
   const shown = filter === 'todos' ? docs : docs.filter((d) => d.type === filter);
   const typeLabel = (id) => (DOC_TYPES.find((t) => t.id === id) || { label: 'Geral' }).label;
@@ -22,25 +36,75 @@ export function Documents({ db, project, isStudio }) {
         <h2>Documentos</h2>
         {isStudio && (
           <div className="head-actions">
-            <select className="mini-select" value={type} onChange={(e) => setType(e.target.value)}>{DOC_TYPES.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}</select>
-            <button className="btn btn-ghost btn-sm" onClick={() => fileRef.current && fileRef.current.click()}><Upload size={14} /> Enviar PDF</button>
+            <select className="mini-select" value={type} onChange={(e) => setType(e.target.value)}>
+              {DOC_TYPES.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.label}
+                </option>
+              ))}
+            </select>
+            <button
+              className="btn btn-ghost btn-sm"
+              onClick={() => fileRef.current && fileRef.current.click()}
+            >
+              <Upload size={14} /> Enviar PDF
+            </button>
             <input ref={fileRef} type="file" accept="application/pdf" hidden onChange={onPick} />
           </div>
         )}
       </header>
       <div className="filter-row">
-        <button className={'filter' + (filter === 'todos' ? ' on' : '')} onClick={() => setFilter('todos')}>Todos</button>
-        {DOC_TYPES.map((t) => <button key={t.id} className={'filter' + (filter === t.id ? ' on' : '')} onClick={() => setFilter(t.id)}>{t.label}</button>)}
+        <button
+          className={'filter' + (filter === 'todos' ? ' on' : '')}
+          onClick={() => setFilter('todos')}
+        >
+          Todos
+        </button>
+        {DOC_TYPES.map((t) => (
+          <button
+            key={t.id}
+            className={'filter' + (filter === t.id ? ' on' : '')}
+            onClick={() => setFilter(t.id)}
+          >
+            {t.label}
+          </button>
+        ))}
       </div>
-      {shown.length === 0 ? <Empty text="Nenhum documento nesta categoria." /> : (
+      {shown.length === 0 ? (
+        <Empty text="Nenhum documento nesta categoria." />
+      ) : (
         <ul className="doc-list">
           {shown.map((d) => (
             <li key={d.id} className="doc">
-              <span className="doc-ic"><FileText size={18} /></span>
-              <span className="doc-meta"><strong>{d.name}</strong><small>{typeLabel(d.type)} · {d.size} · {fmt(d.date)}</small></span>
+              <span className="doc-ic">
+                <FileText size={18} />
+              </span>
+              <span className="doc-meta">
+                <strong>{d.name}</strong>
+                <small>
+                  {typeLabel(d.type)} · {d.size} · {fmt(d.date)}
+                </small>
+              </span>
               <span className="tag">{typeLabel(d.type)}</span>
-              <button className="icon-btn" title="Baixar"><Download size={16} /></button>
-              {isStudio && <button className="icon-btn icon-del" title="Excluir" onClick={() => { if (window.confirm('Excluir "' + d.name + '"?')) db.deleteDocument(d.id); }}><Trash2 size={16} /></button>}
+              <button
+                className="icon-btn"
+                title={d.storagePath ? 'Baixar' : 'Arquivo disponível ao conectar o Supabase'}
+                onClick={() => openDoc(d)}
+                disabled={!d.storagePath}
+              >
+                <Download size={16} />
+              </button>
+              {isStudio && (
+                <button
+                  className="icon-btn icon-del"
+                  title="Excluir"
+                  onClick={() => {
+                    if (window.confirm('Excluir "' + d.name + '"?')) db.deleteDocument(d.id);
+                  }}
+                >
+                  <Trash2 size={16} />
+                </button>
+              )}
             </li>
           ))}
         </ul>

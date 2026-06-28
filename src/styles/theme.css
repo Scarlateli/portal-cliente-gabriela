@@ -418,3 +418,7 @@ button.sub-box{cursor:pointer}
   .doc-sheet{padding:24px}
 }
 @media (prefers-reduced-motion:reduce){ .cp *{animation:none!important;transition:none!important} }
+
+/* loading spinner (integração Supabase) */
+@keyframes spin{to{transform:rotate(360deg)}}
+.spin{animation:spin .8s linear infinite}

@@ -102,7 +102,8 @@ create table if not exists quotes (
   deadline text,
   payment text,
   contract_status text default 'a_iniciar',
-  notes text
+  notes text,
+  storage_path text -- PDF do orçamento no Storage (opcional)
 );
 
 create table if not exists quote_comments (
@@ -121,9 +122,24 @@ create table if not exists events (
   kind text default 'evento'
 );
 
+-- Templates de etapas (ferramenta do studio; clientes não acessam).
+create table if not exists templates (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  created_at timestamptz default now()
+);
+
+create table if not exists template_items (
+  id uuid primary key default gen_random_uuid(),
+  template_id uuid not null references templates (id) on delete cascade,
+  title text not null,
+  category text not null,
+  "desc" text,
+  ord int not null default 1
+);
+
 -- ============================================================
 -- RLS (Row Level Security) — cliente só enxerga o próprio projeto.
--- Habilite o RLS em cada tabela e crie as policies.
 -- ============================================================
 alter table profiles enable row level security;
 alter table projects enable row level security;
@@ -136,12 +152,22 @@ alter table installments enable row level security;
 alter table quotes enable row level security;
 alter table quote_comments enable row level security;
 alter table events enable row level security;
+alter table templates enable row level security;
+alter table template_items enable row level security;
 
 -- Função auxiliar: o usuário logado é do studio?
 create or replace function is_studio()
 returns boolean language sql stable as $$
   select exists (
     select 1 from profiles p where p.id = auth.uid() and p.role = 'studio'
+  );
+$$;
+
+-- Função auxiliar: o projeto pertence ao cliente logado?
+create or replace function owns_project(pid uuid)
+returns boolean language sql stable as $$
+  select exists (
+    select 1 from projects p where p.id = pid and p.client_id = auth.uid()
   );
 $$;
 
@@ -155,16 +181,110 @@ create policy "projects_studio_all" on projects
 create policy "projects_client_read" on projects
   for select using (client_id = auth.uid());
 
--- Modelo p/ tabelas filhas (repita trocando o nome da tabela):
--- studio faz tudo; cliente só lê linhas de projetos dele.
+-- Etapas: studio tudo; cliente só lê as de projetos dele.
 create policy "stages_studio_all" on stages
   for all using (is_studio()) with check (is_studio());
 create policy "stages_client_read" on stages
+  for select using (owns_project(project_id));
+
+-- Sub-etapas: vínculo via stage -> project.
+create policy "stage_subs_studio_all" on stage_subs
+  for all using (is_studio()) with check (is_studio());
+create policy "stage_subs_client_read" on stage_subs
   for select using (
-    exists (select 1 from projects p where p.id = stages.project_id and p.client_id = auth.uid())
+    exists (
+      select 1 from stages s
+      where s.id = stage_subs.stage_id and owns_project(s.project_id)
+    )
   );
 
--- TODO: criar policies equivalentes para stage_subs, documents, contracts,
--- payments, installments, quotes, quote_comments e events. Para orçamentos,
--- o cliente PRECISA de update no "status" (aprovar/reprovar) — crie uma policy
--- de update restrita às colunas/linhas dos projetos dele.
+-- Documentos.
+create policy "documents_studio_all" on documents
+  for all using (is_studio()) with check (is_studio());
+create policy "documents_client_read" on documents
+  for select using (owns_project(project_id));
+
+-- Contratos: cliente lê e pode atualizar (assinatura simulada) os seus.
+create policy "contracts_studio_all" on contracts
+  for all using (is_studio()) with check (is_studio());
+create policy "contracts_client_read" on contracts
+  for select using (owns_project(project_id));
+create policy "contracts_client_sign" on contracts
+  for update using (owns_project(project_id)) with check (owns_project(project_id));
+
+-- Pagamentos e parcelas: somente leitura para o cliente.
+create policy "payments_studio_all" on payments
+  for all using (is_studio()) with check (is_studio());
+create policy "payments_client_read" on payments
+  for select using (owns_project(project_id));
+
+create policy "installments_studio_all" on installments
+  for all using (is_studio()) with check (is_studio());
+create policy "installments_client_read" on installments
+  for select using (
+    exists (
+      select 1 from payments pay
+      where pay.id = installments.payment_id and owns_project(pay.project_id)
+    )
+  );
+
+-- Orçamentos: cliente lê; e pode ATUALIZAR (aprovar/reprovar) os seus.
+-- (RLS é por linha; a restrição às colunas status/decided_at é garantida
+--  pela aplicação — o cliente só dispara setQuoteStatus.)
+create policy "quotes_studio_all" on quotes
+  for all using (is_studio()) with check (is_studio());
+create policy "quotes_client_read" on quotes
+  for select using (owns_project(project_id));
+create policy "quotes_client_decide" on quotes
+  for update using (owns_project(project_id)) with check (owns_project(project_id));
+
+-- Comentários de orçamento: cliente lê e INSERE nos projetos dele.
+create policy "quote_comments_studio_all" on quote_comments
+  for all using (is_studio()) with check (is_studio());
+create policy "quote_comments_client_read" on quote_comments
+  for select using (
+    exists (
+      select 1 from quotes q
+      where q.id = quote_comments.quote_id and owns_project(q.project_id)
+    )
+  );
+create policy "quote_comments_client_insert" on quote_comments
+  for insert with check (
+    author = 'client' and exists (
+      select 1 from quotes q
+      where q.id = quote_comments.quote_id and owns_project(q.project_id)
+    )
+  );
+
+-- Eventos.
+create policy "events_studio_all" on events
+  for all using (is_studio()) with check (is_studio());
+create policy "events_client_read" on events
+  for select using (owns_project(project_id));
+
+-- Templates: exclusivos do studio.
+create policy "templates_studio_all" on templates
+  for all using (is_studio()) with check (is_studio());
+create policy "template_items_studio_all" on template_items
+  for all using (is_studio()) with check (is_studio());
+
+-- ============================================================
+-- Storage: bucket privado "documentos" (PDFs).
+-- Crie o bucket no painel (Storage > New bucket > "documentos", Private)
+-- ou via SQL abaixo. O caminho dos arquivos começa com "<project_id>/...".
+-- ============================================================
+insert into storage.buckets (id, name, public)
+values ('documentos', 'documentos', false)
+on conflict (id) do nothing;
+
+-- Studio: acesso total ao bucket. Cliente: lê arquivos de projetos dele
+-- (o 1º segmento do caminho é o project_id).
+create policy "storage_studio_all" on storage.objects
+  for all using (bucket_id = 'documentos' and is_studio())
+  with check (bucket_id = 'documentos' and is_studio());
+
+create policy "storage_client_read" on storage.objects
+  for select using (
+    bucket_id = 'documentos'
+    and owns_project((storage.foldername(name))[1]::uuid)
+  );
