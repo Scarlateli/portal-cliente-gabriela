@@ -64,29 +64,37 @@ public/
   código antigo (estava embutido em base64).
 
 ## Backend (Supabase)
-O app roda hoje 100% no mock (`src/lib/db.js`). Para o backend real:
-1. Crie um projeto no [Supabase](https://supabase.com).
-2. Rode `src/lib/supabase/schema.sql` no SQL Editor (cria tabelas + RLS).
-3. Copie `.env.example` para `.env` e preencha `VITE_SUPABASE_URL` e
-   `VITE_SUPABASE_ANON_KEY` (use a chave **anon**; nunca a service_role no front).
-4. Implemente os métodos em `src/lib/supabase/db-supabase.js` (espelho assíncrono do mock)
-   e adapte os componentes para `async/await` + estados de carregamento.
+O app roda por padrão no **mock** (`src/lib/db.js`). O backend Supabase já está
+**implementado** — basta ligar a chave `VITE_DATA_SOURCE=supabase`:
+
+1. Copie `.env.example` para `.env` e preencha `VITE_SUPABASE_URL`,
+   `VITE_SUPABASE_ANON_KEY` (chave **anon**; nunca a service_role no front) e
+   `VITE_DATA_SOURCE=supabase`.
+2. Rode `src/lib/supabase/schema.sql` no SQL Editor (tabelas + RLS + Storage).
+3. Faça deploy da Edge Function: `supabase functions deploy invite-client`.
+
+A camada `src/lib/supabase/db-supabase.js` é o espelho assíncrono completo do
+mock; o React Query (só no modo supabase) é carregado sob demanda. Em modo mock
+nada do Supabase entra no bundle. Passo a passo completo em
+[`docs/DEPLOY.md`](docs/DEPLOY.md).
 
 ## Deploy (Vercel)
-1. Suba o repositório no GitHub (já configurado).
-2. Em [vercel.com](https://vercel.com), **Add New → Project** e importe o repo.
-3. Framework: **Vite** (detectado). Build: `npm run build`. Output: `dist`.
-4. Configure as variáveis de ambiente (quando houver backend).
-5. Deploy. Depois, conecte um domínio próprio (HTTPS é automático).
+Resumo: importe o repo em [vercel.com](https://vercel.com) (framework Vite
+detectado, build `npm run build`, output `dist`), configure as variáveis
+`VITE_*` e publique. Detalhes e domínio próprio em
+[`docs/DEPLOY.md`](docs/DEPLOY.md).
 
 ## O que falta para produção
-- **Backend real** (Supabase): Auth (sem senha em texto puro), RLS (cliente só vê o
-  próprio projeto) e Storage para os PDFs.
+Checklist completo (com o que já está pronto e o que falta) em
+[`docs/CHECKLIST-PRODUCAO.md`](docs/CHECKLIST-PRODUCAO.md). Em resumo, ainda
+faltam: tela de "criar senha" no 1º acesso do cliente, deploy no Vercel +
+variáveis de ambiente, URLs de auth no Supabase, SMTP próprio para os e-mails de
+convite e (opcional) domínio `.com.br`. Outras melhorias de produto:
+
 - **Assinatura de contrato** real (ZapSign/Autentique/Clicksign/D4Sign) via API + webhook.
 - **E-mails automáticos** (atraso de etapa, lembrete de parcela) via Resend/SendGrid.
 - **Pagamento online** (opcional): Asaas/Stripe/Mercado Pago (PIX/boleto).
 - **LGPD**: política de privacidade, consentimento e backups.
-- **Remover usuários de demonstração** (seed) antes de publicar.
 - **Licenciar a Futura Std** para uso em produção web.
 
 ---
