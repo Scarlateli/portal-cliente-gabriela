@@ -4,7 +4,7 @@ import { seed } from './lib/seed.js';
 import { getDb, IS_SUPABASE, qk } from './lib/data.js';
 import { useResolvedDb, specsFor } from './lib/useResolvedDb.js';
 import { queryClient } from './lib/queryClient.js';
-import { supabase } from './lib/supabase/client.js';
+import { getSupabase } from './lib/supabase/client.js';
 import { Login } from './components/Login.jsx';
 import { Loading, ErrorBox } from './components/atoms.jsx';
 import { AdminHome } from './components/admin/AdminHome.jsx';
@@ -28,7 +28,13 @@ function AppInner() {
 
   // Sessão persistente (supabase): recupera o usuário logado entre reloads.
   useEffect(() => {
-    if (!IS_SUPABASE || !supabase) return;
+    if (!IS_SUPABASE) return;
+    const supabase = getSupabase();
+    if (!supabase) {
+      // modo supabase sem credenciais — não trava a tela de boot
+      setBootstrapping(false);
+      return;
+    }
     let active = true;
     const loadProfile = async (authUser) => {
       if (!authUser) {
@@ -59,7 +65,10 @@ function AppInner() {
   }, []);
 
   const logout = async () => {
-    if (IS_SUPABASE && supabase) await supabase.auth.signOut();
+    if (IS_SUPABASE) {
+      const supabase = getSupabase();
+      if (supabase) await supabase.auth.signOut();
+    }
     setUser(null);
     setStudioPid(null);
     setClientPid(null);

@@ -8,7 +8,7 @@
    usuário de cliente (addProject) NÃO usa service_role no front — chama a
    Edge Function "invite-client" (ver supabase/functions/invite-client).
    --------------------------------------------------------------------- */
-import { supabase } from './client.js';
+import { getSupabase } from './client.js';
 import { addMonthsISO, todayISO, fmt, stageOverdue } from '../helpers.js';
 
 const STAGE_COLS =
@@ -26,6 +26,7 @@ const must = (error) => {
 const num = (v) => (v == null ? v : Number(v));
 
 export function makeSupabaseDb() {
+  const supabase = getSupabase();
   if (!supabase)
     throw new Error('Supabase não configurado: defina VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY.');
 
