@@ -156,18 +156,24 @@ alter table templates enable row level security;
 alter table template_items enable row level security;
 
 -- Função auxiliar: o usuário logado é do studio?
+-- search_path fixo ('') + schemas qualificados (hardening recomendado pelo
+-- security advisor do Supabase para funções usadas em RLS).
 create or replace function is_studio()
-returns boolean language sql stable as $$
+returns boolean language sql stable
+set search_path = ''
+as $$
   select exists (
-    select 1 from profiles p where p.id = auth.uid() and p.role = 'studio'
+    select 1 from public.profiles p where p.id = auth.uid() and p.role = 'studio'
   );
 $$;
 
 -- Função auxiliar: o projeto pertence ao cliente logado?
 create or replace function owns_project(pid uuid)
-returns boolean language sql stable as $$
+returns boolean language sql stable
+set search_path = ''
+as $$
   select exists (
-    select 1 from projects p where p.id = pid and p.client_id = auth.uid()
+    select 1 from public.projects p where p.id = pid and p.client_id = auth.uid()
   );
 $$;
 
