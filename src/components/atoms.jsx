@@ -56,7 +56,7 @@ export function ErrorBanner({ error, onClose }) {
 export function Mark({ small }) {
   return (
     <div className={'mark' + (small ? ' mark-sm' : '')}>
-      <img src={LOGO} alt={STUDIO.name} className="mark-logo" />
+      <img src={LOGO} alt="" className="mark-logo" />
       <span className="mark-text">
         <strong>{STUDIO.name}</strong>
         {!small && <em>{STUDIO.tagline}</em>}

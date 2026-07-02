@@ -99,13 +99,16 @@ function AdminInner({ db, baseDb, user, onLogout, onOpen, mutationError, clearEr
             {alerts > 0 && <span className="tab-badge">{alerts}</span>}
           </button>
         </nav>
-        {tab === 'projetos' && (
-          <div className="proj-grid">
-            {projects.map((p) => (
-              <AdminProjectCard key={p.id} baseDb={baseDb} p={p} onOpen={onOpen} />
-            ))}
-          </div>
-        )}
+        {tab === 'projetos' &&
+          (projects.length === 0 ? (
+            <Empty text="Nenhum projeto por aqui ainda — comece pela aba “Novo projeto”." />
+          ) : (
+            <div className="proj-grid">
+              {projects.map((p) => (
+                <AdminProjectCard key={p.id} baseDb={baseDb} p={p} onOpen={onOpen} />
+              ))}
+            </div>
+          ))}
         {tab === 'novo' && <NewProject db={db} onDone={() => setTab('projetos')} />}
         {tab === 'templates' && <Templates db={db} />}
         {tab === 'notif' && <Notifications notes={notes} onOpen={onOpen} />}

@@ -4,13 +4,11 @@
    - Cores e fonte: ver src/styles/theme.css (bloco BRAND TOKENS).
    ============================================================ */
 
-export const STUDIO = { name: 'Gabriela Lendecker', tagline: 'arquitetura de interiores' };
+export const STUDIO = { name: 'Gabriela Lendecker', tagline: 'arquitetura e interiores' };
 
-/* Logo servido de /public. O protótipo original trazia o logo como base64
-   embutido; aqui ele virou arquivo (mais limpo e cacheável).
-   >>> PARA USAR O LOGO REAL: substitua public/logo.svg pelo arquivo da marca
-   (pode ser .svg ou .png; se trocar a extensão, ajuste a linha abaixo). <<< */
-export const LOGO = '/logo.svg';
+/* Monograma oficial do estúdio (public/brand). O lockup completo, com o
+   nome, fica em /brand/lockup.png e é usado no histórico impresso. */
+export const LOGO = '/brand/monograma.png';
 
 export const STAGE_STATUS = [
   { id: 'a_fazer', label: 'A fazer' },

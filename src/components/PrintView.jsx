@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { Printer, ArrowLeft } from 'lucide-react';
-import { Mark, Loading, ErrorBox } from './atoms.jsx';
+import { Loading, ErrorBox } from './atoms.jsx';
 import { DOC_TYPES, STAGE_STATUS, STUDIO } from '../lib/constants.js';
 import { fmt, todayISO, money } from '../lib/helpers.js';
 import { qk } from '../lib/data.js';
@@ -77,7 +77,7 @@ export function PrintView({ db: baseDb, pid, onClose }) {
       </div>
       <div className="doc-sheet">
         <div className="ds-head">
-          <Mark />
+          <img className="ds-lockup" src="/brand/lockup.png" alt="Gabriela Lendecker — arquitetura e interiores" />
           <div className="ds-title">
             <h1>Histórico do projeto</h1>
             <p>Gerado em {fmt(todayISO())}</p>

@@ -87,7 +87,7 @@ export function Timeline({ db, project, isStudio }) {
 
       {stages.length === 0 ? <Empty text="Nenhuma etapa ainda. Use um template ou adicione manualmente." />
         : shown.length === 0 ? <Empty text="Nenhuma etapa neste filtro." />
-        : <ol className="timeline">{shown.map((s) => <StageItem key={s.id} db={db} s={s} isStudio={isStudio} />)}</ol>}
+        : <ol className="timeline" key={filter}>{shown.map((s) => <StageItem key={s.id} db={db} s={s} isStudio={isStudio} />)}</ol>}
     </section>
   );
 }
