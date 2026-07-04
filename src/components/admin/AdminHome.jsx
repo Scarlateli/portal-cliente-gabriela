@@ -18,7 +18,7 @@ import { TopBar, Empty, Loading, ErrorBox, ErrorBanner } from '../atoms.jsx';
 import { stageOverdue, fmt, todayISO } from '../../lib/helpers.js';
 import { STAGE_CATEGORIES } from '../../lib/constants.js';
 import { newProjectSchema, validate } from '../../lib/validation.js';
-import { qk } from '../../lib/data.js';
+import { qk, IS_SUPABASE } from '../../lib/data.js';
 import { useResolvedDb, specsFor } from '../../lib/useResolvedDb.js';
 
 export function AdminHome({ db: baseDb, user, onLogout, onOpen }) {
@@ -217,6 +217,7 @@ function NewProject({ db, onDone }) {
     pass: 'mudar123',
   });
   const [errors, setErrors] = useState({});
+  const [invite, setInvite] = useState('');
   const set = (k) => (e) => setF({ ...f, [k]: e.target.value });
   const create = async () => {
     const res = validate(newProjectSchema, f);
@@ -226,8 +227,9 @@ function NewProject({ db, onDone }) {
     }
     setErrors({});
     try {
-      await db.addProject(f);
-      onDone();
+      const created = await db.addProject(f);
+      if (created && created.inviteLink) setInvite(created.inviteLink);
+      else onDone();
     } catch {
       /* erro exibido pelo ErrorBanner do contêiner */
     }
@@ -281,21 +283,45 @@ function NewProject({ db, onDone }) {
           />
           {errors.clientEmail && <span className="error">{errors.clientEmail}</span>}
         </label>
-        <label className="lab">
-          Senha inicial
-          <input value={f.pass} onChange={set('pass')} />
-          {errors.pass && <span className="error">{errors.pass}</span>}
-        </label>
+        {!IS_SUPABASE && (
+          <label className="lab">
+            Senha inicial
+            <input value={f.pass} onChange={set('pass')} />
+            {errors.pass && <span className="error">{errors.pass}</span>}
+          </label>
+        )}
       </div>
       <p className="hint">
-        A senha inicial será usada pelo cliente no primeiro acesso. No backend, o ideal é enviar um
-        convite por e-mail para ele definir a própria senha.
+        {IS_SUPABASE
+          ? 'Ao criar o projeto, você recebe um link de acesso para enviar ao cliente (WhatsApp ou e-mail) — é nele que o cliente define a própria senha.'
+          : 'A senha inicial será usada pelo cliente no primeiro acesso (modo demonstração).'}
       </p>
       <div className="row">
-        <button className="btn btn-primary" onClick={create}>
+        <button className="btn btn-primary" onClick={create} disabled={!!invite}>
           Criar projeto
         </button>
       </div>
+      {invite && (
+        <div className="invite-box">
+          <strong>Projeto criado! Link de acesso do cliente</strong>
+          <code>{invite}</code>
+          <div className="row">
+            <button
+              className="btn btn-primary btn-sm"
+              onClick={() => navigator.clipboard && navigator.clipboard.writeText(invite)}
+            >
+              Copiar link
+            </button>
+            <button className="btn btn-ghost btn-sm" onClick={onDone}>
+              Concluir
+            </button>
+          </div>
+          <p className="hint">
+            Envie por WhatsApp ou e-mail — o link leva o cliente para criar a senha e entrar no
+            portal.
+          </p>
+        </div>
+      )}
     </section>
   );
 }

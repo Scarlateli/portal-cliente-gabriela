@@ -59,7 +59,7 @@ export function Mark({ small }) {
       <img src={LOGO} alt="" className="mark-logo" />
       <span className="mark-text">
         <strong>{STUDIO.name}</strong>
-        {!small && <em>{STUDIO.tagline}</em>}
+        <em>{STUDIO.tagline}</em>
       </span>
     </div>
   );

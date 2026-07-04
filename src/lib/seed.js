@@ -59,8 +59,9 @@ export const seed = {
     { id: 'd3', projectId: 'p1', name: 'Planta — layout proposto.pdf', type: 'planta', size: '1,8 MB', date: '2026-04-30' },
   ],
   contracts: [
-    { id: 'c1', projectId: 'p1', name: 'Contrato de prestação de serviços', sigStatus: 'enviado', provider: 'ZapSign', signer: null, signedAt: null },
-    { id: 'c2', projectId: 'p2', name: 'Contrato de prestação de serviços', sigStatus: 'rascunho', provider: null, signer: null, signedAt: null },
+    { id: 'c1', projectId: 'p1', kind: 'contrato', name: 'Contrato de prestação de serviços', sigStatus: 'enviado', provider: 'Autentique', signer: null, signedAt: null },
+    { id: 'c3', projectId: 'p1', kind: 'termo', name: 'Termo de autorização de uso de imagens', sigStatus: 'rascunho', provider: null, signer: null, signedAt: null },
+    { id: 'c2', projectId: 'p2', kind: 'contrato', name: 'Contrato de prestação de serviços', sigStatus: 'rascunho', provider: null, signer: null, signedAt: null },
   ],
   payments: [
     {

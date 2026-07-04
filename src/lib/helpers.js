@@ -32,9 +32,9 @@ export const addMonthsISO = (iso, n) => {
 
 export const uid = (p) => p + Math.random().toString(36).slice(2, 8);
 
-/* uma etapa de responsabilidade do cliente está atrasada se passou do fim e não foi concluída */
-export const stageOverdue = (s) =>
-  s.owner === 'client' && s.status !== 'concluida' && !!s.end && s.end < todayISO();
+/* uma etapa está atrasada se passou da previsão de fim e não foi concluída
+   (independe do responsável — o studio também enxerga os próprios atrasos) */
+export const stageOverdue = (s) => s.status !== 'concluida' && !!s.end && s.end < todayISO();
 
 export const subStats = (s) => {
   const list = s.subs || [];

@@ -6,7 +6,7 @@ import { fmt } from '../../lib/helpers.js';
 
 export function Documents({ db, project, isStudio }) {
   const docs = db.documents(project.id);
-  const [filter, setFilter] = useState('todos');
+  const [filter, setFilter] = useState('');
   const [type, setType] = useState('geral');
   const fileRef = useRef(null);
   const onPick = (e) => {
@@ -28,7 +28,7 @@ export function Documents({ db, project, isStudio }) {
       /* ignora — sem arquivo disponível */
     }
   };
-  const shown = filter === 'todos' ? docs : docs.filter((d) => d.type === filter);
+  const shown = !filter ? docs : docs.filter((d) => d.type === filter);
   const typeLabel = (id) => (DOC_TYPES.find((t) => t.id === id) || { label: 'Geral' }).label;
   return (
     <section className="panel">
@@ -54,24 +54,18 @@ export function Documents({ db, project, isStudio }) {
         )}
       </header>
       <div className="filter-row">
-        <button
-          className={'filter' + (filter === 'todos' ? ' on' : '')}
-          onClick={() => setFilter('todos')}
-        >
-          Todos
-        </button>
         {DOC_TYPES.map((t) => (
           <button
             key={t.id}
             className={'filter' + (filter === t.id ? ' on' : '')}
-            onClick={() => setFilter(t.id)}
+            onClick={() => setFilter(filter === t.id ? '' : t.id)}
           >
             {t.label}
           </button>
         ))}
       </div>
       {shown.length === 0 ? (
-        <Empty text="Nenhum documento nesta categoria." />
+        <Empty text={filter ? 'Nenhum documento nesta categoria.' : 'Nenhum documento ainda.'} />
       ) : (
         <ul className="doc-list">
           {shown.map((d) => (
@@ -85,7 +79,6 @@ export function Documents({ db, project, isStudio }) {
                   {typeLabel(d.type)} · {d.size} · {fmt(d.date)}
                 </small>
               </span>
-              <span className="tag">{typeLabel(d.type)}</span>
               <button
                 className="icon-btn"
                 title={d.storagePath ? 'Baixar' : 'Arquivo disponível ao conectar o Supabase'}

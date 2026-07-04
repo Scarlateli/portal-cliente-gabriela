@@ -87,11 +87,11 @@ detectado, build `npm run build`, output `dist`), configure as variáveis
 ## O que falta para produção
 Checklist completo (com o que já está pronto e o que falta) em
 [`docs/CHECKLIST-PRODUCAO.md`](docs/CHECKLIST-PRODUCAO.md). Em resumo, ainda
-faltam: tela de "criar senha" no 1º acesso do cliente, deploy no Vercel +
-variáveis de ambiente, URLs de auth no Supabase, SMTP próprio para os e-mails de
-convite e (opcional) domínio `.com.br`. Outras melhorias de produto:
+faltam: deploy no Vercel + variáveis de ambiente, URLs de auth no Supabase e,
+opcionais, domínio `.com.br` e SMTP para e-mails automáticos (o convite do
+cliente é por link copiável). Outras melhorias de produto:
 
-- **Assinatura de contrato** real (ZapSign/Autentique/Clicksign/D4Sign) via API + webhook.
+- **Assinatura de contrato** real via **Autentique** (API GraphQL + webhook) — falta criar a conta e o token.
 - **E-mails automáticos** (atraso de etapa, lembrete de parcela) via Resend/SendGrid.
 - **Pagamento online** (opcional): Asaas/Stripe/Mercado Pago (PIX/boleto).
 - **LGPD**: política de privacidade, consentimento e backups.

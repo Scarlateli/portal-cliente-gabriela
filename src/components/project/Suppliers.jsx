@@ -6,14 +6,24 @@ import { money, fmt } from '../../lib/helpers.js';
 
 export function Suppliers({ db, project, isStudio }) {
   const approved = db.suppliers(project.id);
-  const grouped = SEGMENTS.map((s) => ({ seg: s, items: approved.filter((q) => q.segment === s) })).filter((g) => g.items.length);
-  const total = approved.reduce((s, q) => s + q.amount, 0);
+  const [seg, setSeg] = useState('');
+  const segsPresent = SEGMENTS.filter((s) => approved.some((q) => q.segment === s));
+  const shownList = seg ? approved.filter((q) => q.segment === seg) : approved;
+  const grouped = SEGMENTS.map((s) => ({ seg: s, items: shownList.filter((q) => q.segment === s) })).filter((g) => g.items.length);
+  const total = shownList.reduce((s, q) => s + q.amount, 0);
   return (
     <section className="panel">
       <header className="panel-head"><h2>Fornecedores contratados</h2></header>
       {approved.length === 0 ? <Empty text="Nenhum fornecedor contratado ainda. Orçamentos aprovados aparecem aqui." /> : (
         <>
-          <div className="sup-total"><Handshake size={16} /> {approved.length} contratados · {money(total)}</div>
+          <div className="sup-total"><Handshake size={16} /> {shownList.length} contratados · {money(total)}</div>
+          {segsPresent.length > 1 && (
+            <div className="filter-row">
+              {segsPresent.map((sg) => (
+                <button key={sg} className={'filter' + (seg === sg ? ' on' : '')} onClick={() => setSeg(seg === sg ? '' : sg)}>{sg}</button>
+              ))}
+            </div>
+          )}
           {grouped.map((g) => (
             <div key={g.seg} className="seg-block">
               <h4 className="seg-title">{g.seg}</h4>

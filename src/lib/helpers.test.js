@@ -26,9 +26,9 @@ describe('helpers', () => {
     expect(addMonthsISO('2026-01-31', 3)).toBe('2026-04-30');
   });
 
-  it('stageOverdue só é true para etapa do cliente vencida e não concluída', () => {
+  it('stageOverdue é true para etapa vencida e não concluída (qualquer responsável)', () => {
     expect(stageOverdue({ owner: 'client', status: 'em_andamento', end: '2000-01-01' })).toBe(true);
-    expect(stageOverdue({ owner: 'studio', status: 'em_andamento', end: '2000-01-01' })).toBe(false);
+    expect(stageOverdue({ owner: 'studio', status: 'em_andamento', end: '2000-01-01' })).toBe(true);
     expect(stageOverdue({ owner: 'client', status: 'concluida', end: '2000-01-01' })).toBe(false);
     expect(stageOverdue({ owner: 'client', status: 'em_andamento', end: '' })).toBe(false);
   });

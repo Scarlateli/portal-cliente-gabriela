@@ -38,7 +38,6 @@ export function Login({ db, onLogin }) {
 
   return (
     <div className="login">
-      <div className="login-grid" aria-hidden />
       <div className="login-card">
         <Mark />
         <h1 className="login-title">Portal do cliente</h1>

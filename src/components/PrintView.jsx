@@ -14,7 +14,7 @@ export function PrintView({ db: baseDb, pid, onClose }) {
       { key: qk.clientName(pid), method: 'clientName', args: [pid] },
       { key: qk.stages(pid), method: 'stages', args: [pid] },
       { key: qk.documents(pid), method: 'documents', args: [pid] },
-      { key: qk.contract(pid), method: 'contract', args: [pid] },
+      { key: qk.contracts(pid), method: 'contracts', args: [pid] },
       { key: qk.payment(pid), method: 'payment', args: [pid] },
       { key: qk.quotes(pid), method: 'quotes', args: [pid] },
       { key: qk.suppliers(pid), method: 'suppliers', args: [pid] },
@@ -59,7 +59,7 @@ export function PrintView({ db: baseDb, pid, onClose }) {
 
   const stages = db.stages(pid);
   const docs = db.documents(pid);
-  const c = db.contract(pid);
+  const contracts = db.contracts(pid);
   const pay = db.payment(pid);
   const quotes = db.quotes(pid);
   const suppliers = db.suppliers(pid);
@@ -151,16 +151,21 @@ export function PrintView({ db: baseDb, pid, onClose }) {
           ))}
         </ul>
 
-        <h2 className="ds-sec">Contrato</h2>
-        <p>
-          {c
-            ? c.name +
-              ' — ' +
-              (c.sigStatus === 'assinado'
-                ? 'Assinado por ' + c.signer + ' em ' + fmt(c.signedAt) + ' via ' + c.provider
-                : c.sigStatus)
-            : '—'}
-        </p>
+        <h2 className="ds-sec">Contratos e termos</h2>
+        {contracts.length === 0 ? (
+          <p className="ds-stage">Sem documentos.</p>
+        ) : (
+          contracts.map((c) => (
+            <p key={c.id} className="ds-stage">
+              {(c.kind === 'termo' ? 'Termo: ' : 'Contrato: ') + c.name} —{' '}
+              {c.sigStatus === 'assinado'
+                ? 'assinado por ' + c.signer + ' em ' + fmt(c.signedAt) + ' via ' + c.provider
+                : c.sigStatus === 'enviado'
+                  ? 'enviado para assinatura'
+                  : 'aguardando envio'}
+            </p>
+          ))
+        )}
 
         <h2 className="ds-sec">Pagamentos</h2>
         {pay ? (

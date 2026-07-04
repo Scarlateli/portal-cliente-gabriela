@@ -47,7 +47,7 @@ export const SEGMENTS = [
   'Geral',
 ];
 
-export const SIG_PROVIDERS = ['ZapSign', 'Autentique', 'Clicksign', 'D4Sign'];
+export const SIG_PROVIDERS = ['Autentique', 'ZapSign', 'Clicksign', 'D4Sign'];
 
 export const CONTRACT_STATUS = [
   { id: 'a_iniciar', label: 'A iniciar' },

@@ -24,7 +24,7 @@ export function makeDb(state, set) {
     templates: () => state.templates,
     stages: (pid) => byP('stages', pid).sort((a, b) => a.ord - b.ord),
     documents: (pid) => byP('documents', pid),
-    contract: (pid) => state.contracts.find((c) => c.projectId === pid),
+    contracts: (pid) => state.contracts.filter((c) => c.projectId === pid),
     payment: (pid) => state.payments.find((x) => x.projectId === pid),
     quotes: (pid) => byP('quotes', pid),
     suppliers: (pid) => byP('quotes', pid).filter((q) => q.status === 'aprovado'),
@@ -56,7 +56,7 @@ export function makeDb(state, set) {
           id: pid, code: data.code, name: data.name, clientId: cid, status: 'em_andamento',
           address: data.address, start: data.start, due: data.due, completedAt: null, accessUntil: null,
         }],
-        contracts: [...s.contracts, { id: uid('c'), projectId: pid, name: 'Contrato de prestação de serviços', sigStatus: 'rascunho', provider: null, signer: null, signedAt: null }],
+        contracts: [...s.contracts, { id: uid('c'), projectId: pid, kind: 'contrato', name: 'Contrato de prestação de serviços', sigStatus: 'rascunho', provider: null, signer: null, signedAt: null }],
       };
     }),
     addStage: (pid, d) => set((s) => {
@@ -79,7 +79,8 @@ export function makeDb(state, set) {
     addTemplate: (name, items) => set((s) => ({ ...s, templates: [...s.templates, { id: uid('t'), name, items }] })),
     addDocument: (pid, d) => set((s) => ({ ...s, documents: [...s.documents, { id: uid('d'), projectId: pid, name: d.name, type: d.type, size: d.size, date: todayISO() }] })),
     deleteDocument: (did) => set((s) => ({ ...s, documents: s.documents.filter((x) => x.id !== did) })),
-    setContract: (pid, patch) => set((s) => ({ ...s, contracts: s.contracts.map((c) => c.projectId === pid ? { ...c, ...patch } : c) })),
+    setContract: (cid, patch) => set((s) => ({ ...s, contracts: s.contracts.map((c) => c.id === cid ? { ...c, ...patch } : c) })),
+    addContractDoc: (pid, d) => set((s) => ({ ...s, contracts: [...s.contracts, { id: uid('c'), projectId: pid, kind: d.kind || 'termo', name: d.name, sigStatus: 'rascunho', provider: null, signer: null, signedAt: null }] })),
     createPlan: (pid, total, n, firstDue, interval) => set((s) => {
       const per = Math.round((total / n) * 100) / 100;
       const installments = Array.from({ length: n }, (_, i) => ({ n: i + 1, amount: per, due: addMonthsISO(firstDue, i * interval), status: 'pendente', paidAt: null }));
@@ -113,7 +114,7 @@ export function makeDb(state, set) {
       state.contracts.forEach((c) => {
         if (c.sigStatus === 'assinado') {
           const p = state.projects.find((x) => x.id === c.projectId);
-          out.push({ id: 'n-' + c.id, kind: 'ok', projectId: c.projectId, projectName: p ? p.name : '', title: 'Contrato assinado', body: c.name + (c.signer ? ' · ' + c.signer : ''), date: c.signedAt || todayISO() });
+          out.push({ id: 'n-' + c.id, kind: 'ok', projectId: c.projectId, projectName: p ? p.name : '', title: c.kind === 'termo' ? 'Termo assinado' : 'Contrato assinado', body: c.name + (c.signer ? ' · ' + c.signer : ''), date: c.signedAt || todayISO() });
         }
       });
       return out.sort((a, b) => (b.date || '').localeCompare(a.date || ''));

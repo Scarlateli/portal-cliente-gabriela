@@ -18,7 +18,7 @@ const PROJECT_COLS =
 const QUOTE_COLS =
   'id, projectId:project_id, segment, supplier, amount, fileName:file_name, status, studioNote:studio_note, decidedAt:decided_at, contact, deadline, payment, contractStatus:contract_status, notes, storagePath:storage_path, comments:quote_comments(author, body, at)';
 const CONTRACT_COLS =
-  'id, projectId:project_id, name, sigStatus:sig_status, provider, signer, signedAt:signed_at';
+  'id, projectId:project_id, name, sigStatus:sig_status, provider, signer, signedAt:signed_at, kind';
 
 const must = (error) => {
   if (error) throw error;
@@ -124,14 +124,15 @@ export function makeSupabaseDb() {
       must(error);
       return data;
     },
-    contract: async (pid) => {
+    contracts: async (pid) => {
       const { data, error } = await supabase
         .from('contracts')
         .select(CONTRACT_COLS)
         .eq('project_id', pid)
-        .maybeSingle();
+        .order('kind', { ascending: true })
+        .order('name', { ascending: true });
       must(error);
-      return data;
+      return data || [];
     },
     payment: async (pid) => {
       const { data, error } = await supabase
@@ -224,7 +225,7 @@ export function makeSupabaseDb() {
         await Promise.all([
           supabase.from('stages').select('id, project_id, title, owner, status, "end"'),
           supabase.from('quotes').select('id, project_id, supplier, segment, status, decided_at'),
-          supabase.from('contracts').select('id, project_id, name, sig_status, signer, signed_at'),
+          supabase.from('contracts').select('id, project_id, kind, name, sig_status, signer, signed_at'),
           supabase.from('projects').select('id, name, client_id'),
         ]);
       const projById = Object.fromEntries((projects || []).map((p) => [p.id, p]));
@@ -283,7 +284,7 @@ export function makeSupabaseDb() {
             kind: 'ok',
             projectId: c.project_id,
             projectName: p ? p.name : '',
-            title: 'Contrato assinado',
+            title: c.kind === 'termo' ? 'Termo assinado' : 'Contrato assinado',
             body: c.name + (c.signer ? ' · ' + c.signer : ''),
             date: c.signed_at || todayISO(),
           });
@@ -330,11 +331,13 @@ export function makeSupabaseDb() {
       // 3) contrato em rascunho
       const { error: cErr } = await supabase.from('contracts').insert({
         project_id: proj.id,
+        kind: 'contrato',
         name: 'Contrato de prestação de serviços',
         sig_status: 'rascunho',
       });
       must(cErr);
-      return proj;
+      // devolve também o link de acesso do cliente (gerado pela Edge Function)
+      return { id: proj.id, inviteLink: (fn && fn.actionLink) || null };
     },
 
     addStage: async (pid, d) => {
@@ -504,7 +507,7 @@ export function makeSupabaseDb() {
       const { error } = await supabase.from('documents').delete().eq('id', did);
       must(error);
     },
-    setContract: async (pid, patch) => {
+    setContract: async (cid, patch) => {
       const map = {
         sigStatus: 'sig_status',
         provider: 'provider',
@@ -513,7 +516,16 @@ export function makeSupabaseDb() {
       };
       const payload = {};
       for (const k of Object.keys(patch)) if (map[k]) payload[map[k]] = patch[k];
-      const { error } = await supabase.from('contracts').update(payload).eq('project_id', pid);
+      const { error } = await supabase.from('contracts').update(payload).eq('id', cid);
+      must(error);
+    },
+    addContractDoc: async (pid, d) => {
+      const { error } = await supabase.from('contracts').insert({
+        project_id: pid,
+        kind: d.kind || 'termo',
+        name: d.name,
+        sig_status: 'rascunho',
+      });
       must(error);
     },
     createPlan: async (pid, total, n, firstDue, interval) => {

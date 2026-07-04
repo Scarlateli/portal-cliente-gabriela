@@ -32,16 +32,12 @@ Aplicado direto no projeto Supabase `acqagwwjdaoodmnmtpgp`:
   git push
   ```
 
-### 2. (frontend) Tela de "criar senha" no 1º acesso do cliente
-- [ ] **Decisão de produto pendente.** O cadastro de cliente usa convite por
-      e-mail: o cliente clica no link e precisa **definir a senha**. Hoje o app
-      só tem tela de login — falta a tela de "criar/definir senha".
-      Duas opções:
-      - **(a)** criar essa telinha no frontend (chama `supabase.auth.updateUser({ password })`); ou
-      - **(b)** trocar a Edge Function para o studio definir uma senha inicial
-        e repassar ao cliente (sem e-mail).
-      > Dá pra resolver na fase de "caprichar no frontend". Até lá, o login do
-      > studio funciona normalmente; só o fluxo de convite de cliente depende disto.
+### 2. ✅ Primeiro acesso do cliente — resolvido
+- [x] Tela de **criar senha** implementada (o link de convite abre o app e o
+      cliente define a própria senha).
+- [x] O convite virou **link copiável**: ao criar o projeto, o studio recebe o
+      link na tela e envia por WhatsApp/e-mail — **não depende de SMTP**.
+      Roteiro completo do teste em [`TESTE-PRE-GOLIVE.md`](./TESTE-PRE-GOLIVE.md).
 
 ### 3. Publicar o frontend no Vercel
 - [ ] Criar conta no [Vercel](https://vercel.com) e conectar o repositório do GitHub.
@@ -59,17 +55,23 @@ Aplicado direto no projeto Supabase `acqagwwjdaoodmnmtpgp`:
       - **Redirect URLs**: adicionar `https://<sua-url>.vercel.app/**`.
       (Isto é o que faz o link do convite de cliente voltar pro app.)
 
-### 5. E-mail de verdade (SMTP próprio)
-- [ ] Configurar SMTP em **Authentication → Emails** (ex.: Resend, SendGrid).
-      O e-mail embutido do Supabase é só pra teste (limite baixo) e não serve
-      pra enviar convites pra clientes de verdade.
+### 5. (Opcional) E-mail automático (SMTP próprio)
+- [ ] O convite hoje é por **link copiável** (não precisa de e-mail). Se quiser
+      que o Supabase envie e-mails automaticamente (convite/recuperação de
+      senha), configure um SMTP em **Authentication → Emails** (ex.: Resend).
 
-### 6. (Opcional) Domínio .com.br
+### 6. Assinatura digital (Autentique)
+- [ ] Criar conta na [Autentique](https://www.autentique.com.br) e gerar um
+      **token de API** (painel → API keys). Com o token em mãos, a integração
+      real entra por Edge Function (envio do documento + webhook de status) —
+      me avise quando tiver o token.
+
+### 7. (Opcional) Domínio .com.br
 - [ ] Comprar no [Registro.br](https://registro.br) (~R$40/ano).
 - [ ] No Vercel: **Settings → Domains → Add** e seguir as instruções de DNS.
 - [ ] Trocar a Site URL / Redirect URLs (passo 4) pro domínio novo.
 
-### 7. Operação no plano Free (decidir)
+### 8. Operação no plano Free (decidir)
 - [ ] **Pausa por inatividade:** projetos free pausam após 7 dias sem uso.
       Opções: keep-alive (ping diário) ou plano Pro ($25/mês, sem pausa).
 - [ ] **Backups:** o free não tem backup automático. Exportar dumps
@@ -83,9 +85,10 @@ Aplicado direto no projeto Supabase `acqagwwjdaoodmnmtpgp`:
 |------|--------|
 | Backend Supabase (banco, RLS, função, storage, studio) | ✅ pronto |
 | Código no GitHub | ⏳ aplicar patch + push |
-| Tela de criar senha do cliente | ⏳ frontend (decidir abordagem) |
+| Primeiro acesso do cliente (link + criar senha) | ✅ pronto |
 | Deploy no Vercel + env vars | ⏳ |
 | URLs de auth no Supabase | ⏳ |
-| SMTP próprio | ⏳ recomendado |
+| SMTP (e-mail automático) | ⏳ opcional |
+| Integração Autentique | ⏳ precisa do token |
 | Domínio .com.br | ⏳ opcional, por último |
 | Pausa de 7 dias / backups | ⏳ decidir |

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import {
   Plus, Clock, Video, MapPin, Calendar as CalendarIcon, CalendarDays, User, CalendarClock,
-  Link2, AlertTriangle, ListChecks, Check, X, ChevronRight, PenLine, Trash2,
+  Link2, AlertTriangle, ListChecks, Check, X, PenLine, Trash2,
 } from 'lucide-react';
 import { StatusPill, Empty } from '../atoms.jsx';
 import { STAGE_STATUS, STAGE_CATEGORIES } from '../../lib/constants.js';
@@ -93,7 +93,6 @@ export function Timeline({ db, project, isStudio }) {
 }
 
 function StageItem({ db, s, isStudio }) {
-  const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState(false);
   const [ef, setEf] = useState(s);
   const [addingSub, setAddingSub] = useState(false);
@@ -148,16 +147,14 @@ function StageItem({ db, s, isStudio }) {
       <div className="tl-body">
         <div className="tl-top">
           <h3>{s.title}</h3>
-          <span className="tl-date"><CalendarDays size={12} /> {fmt(s.start)}{s.end && s.end !== s.start ? ' → ' + fmt(s.end) : ''}{s.time ? ' · ' + s.time : ''}</span>
+          <span className="tl-date"><CalendarDays size={12} /> {fmt(s.start)}{!late && s.end && s.end !== s.start ? ' → ' + fmt(s.end) : ''}{s.time ? ' · ' + s.time : ''}</span>
         </div>
         <div className="tl-meta">
           <span className="tag">{s.category}</span>
-          <StatusPill status={s.status} />
-          <span className={'tag tag-owner' + (s.owner === 'client' ? ' owner-client' : '')}><User size={11} /> {s.owner === 'client' ? 'Cliente' : 'Studio'}</span>
-          {s.category === 'Reunião' && (s.presencial
-            ? <span className="tag tag-loc"><MapPin size={11} /> Presencial</span>
-            : <span className="tag tag-loc"><Video size={11} /> Online</span>)}
+          {s.category === 'Reunião' && !s.presencial && <span className="tag tag-loc"><Video size={11} /> Online</span>}
+          {s.owner === 'client' && <span className="tag tag-owner owner-client"><User size={11} /> Responsabilidade: Cliente</span>}
           {s.rescheduledFrom && <span className="tag tag-resched"><CalendarClock size={11} /> Reagendada de {fmt(s.rescheduledFrom)}</span>}
+          {late ? <span className="pill pill-late"><AlertTriangle size={12} /> Em atraso</span> : <StatusPill status={s.status} />}
         </div>
 
         {s.category === 'Reunião' && !s.presencial && s.link && (
@@ -166,7 +163,7 @@ function StageItem({ db, s, isStudio }) {
 
         {late && (
           <div className="late-box">
-            <div className="late-msg"><AlertTriangle size={15} /> <span>Prazo do cliente venceu em {fmt(s.end)}. {isStudio ? 'Um e-mail de cobrança foi enviado ao cliente.' : 'Anexe as documentações em Documentos. Depois disso, o studio define uma nova data de entrega.'}</span></div>
+            <div className="late-msg"><AlertTriangle size={15} /> <span>Prazo venceu em {fmt(s.end)}. {isStudio ? 'Defina a nova data de entrega abaixo.' : s.owner === 'client' ? 'Anexe as documentações em Documentos. Depois disso, o studio define uma nova data de entrega.' : 'Uma nova análise de prazo será feita pelo studio.'}</span></div>
             {isStudio && (
               <div className="reschedule">
                 <label className="inline-lab"><CalendarClock size={13} /> Nova data de entrega<input type="date" value={newEnd} onChange={(e) => setNewEnd(e.target.value)} /></label>
@@ -184,7 +181,7 @@ function StageItem({ db, s, isStudio }) {
                 {(s.subs || []).map((b) => (
                   <li key={b.id} className={'sub' + (b.done ? ' done' : '')}>
                     {isStudio
-                      ? <button className={'sub-box' + (b.done ? ' on' : '')} onClick={() => db.toggleSub(s.id, b.id)} aria-label="alternar">{b.done && <Check size={11} />}</button>
+                      ? <button className={'sub-box' + (b.done ? ' on' : '')} onClick={isStudio ? () => db.toggleSub(s.id, b.id) : undefined} disabled={!isStudio} aria-label="alternar">{b.done && <Check size={11} />}</button>
                       : <span className={'sub-box' + (b.done ? ' on' : '')}>{b.done && <Check size={11} />}</span>}
                     <span className="sub-title">{b.title}</span>
                     {isStudio && <button className="icon-x" onClick={() => db.deleteSub(s.id, b.id)} aria-label="remover"><X size={12} /></button>}
@@ -202,12 +199,7 @@ function StageItem({ db, s, isStudio }) {
           </div>
         )}
 
-        {s.desc && (
-          <>
-            <button className="link" onClick={() => setOpen(!open)}>Ver detalhes <ChevronRight size={13} className={open ? 'rot' : ''} /></button>
-            {open && <p className="tl-desc">{s.desc}</p>}
-          </>
-        )}
+        {s.desc && <p className="tl-desc-inline">{s.desc}</p>}
 
         {isStudio && (
           <div className="status-set">

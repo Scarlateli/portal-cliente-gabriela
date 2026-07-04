@@ -6,6 +6,7 @@ import { useResolvedDb, specsFor } from './lib/useResolvedDb.js';
 import { queryClient } from './lib/queryClient.js';
 import { getSupabase } from './lib/supabase/client.js';
 import { Login } from './components/Login.jsx';
+import { SetPassword } from './components/SetPassword.jsx';
 import { Loading, ErrorBox } from './components/atoms.jsx';
 import { AdminHome } from './components/admin/AdminHome.jsx';
 import { ProjectView } from './components/project/ProjectView.jsx';
@@ -27,6 +28,11 @@ function AppInner() {
   const db = getDb({ state: mockState, set: setMockState });
 
   // Sessão persistente (supabase): recupera o usuário logado entre reloads.
+  // link de convite/recovery do Supabase chega com type=invite|recovery no hash
+  const [needsPassword, setNeedsPassword] = useState(
+    () => IS_SUPABASE && typeof window !== 'undefined' && /type=(invite|recovery)/.test(window.location.hash),
+  );
+
   useEffect(() => {
     if (!IS_SUPABASE) return;
     const supabase = getSupabase();
@@ -86,6 +92,15 @@ function AppInner() {
     );
   } else if (printPid) {
     body = <PrintView db={db} pid={printPid} onClose={() => setPrintPid(null)} />;
+  } else if (IS_SUPABASE && needsPassword && user) {
+    body = (
+      <SetPassword
+        onDone={() => {
+          setNeedsPassword(false);
+          window.history.replaceState(null, '', window.location.pathname);
+        }}
+      />
+    );
   } else if (!user) {
     body = <Login db={db} onLogin={setUser} />;
   } else if (user.role === 'studio') {

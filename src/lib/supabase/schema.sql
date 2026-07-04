@@ -65,6 +65,7 @@ create table if not exists documents (
 create table if not exists contracts (
   id uuid primary key default gen_random_uuid(),
   project_id uuid not null references projects (id) on delete cascade,
+  kind text not null default 'contrato' check (kind in ('contrato', 'termo')),
   name text not null,
   sig_status text not null default 'rascunho' check (sig_status in ('rascunho', 'enviado', 'assinado')),
   provider text,

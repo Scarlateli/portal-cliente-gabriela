@@ -20,7 +20,7 @@ describe('makeDb (mock)', () => {
     const p = projects[projects.length - 1];
     expect(p.code).toBe('X-1');
     expect(db().clientName(p.id)).toBe('Fulano');
-    expect(db().contract(p.id)).toBeTruthy();
+    expect(db().contracts(p.id).length).toBe(1);
   });
 
   it('applyTemplate adiciona as etapas do template', () => {
