@@ -217,7 +217,7 @@ function NewProject({ db, onDone }) {
     pass: 'mudar123',
   });
   const [errors, setErrors] = useState({});
-  const [invite, setInvite] = useState('');
+  const [invite, setInvite] = useState(null);
   const set = (k) => (e) => setF({ ...f, [k]: e.target.value });
   const create = async () => {
     const res = validate(newProjectSchema, f);
@@ -228,7 +228,12 @@ function NewProject({ db, onDone }) {
     setErrors({});
     try {
       const created = await db.addProject(f);
-      if (created && created.inviteLink) setInvite(created.inviteLink);
+      if (created && created.inviteLink)
+        setInvite({
+          link: created.inviteLink,
+          sent: !!created.inviteEmailSent,
+          email: f.clientEmail.trim(),
+        });
       else onDone();
     } catch {
       /* erro exibido pelo ErrorBanner do contêiner */
@@ -303,12 +308,16 @@ function NewProject({ db, onDone }) {
       </div>
       {invite && (
         <div className="invite-box">
-          <strong>Projeto criado! Link de acesso do cliente</strong>
-          <code>{invite}</code>
+          <strong>
+            {invite.sent
+              ? 'Projeto criado! Convite enviado por e-mail para ' + invite.email
+              : 'Projeto criado! Link de acesso do cliente'}
+          </strong>
+          <code>{invite.link}</code>
           <div className="row">
             <button
               className="btn btn-primary btn-sm"
-              onClick={() => navigator.clipboard && navigator.clipboard.writeText(invite)}
+              onClick={() => navigator.clipboard && navigator.clipboard.writeText(invite.link)}
             >
               Copiar link
             </button>
@@ -317,8 +326,9 @@ function NewProject({ db, onDone }) {
             </button>
           </div>
           <p className="hint">
-            Envie por WhatsApp ou e-mail — o link leva o cliente para criar a senha e entrar no
-            portal.
+            {invite.sent
+              ? 'Se preferir, mande também o link acima por WhatsApp — os dois funcionam.'
+              : 'Envie por WhatsApp ou e-mail — o link leva o cliente para criar a senha e entrar no portal.'}
           </p>
         </div>
       )}

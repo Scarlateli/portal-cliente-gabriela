@@ -166,8 +166,8 @@ function ProjectInner({
             <Clock size={14} />
             {expired ? (
               <span>
-                O acesso do cliente a este projeto expirou em {fmt(project.accessUntil)}. Ele ainda
-                pode gerar o histórico em PDF.
+                O acesso do cliente a este projeto foi encerrado em {fmt(project.accessUntil)} — o
+                portal dele está desativado.
               </span>
             ) : (
               <span>
@@ -180,27 +180,41 @@ function ProjectInner({
 
         <ErrorBanner error={mutationError} onClose={clearError} />
 
-        <nav className="tabs" role="tablist">
-          {TABS.map(({ id, label, I }) => (
-            <button
-              key={id}
-              role="tab"
-              aria-selected={tab === id}
-              className={'tab' + (tab === id ? ' active' : '')}
-              onClick={() => setTab(id)}
-            >
-              <I size={15} /> {label}
-            </button>
-          ))}
-        </nav>
+        {!isStudio && expired ? (
+          <section className="panel">
+            <header className="panel-head">
+              <h2>Acesso encerrado</h2>
+            </header>
+            <p className="hint">
+              Seu acesso a este projeto foi encerrado em {fmt(project.accessUntil)}, um mês após a
+              conclusão. Precisa de algum documento ou informação? É só falar com o studio.
+            </p>
+          </section>
+        ) : (
+          <>
+            <nav className="tabs" role="tablist">
+              {TABS.map(({ id, label, I }) => (
+                <button
+                  key={id}
+                  role="tab"
+                  aria-selected={tab === id}
+                  className={'tab' + (tab === id ? ' active' : '')}
+                  onClick={() => setTab(id)}
+                >
+                  <I size={15} /> {label}
+                </button>
+              ))}
+            </nav>
 
-        {tab === 'timeline' && <Timeline db={db} project={project} isStudio={isStudio} />}
-        {tab === 'calendar' && <Calendar db={db} project={project} isStudio={isStudio} />}
-        {tab === 'docs' && <Documents db={db} project={project} isStudio={isStudio} />}
-        {tab === 'contract' && <Contract db={db} project={project} isStudio={isStudio} />}
-        {tab === 'payments' && <Payments db={db} project={project} isStudio={isStudio} />}
-        {tab === 'quotes' && <Quotes db={db} project={project} isStudio={isStudio} />}
-        {tab === 'suppliers' && <Suppliers db={db} project={project} isStudio={isStudio} />}
+            {tab === 'timeline' && <Timeline db={db} project={project} isStudio={isStudio} />}
+            {tab === 'calendar' && <Calendar db={db} project={project} isStudio={isStudio} />}
+            {tab === 'docs' && <Documents db={db} project={project} isStudio={isStudio} />}
+            {tab === 'contract' && <Contract db={db} project={project} isStudio={isStudio} />}
+            {tab === 'payments' && <Payments db={db} project={project} isStudio={isStudio} />}
+            {tab === 'quotes' && <Quotes db={db} project={project} isStudio={isStudio} />}
+            {tab === 'suppliers' && <Suppliers db={db} project={project} isStudio={isStudio} />}
+          </>
+        )}
 
         {isStudio && project.status !== 'concluido' && (
           <button

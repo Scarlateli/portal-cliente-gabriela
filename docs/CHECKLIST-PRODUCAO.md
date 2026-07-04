@@ -55,10 +55,16 @@ Aplicado direto no projeto Supabase `acqagwwjdaoodmnmtpgp`:
       - **Redirect URLs**: adicionar `https://<sua-url>.vercel.app/**`.
       (Isto é o que faz o link do convite de cliente voltar pro app.)
 
-### 5. (Opcional) E-mail automático (SMTP próprio)
-- [ ] O convite hoje é por **link copiável** (não precisa de e-mail). Se quiser
-      que o Supabase envie e-mails automaticamente (convite/recuperação de
-      senha), configure um SMTP em **Authentication → Emails** (ex.: Resend).
+### 5. E-mail automático do convite (Resend)
+- [ ] O envio **já está implementado** na função `invite-client` — falta só a
+      chave: criar conta no [Resend](https://resend.com) → *API Keys* → copiar
+      → Supabase Dashboard → **Edge Functions → invite-client → Secrets** →
+      adicionar `RESEND_API_KEY`.
+- [ ] Sem domínio verificado no Resend, o envio só chega **no e-mail do dono
+      da conta Resend** (suficiente para o teste). Para clientes reais:
+      verificar um domínio (ex.: o `.com.br` do passo 7) e adicionar o secret
+      `INVITE_FROM` (ex.: `Gabriela Lendecker <portal@seudominio.com.br>`).
+      O **link copiável continua funcionando** em qualquer cenário.
 
 ### 6. Assinatura digital (Autentique)
 - [ ] Criar conta na [Autentique](https://www.autentique.com.br) e gerar um

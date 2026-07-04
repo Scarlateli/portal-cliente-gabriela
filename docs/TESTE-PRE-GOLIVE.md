@@ -74,7 +74,8 @@ arquiteta (studio)** e **JP como cliente** — antes de publicar.
 
 ## Limitações conhecidas deste teste
 
-- **Nenhum e-mail é enviado** — o convite é link copiado (por design, por ora).
+- **E-mail do convite**: só é enviado se o secret `RESEND_API_KEY` estiver
+  configurado (checklist, item 5); sem ele, vale o link copiável.
 - **Assinatura é simulada** — a integração real (Autentique) entra quando você
   criar a conta e me passar o token de API.
 - Sub-etapas: **apenas o studio marca** (o cliente visualiza) — é o que a

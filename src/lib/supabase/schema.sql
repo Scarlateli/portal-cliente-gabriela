@@ -174,7 +174,11 @@ returns boolean language sql stable
 set search_path = ''
 as $$
   select exists (
-    select 1 from public.projects p where p.id = pid and p.client_id = auth.uid()
+    select 1 from public.projects p
+    where p.id = pid
+      and p.client_id = auth.uid()
+      -- acesso do cliente expira 1 mês após a conclusão do projeto
+      and (p.access_until is null or p.access_until >= (now() at time zone 'America/Sao_Paulo')::date)
   );
 $$;
 

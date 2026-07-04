@@ -336,8 +336,12 @@ export function makeSupabaseDb() {
         sig_status: 'rascunho',
       });
       must(cErr);
-      // devolve também o link de acesso do cliente (gerado pela Edge Function)
-      return { id: proj.id, inviteLink: (fn && fn.actionLink) || null };
+      // devolve o link de acesso e se o e-mail de convite foi enviado
+      return {
+        id: proj.id,
+        inviteLink: (fn && fn.actionLink) || null,
+        inviteEmailSent: !!(fn && fn.emailSent),
+      };
     },
 
     addStage: async (pid, d) => {
