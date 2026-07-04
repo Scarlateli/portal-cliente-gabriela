@@ -1,3 +1,9 @@
+/* base global (fora do escopo .cp): remove a moldura branca do body
+   (margem padrão do navegador) e casa o fundo com o papel da marca */
+html,body{margin:0;padding:0;background:#d8d4ca}
+#root{min-height:100vh}
+@media print{html,body{background:#fff}}
+
 /* Fontes carregadas no index.html: Jost (fallback da Futura) + IBM Plex Mono.
    A Futura Std real é carregada abaixo via @font-face (arquivo licenciado). */
 @font-face {
