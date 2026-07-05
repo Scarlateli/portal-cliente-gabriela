@@ -87,7 +87,7 @@ Deno.serve(async (req) => {
     if (!existing) {
       const { error: pErr } = await admin
         .from('profiles')
-        .insert({ id: userId, role: 'client', name: name || email });
+        .insert({ id: userId, role: 'client', name: name || email, email });
       if (pErr) return json({ error: pErr.message }, 500);
     }
 

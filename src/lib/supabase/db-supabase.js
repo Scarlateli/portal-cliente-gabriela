@@ -310,7 +310,17 @@ export function makeSupabaseDb() {
       const { data: fn, error: fnErr } = await supabase.functions.invoke('invite-client', {
         body: { email: data.clientEmail.trim().toLowerCase(), name: data.clientName },
       });
-      if (fnErr) throw fnErr;
+      if (fnErr) {
+        // FunctionsHttpError traz o Response em .context — extrai o erro real
+        let msg = fnErr.message;
+        try {
+          const body = fnErr.context && (await fnErr.context.json());
+          if (body && body.error) msg = body.error;
+        } catch {
+          /* mantém a mensagem genérica */
+        }
+        throw new Error(msg);
+      }
       const clientId = fn && fn.userId;
       if (!clientId) throw new Error('Falha ao criar o usuário do cliente.');
       // 2) projeto
