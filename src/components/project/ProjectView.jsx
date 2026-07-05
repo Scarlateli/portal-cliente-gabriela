@@ -14,10 +14,11 @@ import {
   CircleCheck,
   ArrowLeft,
   Printer,
+  KeyRound,
 } from 'lucide-react';
 import { TopBar, Loading, ErrorBox, ErrorBanner } from '../atoms.jsx';
 import { fmt, todayISO } from '../../lib/helpers.js';
-import { qk } from '../../lib/data.js';
+import { qk, IS_SUPABASE } from '../../lib/data.js';
 import { useResolvedDb, specsFor } from '../../lib/useResolvedDb.js';
 import { Timeline } from './Timeline.jsx';
 import { Calendar } from './Calendar.jsx';
@@ -115,6 +116,8 @@ function ProjectInner({
 }) {
   const [tab, setTab] = useState('timeline');
   const expired = project.accessUntil && todayISO() > project.accessUntil;
+  const [resent, setResent] = useState(null);
+  const [resending, setResending] = useState(false);
 
   return (
     <div className="shell">
@@ -180,6 +183,42 @@ function ProjectInner({
 
         <ErrorBanner error={mutationError} onClose={clearError} />
 
+        {resent && (
+          <div className="invite-box">
+            <strong>
+              {resent.emailSent
+                ? 'Nova senha provisória enviada por e-mail para ' + resent.email
+                : 'Nova senha provisória do cliente'}
+            </strong>
+            <code>
+              e-mail: {resent.email}
+              <br />
+              senha provisória: {resent.tempPassword}
+            </code>
+            <div className="row">
+              <button
+                className="btn btn-primary btn-sm"
+                onClick={() =>
+                  navigator.clipboard &&
+                  navigator.clipboard.writeText(
+                    'Portal do Cliente — ' +
+                      window.location.origin +
+                      '\nE-mail: ' +
+                      resent.email +
+                      '\nSenha provisória: ' +
+                      resent.tempPassword,
+                  )
+                }
+              >
+                Copiar dados de acesso
+              </button>
+              <button className="btn btn-ghost btn-sm" onClick={() => setResent(null)}>
+                Fechar
+              </button>
+            </div>
+          </div>
+        )}
+
         {!isStudio && expired ? (
           <section className="panel">
             <header className="panel-head">
@@ -217,17 +256,42 @@ function ProjectInner({
         )}
 
         {isStudio && project.status !== 'concluido' && (
-          <button
-            className="btn btn-ghost finish-btn"
-            onClick={() => {
-              if (
-                window.confirm('Finalizar o projeto? O acesso do cliente passa a expirar em 1 mês.')
-              )
-                db.completeProject(project.id);
-            }}
-          >
-            <CircleCheck size={15} /> Finalizar projeto
-          </button>
+          <div className="row">
+            {IS_SUPABASE && !expired && (
+              <button
+                className="btn btn-ghost btn-sm"
+                disabled={resending}
+                onClick={async () => {
+                  if (
+                    !window.confirm(
+                      'Gerar nova senha provisória para o cliente? A senha atual dele deixa de valer.',
+                    )
+                  )
+                    return;
+                  setResending(true);
+                  try {
+                    const r = await db.resendClientAccess(project.id);
+                    if (r) setResent(r);
+                  } finally {
+                    setResending(false);
+                  }
+                }}
+              >
+                <KeyRound size={15} /> {resending ? 'Gerando…' : 'Reenviar acesso'}
+              </button>
+            )}
+            <button
+              className="btn btn-ghost finish-btn"
+              onClick={() => {
+                if (
+                  window.confirm('Finalizar o projeto? O acesso do cliente passa a expirar em 1 mês.')
+                )
+                  db.completeProject(project.id);
+              }}
+            >
+              <CircleCheck size={15} /> Finalizar projeto
+            </button>
+          </div>
         )}
       </main>
     </div>

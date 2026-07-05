@@ -64,7 +64,7 @@ Aplicado direto no projeto Supabase `acqagwwjdaoodmnmtpgp`:
 - [ ] Sem domínio verificado no Resend, o envio só chega **no e-mail do dono
       da conta Resend** (suficiente para o teste). Para clientes reais:
       verificar um domínio (ex.: o `.com.br` do passo 7) e adicionar o secret
-      `INVITE_FROM` (ex.: `Gabriela Lendecker <portal@seudominio.com.br>`).
+      `INVITE_FROM` (ex.: `Gabriela Lendecker <portal@gabrielalendecker.com>`).
       O **link copiável continua funcionando** em qualquer cenário.
 
 ### 6. Assinatura digital (Autentique)
@@ -73,10 +73,20 @@ Aplicado direto no projeto Supabase `acqagwwjdaoodmnmtpgp`:
       real entra por Edge Function (envio do documento + webhook de status) —
       me avise quando tiver o token.
 
-### 7. (Opcional) Domínio .com.br
-- [ ] Comprar no [Registro.br](https://registro.br) (~R$40/ano).
-- [ ] No Vercel: **Settings → Domains → Add** e seguir as instruções de DNS.
-- [ ] Trocar a Site URL / Redirect URLs (passo 4) pro domínio novo.
+### 7. Domínio — gabrielalendecker.com (GoDaddy)
+- [ ] **Resend (libera e-mail p/ qualquer cliente)**: Resend → *Domains* →
+      Add `gabrielalendecker.com` → copiar os registros (DKIM/SPF) → colar no
+      **DNS do GoDaddy** → aguardar *Verified*. Depois, adicionar o secret
+      `INVITE_FROM` na função (ex.: `Gabriela Lendecker <portal@gabrielalendecker.com>`).
+- [ ] **Portal**: no Vercel, *Settings → Domains* → `portal.gabrielalendecker.com`
+      → criar no GoDaddy o CNAME indicado.
+- [ ] **Site** (repo separado — ver [`BRIEFING-SITE.md`](./BRIEFING-SITE.md)):
+      domínio raiz `gabrielalendecker.com` no projeto do site na Vercel
+      (registros A/CNAME indicados). O botão "Portal do Cliente" do site
+      aponta para o subdomínio.
+- [ ] **Supabase Auth**: adicionar `https://portal.gabrielalendecker.com` na
+      Site URL e `https://portal.gabrielalendecker.com/**` nas Redirect URLs
+      (mantendo o localhost para dev).
 
 ### 8. Operação no plano Free (decidir)
 - [ ] **Pausa por inatividade:** projetos free pausam após 7 dias sem uso.
@@ -97,5 +107,5 @@ Aplicado direto no projeto Supabase `acqagwwjdaoodmnmtpgp`:
 | URLs de auth no Supabase | ⏳ |
 | SMTP (e-mail automático) | ⏳ opcional |
 | Integração Autentique | ⏳ precisa do token |
-| Domínio .com.br | ⏳ opcional, por último |
+| Domínio gabrielalendecker.com (Resend + portal + site) | ⏳ DNS no GoDaddy |
 | Pausa de 7 dias / backups | ⏳ decidir |

@@ -353,6 +353,38 @@ export function makeSupabaseDb() {
         inviteEmailSent: !!(fn && fn.emailSent),
       };
     },
+    resendClientAccess: async (pid) => {
+      const { data: proj, error: e1 } = await supabase
+        .from('projects')
+        .select('client_id')
+        .eq('id', pid)
+        .single();
+      must(e1);
+      const { data: prof, error: e2 } = await supabase
+        .from('profiles')
+        .select('email, name')
+        .eq('id', proj.client_id)
+        .single();
+      must(e2);
+      const { data: fn, error: fnErr } = await supabase.functions.invoke('invite-client', {
+        body: { email: prof.email, name: prof.name },
+      });
+      if (fnErr) {
+        let msg = fnErr.message;
+        try {
+          const body = fnErr.context && (await fnErr.context.json());
+          if (body && body.error) msg = body.error;
+        } catch {
+          /* mantém a mensagem genérica */
+        }
+        throw new Error(msg);
+      }
+      return {
+        email: prof.email,
+        tempPassword: (fn && fn.tempPassword) || null,
+        emailSent: !!(fn && fn.emailSent),
+      };
+    },
 
     addStage: async (pid, d) => {
       const { data: rows, error: e1 } = await supabase
