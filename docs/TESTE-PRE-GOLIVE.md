@@ -16,7 +16,7 @@ arquiteta (studio)** e **JP como cliente** — antes de publicar.
    VITE_SUPABASE_URL=https://acqagwwjdaoodmnmtpgp.supabase.co
    VITE_SUPABASE_ANON_KEY=<Dashboard → Project Settings → API Keys → anon public>
    ```
-3. **URLs de autenticação** (necessário pro link de convite voltar pro app):
+3. **URLs de autenticação** (recomendado — usado por links de recuperação de senha):
    Dashboard → **Authentication → URL Configuration**:
    - **Site URL**: `http://localhost:5173`
    - **Redirect URLs**: adicionar `http://localhost:5173/**`
@@ -29,15 +29,15 @@ arquiteta (studio)** e **JP como cliente** — antes de publicar.
 - **Studio (Gabriela)**: `jprebello10@gmail.com` — a senha é a que você já
   definiu (existe uma no banco). Se não lembrar: Dashboard → **Authentication →
   Users** → usuário → **⋯ → Reset password** (ou me peça que eu redefino).
-- **Cliente (JP)**: criado durante o teste, via link de convite (passo abaixo).
+- **Cliente (JP)**: criado durante o teste — você recebe uma **senha provisória** (passo abaixo).
   Use um e-mail seu diferente do do studio.
 
 ## Roteiro — Gabriela (studio)
 
 1. Login com o e-mail do studio.
 2. **Novo projeto**: preencher dados + nome e e-mail do JP → **Criar projeto**.
-3. Vai aparecer a caixa **“Link de acesso do cliente”** → **Copiar link** →
-   enviar pro JP (WhatsApp/e-mail).
+3. Vai aparecer a caixa **“Acesso provisório do cliente”** (e-mail + senha
+   provisória) → **Copiar dados de acesso** → enviar pro JP (WhatsApp).
 4. Abrir o projeto e montar o cenário:
    - Aplicar um **template de etapas** (ou criar etapas manuais — crie uma com
      prazo no passado para ver o estado **Em atraso**).
@@ -49,10 +49,11 @@ arquiteta (studio)** e **JP como cliente** — antes de publicar.
 
 ## Roteiro — JP (cliente)
 
-> ⚠️ Abra o link **em janela anônima ou outro navegador** — se abrir no mesmo
-> navegador da Gabriela, a sessão dela é substituída pela do cliente.
+> ⚠️ Entre como cliente **em janela anônima ou outro navegador** — logar no
+> mesmo navegador substitui a sessão da Gabriela.
 
-1. Abrir o link recebido → tela **“Crie sua senha”** → definir senha (mín. 8).
+1. Abrir o portal (mesmo endereço) → entrar com **e-mail + senha provisória**
+   → o app abre **“Crie sua senha”** (troca obrigatória, mín. 8).
 2. Entra direto no projeto. Conferir:
    - **Linha do tempo**: descrições sob os títulos, tag de responsabilidade só
      quando for do cliente, status por último (laranja = em andamento,

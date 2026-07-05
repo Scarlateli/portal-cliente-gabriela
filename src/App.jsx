@@ -50,6 +50,9 @@ function AppInner() {
         }
         return;
       }
+      if (active && authUser.user_metadata && authUser.user_metadata.must_change_password) {
+        setNeedsPassword(true);
+      }
       const { data: profile } = await supabase
         .from('profiles')
         .select('id, role, name')

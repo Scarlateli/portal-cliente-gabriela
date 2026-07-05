@@ -33,11 +33,12 @@ Aplicado direto no projeto Supabase `acqagwwjdaoodmnmtpgp`:
   ```
 
 ### 2. ✅ Primeiro acesso do cliente — resolvido
-- [x] Tela de **criar senha** implementada (o link de convite abre o app e o
-      cliente define a própria senha).
-- [x] O convite virou **link copiável**: ao criar o projeto, o studio recebe o
-      link na tela e envia por WhatsApp/e-mail — **não depende de SMTP**.
-      Roteiro completo do teste em [`TESTE-PRE-GOLIVE.md`](./TESTE-PRE-GOLIVE.md).
+- [x] Tela de **criar senha** implementada — usada na troca obrigatória do
+      1º login (e também por links de recuperação de senha).
+- [x] Acesso por **senha provisória**: ao criar o projeto, o studio vê
+      e-mail + senha do cliente na tela (e sai por e-mail com o Resend ativo).
+      Troca de senha **obrigatória** no 1º login. Roteiro do teste em
+      [`TESTE-PRE-GOLIVE.md`](./TESTE-PRE-GOLIVE.md).
 
 ### 3. Publicar o frontend no Vercel
 - [ ] Criar conta no [Vercel](https://vercel.com) e conectar o repositório do GitHub.

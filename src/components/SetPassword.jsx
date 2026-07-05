@@ -24,7 +24,10 @@ export function SetPassword({ onDone }) {
     setBusy(true);
     try {
       const supabase = getSupabase();
-      const { error } = await supabase.auth.updateUser({ password: p1 });
+      const { error } = await supabase.auth.updateUser({
+        password: p1,
+        data: { must_change_password: false },
+      });
       if (error) throw error;
       onDone();
     } catch {

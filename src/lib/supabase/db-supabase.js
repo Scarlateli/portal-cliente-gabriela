@@ -346,10 +346,10 @@ export function makeSupabaseDb() {
         sig_status: 'rascunho',
       });
       must(cErr);
-      // devolve o link de acesso e se o e-mail de convite foi enviado
+      // devolve a senha provisória do cliente e se o e-mail foi enviado
       return {
         id: proj.id,
-        inviteLink: (fn && fn.actionLink) || null,
+        tempPassword: (fn && fn.tempPassword) || null,
         inviteEmailSent: !!(fn && fn.emailSent),
       };
     },

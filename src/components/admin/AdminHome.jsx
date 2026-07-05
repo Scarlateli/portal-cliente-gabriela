@@ -228,11 +228,11 @@ function NewProject({ db, onDone }) {
     setErrors({});
     try {
       const created = await db.addProject(f);
-      if (created && created.inviteLink)
+      if (created && created.tempPassword)
         setInvite({
-          link: created.inviteLink,
+          password: created.tempPassword,
           sent: !!created.inviteEmailSent,
-          email: f.clientEmail.trim(),
+          email: f.clientEmail.trim().toLowerCase(),
         });
       else onDone();
     } catch {
@@ -298,7 +298,7 @@ function NewProject({ db, onDone }) {
       </div>
       <p className="hint">
         {IS_SUPABASE
-          ? 'Ao criar o projeto, você recebe um link de acesso para enviar ao cliente (WhatsApp ou e-mail) — é nele que o cliente define a própria senha.'
+          ? 'Ao criar o projeto, uma senha provisória é gerada para o cliente — copie e envie por WhatsApp (ou deixe ir por e-mail, com o Resend ativo). No primeiro acesso, ele cria a senha definitiva.'
           : 'A senha inicial será usada pelo cliente no primeiro acesso (modo demonstração).'}
       </p>
       <div className="row">
@@ -310,16 +310,30 @@ function NewProject({ db, onDone }) {
         <div className="invite-box">
           <strong>
             {invite.sent
-              ? 'Projeto criado! Convite enviado por e-mail para ' + invite.email
-              : 'Projeto criado! Link de acesso do cliente'}
+              ? 'Projeto criado! Convite com a senha provisória enviado para ' + invite.email
+              : 'Projeto criado! Acesso provisório do cliente'}
           </strong>
-          <code>{invite.link}</code>
+          <code>
+            e-mail: {invite.email}
+            <br />
+            senha provisória: {invite.password}
+          </code>
           <div className="row">
             <button
               className="btn btn-primary btn-sm"
-              onClick={() => navigator.clipboard && navigator.clipboard.writeText(invite.link)}
+              onClick={() =>
+                navigator.clipboard &&
+                navigator.clipboard.writeText(
+                  'Portal do Cliente — ' +
+                    window.location.origin +
+                    '\nE-mail: ' +
+                    invite.email +
+                    '\nSenha provisória: ' +
+                    invite.password,
+                )
+              }
             >
-              Copiar link
+              Copiar dados de acesso
             </button>
             <button className="btn btn-ghost btn-sm" onClick={onDone}>
               Concluir
@@ -327,8 +341,8 @@ function NewProject({ db, onDone }) {
           </div>
           <p className="hint">
             {invite.sent
-              ? 'Se preferir, mande também o link acima por WhatsApp — os dois funcionam.'
-              : 'Envie por WhatsApp ou e-mail — o link leva o cliente para criar a senha e entrar no portal.'}
+              ? 'Se preferir, copie e mande também por WhatsApp — no primeiro acesso o cliente cria a senha definitiva.'
+              : 'Copie e envie ao cliente por WhatsApp ou e-mail. No primeiro acesso, ele será levado a criar a senha definitiva.'}
           </p>
         </div>
       )}
