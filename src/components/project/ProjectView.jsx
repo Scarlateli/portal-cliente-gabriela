@@ -70,7 +70,7 @@ export function ProjectView({ db: baseDb, user, pid, isStudio, onLogout, onBack,
             ) : null
           }
         />
-        <main className="content">{r.error ? <ErrorBox /> : <Loading />}</main>
+        <main className="content">{r.error ? <ErrorBox error={r.error} /> : <Loading />}</main>
       </div>
     );
   }

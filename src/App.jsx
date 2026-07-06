@@ -149,7 +149,7 @@ function ClientArea({ db, user, clientPid, setClientPid, onLogout, onPrint }) {
   if (!r.ready) {
     return (
       <div className="shell">
-        <main className="content">{r.error ? <ErrorBox /> : <Loading />}</main>
+        <main className="content">{r.error ? <ErrorBox error={r.error} /> : <Loading />}</main>
       </div>
     );
   }

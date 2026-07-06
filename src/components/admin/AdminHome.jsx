@@ -35,7 +35,7 @@ export function AdminHome({ db: baseDb, user, onLogout, onOpen }) {
     return (
       <div className="shell">
         <TopBar user={user} onLogout={onLogout} />
-        <main className="content">{r.error ? <ErrorBox /> : <Loading />}</main>
+        <main className="content">{r.error ? <ErrorBox error={r.error} /> : <Loading />}</main>
       </div>
     );
   }

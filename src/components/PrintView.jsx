@@ -34,7 +34,7 @@ export function PrintView({ db: baseDb, pid, onClose }) {
           </button>
         </div>
         <div className="doc-sheet">
-          {r.error ? <ErrorBox /> : <Loading text="Montando histórico…" />}
+          {r.error ? <ErrorBox error={r.error} /> : <Loading text="Montando histórico…" />}
         </div>
       </div>
     );

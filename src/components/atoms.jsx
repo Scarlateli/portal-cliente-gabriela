@@ -19,11 +19,19 @@ export function Loading({ text = 'Carregando…' }) {
   );
 }
 
-export function ErrorBox({ text = 'Não foi possível carregar os dados.', onRetry }) {
+export function ErrorBox({ text = 'Não foi possível carregar os dados.', error, onRetry }) {
+  // Mostra a causa real (ex.: resposta do PostgREST) — sem isso o erro fica
+  // genérico e impossível de diagnosticar em produção.
+  const detail = error ? error.message || String(error) : null;
   return (
     <div className="empty">
       <AlertTriangle size={18} />
       <span>{text}</span>
+      {detail && (
+        <span className="hint" style={{ maxWidth: 420 }}>
+          Detalhe técnico: {detail}
+        </span>
+      )}
       {onRetry && (
         <button className="btn btn-ghost btn-sm" onClick={onRetry} style={{ marginTop: 8 }}>
           Tentar novamente
