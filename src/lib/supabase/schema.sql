@@ -159,8 +159,11 @@ alter table template_items enable row level security;
 -- Função auxiliar: o usuário logado é do studio?
 -- search_path fixo ('') + schemas qualificados (hardening recomendado pelo
 -- security advisor do Supabase para funções usadas em RLS).
-create or replace function is_studio()
-returns boolean language sql stable
+-- SECURITY DEFINER: evita recursão infinita de RLS — estas funções são
+-- usadas DENTRO das policies e leem tabelas que também têm policy; sem o
+-- definer, a checagem chamaria a si mesma até estourar a pilha.
+create or replace function public.is_studio()
+returns boolean language sql stable security definer
 set search_path = ''
 as $$
   select exists (
@@ -169,8 +172,8 @@ as $$
 $$;
 
 -- Função auxiliar: o projeto pertence ao cliente logado?
-create or replace function owns_project(pid uuid)
-returns boolean language sql stable
+create or replace function public.owns_project(pid uuid)
+returns boolean language sql stable security definer
 set search_path = ''
 as $$
   select exists (
