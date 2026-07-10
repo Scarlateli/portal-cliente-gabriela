@@ -511,3 +511,7 @@ button.sub-box{cursor:pointer}
 .invite-box{margin-top:18px;border:1px dashed var(--brand);background:var(--brand-soft);border-radius:5px;padding:16px;display:flex;flex-direction:column;gap:9px}
 .invite-box code{font-family:var(--font-mono);font-size:11px;word-break:break-all;color:var(--ink)}
 .sub-box:disabled{cursor:default;opacity:1}
+
+/* link discreto "esqueci minha senha" no login */
+.cp .forgot{background:none;border:none;color:#7a6f60;font-size:13px;margin-top:12px;cursor:pointer;text-decoration:underline;text-underline-offset:3px;display:block;width:100%;text-align:center}
+.cp .forgot:hover{color:#5d1c17}

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { loadSupabase } from '../lib/supabase/client.js';
 import { Mail, Lock } from 'lucide-react';
 import { Mark } from './atoms.jsx';
 import { STUDIO } from '../lib/constants.js';
@@ -68,6 +69,29 @@ export function Login({ db, onLogin }) {
         <button className="btn btn-primary btn-block" onClick={submit} disabled={busy}>
           {busy ? 'Entrando…' : 'Entrar'}
         </button>
+
+        {IS_SUPABASE && (
+          <button
+            type="button"
+            className="forgot"
+            onClick={async () => {
+              const em = window.prompt(
+                'Digite seu e-mail para receber o link de redefinição de senha:',
+                email,
+              );
+              if (!em) return;
+              try {
+                const sb = await loadSupabase();
+                await sb.functions.invoke('forgot-password', { body: { email: em } });
+              } catch {
+                /* resposta é sempre neutra, por segurança */
+              }
+              window.alert('Se este e-mail estiver cadastrado, enviamos um link para redefinir a senha.');
+            }}
+          >
+            Esqueci minha senha
+          </button>
+        )}
         {!IS_SUPABASE && (
           <div className="demo">
             <span>Acessos de teste</span>

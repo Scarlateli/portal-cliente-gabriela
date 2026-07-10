@@ -1,0 +1,19 @@
+# Mantém o projeto Supabase (plano Free) ativo — o Free pausa após ~7 dias
+# sem atividade. Duas chamadas por semana à API resolvem. A chave usada é a
+# "anon" (pública por design; a RLS continua protegendo os dados).
+name: Keep Supabase alive
+on:
+  schedule:
+    - cron: '23 9 * * 1,4' # segundas e quintas, 09:23 UTC
+  workflow_dispatch: {}
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping REST API
+        env:
+          ANON: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFjcWFnd3dqZGFvb2Rtbm10cGdwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI2NjAwOTIsImV4cCI6MjA5ODIzNjA5Mn0.CsuxmZNnQ478_W3b6VyfEq46eYgjaz5D7C2qKAihbxM
+        run: |
+          curl -sf "https://acqagwwjdaoodmnmtpgp.supabase.co/rest/v1/profiles?select=id&limit=1" \
+            -H "apikey: $ANON" -H "Authorization: Bearer $ANON" -o /dev/null
+          echo "Supabase acordado ✓"
