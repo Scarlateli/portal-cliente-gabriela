@@ -143,7 +143,7 @@ export function makeSupabaseDb() {
         .eq('project_id', pid)
         .maybeSingle();
       must(error);
-      if (!data) return undefined;
+      if (!data) return null; // react-query não aceita undefined
       return {
         ...data,
         total: num(data.total),
