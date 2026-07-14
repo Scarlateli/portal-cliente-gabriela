@@ -302,3 +302,18 @@ create policy "storage_client_read" on storage.objects
     bucket_id = 'documentos'
     and owns_project((storage.foldername(name))[1]::uuid)
   );
+
+-- Onda 2 do redesign: sub-etapas com tipo/responsável/prazo/reunião por item
+alter table stage_subs
+  add column if not exists kind text not null default 'tarefa',
+  add column if not exists responsible text not null default 'studio',
+  add column if not exists due date,
+  add column if not exists "time" text,
+  add column if not exists format text,
+  add column if not exists link text;
+alter table stage_subs
+  add constraint stage_subs_kind_check check (kind in ('tarefa', 'reuniao', 'entrega'));
+alter table stage_subs
+  add constraint stage_subs_responsible_check check (responsible in ('studio', 'cliente', 'fornecedor'));
+alter table stage_subs
+  add constraint stage_subs_format_check check (format is null or format in ('online', 'presencial'));

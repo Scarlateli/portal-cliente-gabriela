@@ -14,7 +14,7 @@
    --------------------------------------------------------------------- */
 import { useMemo, useState, useCallback } from 'react';
 import { useQueries, useQueryClient } from '@tanstack/react-query';
-import { IS_SUPABASE, qk, invalidationsFor } from './data.js';
+import { IS_SUPABASE, qk, invalidationsFor, applyOptimistic } from './data.js';
 
 const READ_METHODS = [
   'projects',
@@ -132,12 +132,15 @@ export function useResolvedDb(baseDb, specs, scopePid = null) {
     for (const m of ALL_MUTATIONS) {
       out[m] = (...args) => {
         const pid = PID_FIRST.has(m) ? args[0] : scopePid;
+        // otimista: reflete o clique na hora; o servidor confirma em seguida
+        applyOptimistic(queryClient, m, pid, PID_FIRST.has(m) ? args.slice(1) : args);
         return Promise.resolve(baseDb[m](...args))
           .then((r) => {
             invalidate(m, pid);
             return r;
           })
           .catch((e) => {
+            invalidate(m, pid); // desfaz o otimista com o estado real
             setError(e);
             throw e;
           });

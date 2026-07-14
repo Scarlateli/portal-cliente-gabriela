@@ -72,3 +72,30 @@ export function invalidationsFor(method, pid) {
   };
   return map[method] || [];
 }
+
+// ===== atualização otimista (redesign §3.1 nº 1) =====
+// A interface muda NA HORA do clique; se o servidor falhar, o catch do
+// wrapper invalida a query e o estado real volta. Receitas por mutação:
+const OPTIMISTIC = {
+  setStageStatus: (qc, pid, [sid, status]) => {
+    qc.setQueryData(qk.stages(pid), (old) =>
+      old ? old.map((s) => (s.id === sid ? { ...s, status } : s)) : old,
+    );
+  },
+  toggleSub: (qc, pid, [subId, done]) => {
+    qc.setQueryData(qk.stages(pid), (old) =>
+      old
+        ? old.map((s) =>
+            s.subs
+              ? { ...s, subs: s.subs.map((x) => (x.id === subId ? { ...x, done } : x)) }
+              : s,
+          )
+        : old,
+    );
+  },
+};
+
+export function applyOptimistic(qc, method, pid, args) {
+  const fn = OPTIMISTIC[method];
+  if (fn && pid) fn(qc, pid, args);
+}
