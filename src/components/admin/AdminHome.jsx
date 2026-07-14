@@ -218,6 +218,7 @@ function NewProject({ db, onDone }) {
   });
   const [errors, setErrors] = useState({});
   const [invite, setInvite] = useState(null);
+  const [saving, setSaving] = useState(false);
   const set = (k) => (e) => setF({ ...f, [k]: e.target.value });
   const create = async () => {
     const res = validate(newProjectSchema, f);
@@ -225,7 +226,9 @@ function NewProject({ db, onDone }) {
       setErrors(res.errors);
       return;
     }
+    if (saving) return; // proteção contra duplo clique (projeto/e-mail duplicados)
     setErrors({});
+    setSaving(true);
     try {
       const created = await db.addProject(f);
       if (created && created.tempPassword)
@@ -237,6 +240,8 @@ function NewProject({ db, onDone }) {
       else onDone();
     } catch {
       /* erro exibido pelo ErrorBanner do contêiner */
+    } finally {
+      setSaving(false);
     }
   };
   return (
@@ -302,8 +307,8 @@ function NewProject({ db, onDone }) {
           : 'A senha inicial será usada pelo cliente no primeiro acesso (modo demonstração).'}
       </p>
       <div className="row">
-        <button className="btn btn-primary" onClick={create} disabled={!!invite}>
-          Criar projeto
+        <button className="btn btn-primary" onClick={create} disabled={!!invite || saving}>
+          {saving ? 'Criando…' : 'Criar projeto'}
         </button>
       </div>
       {invite && (
