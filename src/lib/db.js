@@ -88,6 +88,7 @@ export function makeDb(state, set) {
     setContract: (cid, patch) => set((s) => ({ ...s, contracts: s.contracts.map((c) => c.id === cid ? { ...c, ...patch } : c) })),
     addContractDoc: (pid, d) => set((s) => ({ ...s, contracts: [...s.contracts, { id: uid('c'), projectId: pid, kind: d.kind || 'termo', name: d.name, sigStatus: 'rascunho', provider: null, signer: null, signedAt: null }] })),
     deleteContractDoc: (pid, cid) => set((s) => ({ ...s, contracts: s.contracts.filter((c) => c.id !== cid) })),
+    sendToAutentique: () => null, // assinatura real só no modo Supabase
     resendClientAccess: () => null, // só faz sentido no modo Supabase
     createPlan: (pid, total, n, firstDue, interval) => set((s) => {
       const per = Math.round((total / n) * 100) / 100;

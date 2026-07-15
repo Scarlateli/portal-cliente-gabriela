@@ -18,7 +18,7 @@ const PROJECT_COLS =
 const QUOTE_COLS =
   'id, projectId:project_id, segment, supplier, amount, fileName:file_name, status, studioNote:studio_note, decidedAt:decided_at, contact, deadline, payment, contractStatus:contract_status, notes, storagePath:storage_path, comments:quote_comments(author, body, at)';
 const CONTRACT_COLS =
-  'id, projectId:project_id, name, sigStatus:sig_status, provider, signer, signedAt:signed_at, kind, storagePath:storage_path';
+  'id, projectId:project_id, name, sigStatus:sig_status, provider, signer, signedAt:signed_at, kind, storagePath:storage_path, providerDocId:provider_doc_id';
 
 const must = (error) => {
   if (error) throw error;
@@ -643,6 +643,22 @@ export function makeSupabaseDb() {
       }
       const { error } = await supabase.from('contracts').delete().eq('id', cid);
       must(error);
+    },
+    sendToAutentique: async (pid, cid) => {
+      const { data: fn, error: fnErr } = await supabase.functions.invoke('autentique-send', {
+        body: { contractId: cid },
+      });
+      if (fnErr) {
+        let msg = fnErr.message;
+        try {
+          const body = fnErr.context && (await fnErr.context.json());
+          if (body && body.error) msg = body.error;
+        } catch {
+          /* mantém a genérica */
+        }
+        throw new Error(msg);
+      }
+      return fn;
     },
     createPlan: async (pid, total, n, firstDue, interval) => {
       const per = Math.round((total / n) * 100) / 100;

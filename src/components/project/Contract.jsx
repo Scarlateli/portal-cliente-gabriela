@@ -1,5 +1,13 @@
 import { useState } from 'react';
-import { ShieldCheck, PenLine, Plus, FileText, Trash2 } from 'lucide-react';
+import { IS_SUPABASE } from '../../lib/data.js';
+import {
+  ShieldCheck,
+  PenLine,
+  Plus,
+  FileText,
+  Trash2,
+  Send,
+} from 'lucide-react';
 import { Empty } from '../atoms.jsx';
 import { SIG_PROVIDERS } from '../../lib/constants.js';
 import { fmt, todayISO } from '../../lib/helpers.js';
@@ -90,6 +98,7 @@ export function Contract({ db, project, isStudio }) {
 function ContractDoc({ db, c, isStudio, clientName }) {
   const [provider, setProvider] = useState(c.provider || SIG_PROVIDERS[0]);
   const [redir, setRedir] = useState(false);
+  const [sending, setSending] = useState(false);
   const signed = c.sigStatus === 'assinado';
   return (
     <div className="contract-block">
@@ -122,6 +131,29 @@ function ContractDoc({ db, c, isStudio, clientName }) {
               }}
             >
               <FileText size={12} /> Ver PDF
+            </button>
+          )}
+          {IS_SUPABASE && isStudio && c.sigStatus === 'rascunho' && c.storagePath && (
+            <button
+              type="button"
+              className="link sm"
+              disabled={sending}
+              onClick={async () => {
+                if (
+                  !window.confirm(
+                    'Enviar "' + c.name + '" para assinatura na Autentique? O cliente recebe o e-mail de assinatura deles.',
+                  )
+                )
+                  return;
+                setSending(true);
+                try {
+                  await db.sendToAutentique(c.projectId, c.id);
+                } finally {
+                  setSending(false);
+                }
+              }}
+            >
+              <Send size={12} /> {sending ? 'Enviando…' : 'Enviar p/ assinatura'}
             </button>
           )}
           {isStudio && (
