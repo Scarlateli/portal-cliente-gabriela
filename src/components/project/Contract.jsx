@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ShieldCheck, PenLine, Plus } from 'lucide-react';
+import { ShieldCheck, PenLine, Plus, FileText, Trash2 } from 'lucide-react';
 import { Empty } from '../atoms.jsx';
 import { SIG_PROVIDERS } from '../../lib/constants.js';
 import { fmt, todayISO } from '../../lib/helpers.js';
@@ -15,6 +15,8 @@ export function Contract({ db, project, isStudio }) {
   const [kind, setKind] = useState('');
   const [adding, setAdding] = useState(false);
   const [nf, setNf] = useState({ name: '', kind: 'termo' });
+  const [file, setFile] = useState(null);
+  const [fileKey, setFileKey] = useState(0);
   const shown = kind ? all.filter((d) => d.kind === kind) : all;
   return (
     <section className="panel">
@@ -39,14 +41,17 @@ export function Contract({ db, project, isStudio }) {
               <option value="contrato">Contrato</option>
               <option value="termo">Termo</option>
             </select>
+            <input key={fileKey} type="file" accept="application/pdf" onChange={(e) => setFile(e.target.files && e.target.files[0] ? e.target.files[0] : null)} />
           </div>
           <div className="row">
             <button
               className="btn btn-primary btn-sm"
               disabled={!nf.name.trim()}
               onClick={() => {
-                db.addContractDoc(project.id, { name: nf.name.trim(), kind: nf.kind });
+                db.addContractDoc(project.id, { name: nf.name.trim(), kind: nf.kind }, file);
                 setNf({ name: '', kind: 'termo' });
+                setFile(null);
+                setFileKey((k) => k + 1);
                 setAdding(false);
               }}
             >
@@ -104,6 +109,35 @@ function ContractDoc({ db, c, isStudio, clientName }) {
           </span>
         </div>
       </div>
+
+      {(c.storagePath || isStudio) && (
+        <div className="row contract-actions">
+          {c.storagePath && (
+            <button
+              type="button"
+              className="link sm"
+              onClick={async () => {
+                const url = await db.fileUrl(c.storagePath);
+                if (url) window.open(url, '_blank');
+              }}
+            >
+              <FileText size={12} /> Ver PDF
+            </button>
+          )}
+          {isStudio && (
+            <button
+              type="button"
+              className="link sm danger"
+              onClick={() => {
+                if (window.confirm('Excluir "' + c.name + '"? O PDF anexado também será removido.'))
+                  db.deleteContractDoc(c.projectId, c.id);
+              }}
+            >
+              <Trash2 size={12} /> Excluir
+            </button>
+          )}
+        </div>
+      )}
 
       {isStudio && c.sigStatus === 'rascunho' && (
         <div className="sign-box">

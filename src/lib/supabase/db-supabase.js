@@ -18,7 +18,7 @@ const PROJECT_COLS =
 const QUOTE_COLS =
   'id, projectId:project_id, segment, supplier, amount, fileName:file_name, status, studioNote:studio_note, decidedAt:decided_at, contact, deadline, payment, contractStatus:contract_status, notes, storagePath:storage_path, comments:quote_comments(author, body, at)';
 const CONTRACT_COLS =
-  'id, projectId:project_id, name, sigStatus:sig_status, provider, signer, signedAt:signed_at, kind';
+  'id, projectId:project_id, name, sigStatus:sig_status, provider, signer, signedAt:signed_at, kind, storagePath:storage_path';
 
 const must = (error) => {
   if (error) throw error;
@@ -602,13 +602,32 @@ export function makeSupabaseDb() {
       const { error } = await supabase.from('contracts').update(payload).eq('id', cid);
       must(error);
     },
-    addContractDoc: async (pid, d) => {
+    addContractDoc: async (pid, d, file) => {
+      let storage_path = null;
+      if (file) {
+        const path = pid + '/contratos/' + Date.now() + '-' + file.name;
+        const { error: upErr } = await supabase.storage.from('documentos').upload(path, file);
+        if (upErr) throw upErr;
+        storage_path = path;
+      }
       const { error } = await supabase.from('contracts').insert({
         project_id: pid,
         kind: d.kind || 'termo',
         name: d.name,
-        sig_status: 'rascunho',
+        storage_path,
       });
+      must(error);
+    },
+    deleteContractDoc: async (pid, cid) => {
+      const { data: c } = await supabase
+        .from('contracts')
+        .select('storage_path')
+        .eq('id', cid)
+        .maybeSingle();
+      if (c && c.storage_path) {
+        await supabase.storage.from('documentos').remove([c.storage_path]);
+      }
+      const { error } = await supabase.from('contracts').delete().eq('id', cid);
       must(error);
     },
     createPlan: async (pid, total, n, firstDue, interval) => {

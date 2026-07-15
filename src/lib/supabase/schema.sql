@@ -317,3 +317,6 @@ alter table stage_subs
   add constraint stage_subs_responsible_check check (responsible in ('studio', 'cliente', 'fornecedor'));
 alter table stage_subs
   add constraint stage_subs_format_check check (format is null or format in ('online', 'presencial'));
+
+-- Onda 4A: PDF anexado ao contrato/termo (mesmo bucket/prefixo dos documentos)
+alter table contracts add column if not exists storage_path text;

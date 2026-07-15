@@ -538,3 +538,8 @@ button.sub-box{cursor:pointer}
 .cp .nf-sub-title{font-size:13px}
 .cp .nf-sub-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:end}
 .cp .sub-meta{margin-left:6px}
+
+/* onda 4A: ações do contrato */
+.cp .contract-actions{margin:6px 0 2px;gap:14px}
+.cp .link.danger{color:#8a3a30}
+.cp .link.danger:hover{color:var(--gl-vinho)}
