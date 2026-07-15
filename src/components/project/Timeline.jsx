@@ -1,7 +1,21 @@
 import { useState } from 'react';
 import {
-  Plus, Clock, Video, MapPin, Calendar as CalendarIcon, CalendarDays, User, CalendarClock,
-  Link2, AlertTriangle, ListChecks, Check, X, PenLine, Trash2,
+  Plus,
+  Clock,
+  Video,
+  MapPin,
+  Calendar as CalendarIcon,
+  CalendarDays,
+  User,
+  CalendarClock,
+  Link2,
+  AlertTriangle,
+  ListChecks,
+  Check,
+  X,
+  PenLine,
+  Trash2,
+  Save,
 } from 'lucide-react';
 import { StatusPill, Empty } from '../atoms.jsx';
 import { STAGE_STATUS, STAGE_CATEGORIES } from '../../lib/constants.js';
@@ -35,6 +49,18 @@ export function Timeline({ db, project, isStudio }) {
               {templates.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
             </select>
             <button className="btn btn-ghost btn-sm" onClick={() => setAdding(!adding)}><Plus size={14} /> Nova etapa</button>
+            {stages.length > 0 && (
+              <button
+                className="btn btn-ghost btn-sm"
+                onClick={() => {
+                  const name = window.prompt('Nome do template (as etapas atuais viram um modelo reutilizável):');
+                  if (name && name.trim())
+                    db.addTemplate(name.trim(), stages.map((st) => ({ title: st.title, category: st.category, desc: st.desc || '' })));
+                }}
+              >
+                <Save size={14} /> Salvar como template
+              </button>
+            )}
           </div>
         )}
       </header>

@@ -13,6 +13,7 @@ import {
   AlertTriangle,
   ThumbsDown,
   CircleCheck,
+  Trash2,
 } from 'lucide-react';
 import { TopBar, Empty, Loading, ErrorBox, ErrorBanner } from '../atoms.jsx';
 import { stageOverdue, fmt, todayISO } from '../../lib/helpers.js';
@@ -380,7 +381,18 @@ function Templates({ db }) {
       <div className="tpl-list">
         {templates.map((t) => (
           <div key={t.id} className="tpl-card">
-            <strong>{t.name}</strong>
+            <div className="row tpl-head">
+              <strong>{t.name}</strong>
+              <button
+                type="button"
+                className="link sm danger"
+                onClick={() => {
+                  if (window.confirm('Excluir o template "' + t.name + '"?')) db.deleteTemplate(t.id);
+                }}
+              >
+                <Trash2 size={12} /> Excluir
+              </button>
+            </div>
             <ol className="tpl-items">
               {t.items.map((it, i) => (
                 <li key={i}>

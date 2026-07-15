@@ -320,3 +320,16 @@ alter table stage_subs
 
 -- Onda 4A: PDF anexado ao contrato/termo (mesmo bucket/prefixo dos documentos)
 alter table contracts add column if not exists storage_path text;
+
+-- Onda 4B/4C + Autentique: categoria (reservada) em documents; arquivo do
+-- cliente nas sub-etapas; id do documento na Autentique; upload do cliente.
+alter table documents add column if not exists category text not null default 'outros';
+alter table stage_subs
+  add column if not exists storage_path text,
+  add column if not exists file_name text;
+alter table contracts add column if not exists provider_doc_id text;
+create policy "storage_client_upload" on storage.objects
+  for insert with check (
+    bucket_id = 'documentos'
+    and owns_project((storage.foldername(name))[1]::uuid)
+  );

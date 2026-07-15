@@ -561,6 +561,10 @@ export function makeSupabaseDb() {
       const { error } = await supabase.from('template_items').insert(payload);
       must(error);
     },
+    deleteTemplate: async (tid) => {
+      const { error } = await supabase.from('templates').delete().eq('id', tid);
+      must(error);
+    },
     addDocument: async (pid, d, file) => {
       let storage_path = null;
       if (file) {

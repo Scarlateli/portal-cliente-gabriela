@@ -543,3 +543,6 @@ button.sub-box{cursor:pointer}
 .cp .contract-actions{margin:6px 0 2px;gap:14px}
 .cp .link.danger{color:#8a3a30}
 .cp .link.danger:hover{color:var(--gl-vinho)}
+
+/* onda 4B: gestão de templates */
+.cp .tpl-head{justify-content:space-between;width:100%}

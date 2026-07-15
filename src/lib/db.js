@@ -81,6 +81,7 @@ export function makeDb(state, set) {
       return { ...s, stages: [...s.stages, ...added] };
     }),
     addTemplate: (name, items) => set((s) => ({ ...s, templates: [...s.templates, { id: uid('t'), name, items }] })),
+    deleteTemplate: (tid) => set((s) => ({ ...s, templates: s.templates.filter((t) => t.id !== tid) })),
     addDocument: (pid, d) => set((s) => ({ ...s, documents: [...s.documents, { id: uid('d'), projectId: pid, name: d.name, type: d.type, size: d.size, date: todayISO() }] })),
     deleteDocument: (did) => set((s) => ({ ...s, documents: s.documents.filter((x) => x.id !== did) })),
     setContract: (cid, patch) => set((s) => ({ ...s, contracts: s.contracts.map((c) => c.id === cid ? { ...c, ...patch } : c) })),

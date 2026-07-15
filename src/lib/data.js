@@ -54,6 +54,7 @@ export function invalidationsFor(method, pid) {
     deleteSub: [qk.stages(pid)],
     applyTemplate: [qk.stages(pid), qk.calendar(pid)],
     addTemplate: [qk.templates()],
+    deleteTemplate: [qk.templates()],
     addDocument: [qk.documents(pid)],
     deleteDocument: [qk.documents(pid)],
     setContract: [qk.contracts(pid), qk.notifications()],

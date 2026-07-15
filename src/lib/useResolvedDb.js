@@ -44,6 +44,7 @@ const ALL_MUTATIONS = [
   'deleteSub',
   'applyTemplate',
   'addTemplate',
+  'deleteTemplate',
   'addDocument',
   'deleteDocument',
   'setContract',
