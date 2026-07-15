@@ -16,6 +16,8 @@ import {
   PenLine,
   Trash2,
   Save,
+  Paperclip,
+  Upload,
 } from 'lucide-react';
 import { StatusPill, Empty } from '../atoms.jsx';
 import { STAGE_STATUS, STAGE_CATEGORIES } from '../../lib/constants.js';
@@ -274,6 +276,36 @@ function StageItem({ db, s, isStudio }) {
                           .join(' · ')}
                       </span>
                     ) : null}
+                    {b.storagePath ? (
+                      <button
+                        type="button"
+                        className="link sm"
+                        onClick={async () => {
+                          const url = await db.fileUrl(b.storagePath);
+                          if (url) window.open(url, '_blank');
+                        }}
+                      >
+                        <Paperclip size={11} /> {b.fileName || 'arquivo'}
+                      </button>
+                    ) : b.fileName ? (
+                      <span className="micro">
+                        <Paperclip size={11} /> {b.fileName}
+                      </span>
+                    ) : null}
+                    {!isStudio && b.responsible === 'cliente' && !b.done && (
+                      <label className="link sm sub-upload">
+                        <Upload size={11} /> {b.storagePath || b.fileName ? 'Trocar' : 'Enviar arquivo'}
+                        <input
+                          type="file"
+                          hidden
+                          onChange={(e) => {
+                            const f = e.target.files && e.target.files[0];
+                            if (f) db.attachSubFile(s.projectId, s.id, b.id, f);
+                            e.target.value = '';
+                          }}
+                        />
+                      </label>
+                    )}
                     {isStudio && <button className="icon-x" onClick={() => db.deleteSub(s.id, b.id)} aria-label="remover"><X size={12} /></button>}
                   </li>
                 ))}

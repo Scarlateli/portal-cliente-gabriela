@@ -546,3 +546,6 @@ button.sub-box{cursor:pointer}
 
 /* onda 4B: gestão de templates */
 .cp .tpl-head{justify-content:space-between;width:100%}
+
+/* onda 4C: upload do cliente na sub-etapa */
+.cp .sub-upload{cursor:pointer}

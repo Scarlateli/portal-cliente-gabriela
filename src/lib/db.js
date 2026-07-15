@@ -73,6 +73,7 @@ export function makeDb(state, set) {
     addSub: (sid, d) => set((s) => { const it = typeof d === 'string' ? { title: d } : d; return { ...s, stages: s.stages.map((x) => x.id === sid ? { ...x, subs: [...(x.subs || []), { id: uid('sb'), title: it.title, done: false, kind: it.kind || 'tarefa', responsible: it.responsible || 'studio', due: it.due || '', time: it.time || '', format: it.format || '', link: it.link || '' }] } : x) }; }),
     toggleSub: (sid, bid) => set((s) => ({ ...s, stages: s.stages.map((x) => x.id === sid ? { ...x, subs: (x.subs || []).map((b) => b.id === bid ? { ...b, done: !b.done } : b) } : x) })),
     deleteSub: (sid, bid) => set((s) => ({ ...s, stages: s.stages.map((x) => x.id === sid ? { ...x, subs: (x.subs || []).filter((b) => b.id !== bid) } : x) })),
+    attachSubFile: (pid, sid, bid, file) => set((s) => ({ ...s, stages: s.stages.map((x) => x.id === sid ? { ...x, subs: (x.subs || []).map((b) => b.id === bid ? { ...b, fileName: file && file.name ? file.name : 'arquivo' } : b) } : x) })),
     setStageStatus: (sid, status) => set((s) => ({ ...s, stages: s.stages.map((x) => x.id === sid ? { ...x, status } : x) })),
     applyTemplate: (pid, tid) => set((s) => {
       const t = s.templates.find((x) => x.id === tid); if (!t) return s;

@@ -12,7 +12,7 @@ import { getSupabase } from './client.js';
 import { addMonthsISO, todayISO, fmt, stageOverdue } from '../helpers.js';
 
 const STAGE_COLS =
-  'id, projectId:project_id, ord, title, category, status, owner, start, "end", "time", link, presencial, "desc", rescheduledFrom:rescheduled_from, subs:stage_subs(id, title, done, kind, responsible, due, time, format, link)';
+  'id, projectId:project_id, ord, title, category, status, owner, start, "end", "time", link, presencial, "desc", rescheduledFrom:rescheduled_from, subs:stage_subs(id, title, done, kind, responsible, due, time, format, link, storagePath:storage_path, fileName:file_name)';
 const PROJECT_COLS =
   'id, code, name, clientId:client_id, status, address, start, due, completedAt:completed_at, accessUntil:access_until';
 const QUOTE_COLS =
@@ -508,6 +508,16 @@ export function makeSupabaseDb() {
     },
     deleteSub: async (sid, bid) => {
       const { error } = await supabase.from('stage_subs').delete().eq('id', bid);
+      must(error);
+    },
+    attachSubFile: async (pid, sid, bid, file) => {
+      const path = pid + '/subetapas/' + Date.now() + '-' + file.name;
+      const { error: upErr } = await supabase.storage.from('documentos').upload(path, file);
+      if (upErr) throw upErr;
+      const { error } = await supabase
+        .from('stage_subs')
+        .update({ storage_path: path, file_name: file.name })
+        .eq('id', bid);
       must(error);
     },
     applyTemplate: async (pid, tid) => {

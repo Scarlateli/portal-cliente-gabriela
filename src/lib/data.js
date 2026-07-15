@@ -61,6 +61,7 @@ export function invalidationsFor(method, pid) {
     addContractDoc: [qk.contracts(pid)],
     deleteContractDoc: [qk.contracts(pid)],
     resendClientAccess: [],
+    attachSubFile: [qk.stages(pid)],
     createPlan: [qk.payment(pid), qk.calendar(pid)],
     markPaid: [qk.payment(pid), qk.calendar(pid)],
     addQuote: [qk.quotes(pid), qk.suppliers(pid), qk.notifications()],

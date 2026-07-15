@@ -333,3 +333,14 @@ create policy "storage_client_upload" on storage.objects
     bucket_id = 'documentos'
     and owns_project((storage.foldername(name))[1]::uuid)
   );
+
+-- Onda 4C: cliente anexa arquivo nas sub-etapas em que é responsável
+create policy "stage_subs_client_attach" on stage_subs
+  for update using (
+    responsible = 'cliente'
+    and exists (
+      select 1 from stages s
+      where s.id = stage_subs.stage_id and owns_project(s.project_id)
+    )
+  )
+  with check (responsible = 'cliente');
