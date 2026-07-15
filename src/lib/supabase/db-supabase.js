@@ -12,7 +12,7 @@ import { getSupabase } from './client.js';
 import { addMonthsISO, todayISO, fmt, stageOverdue } from '../helpers.js';
 
 const STAGE_COLS =
-  'id, projectId:project_id, ord, title, category, status, owner, start, "end", "time", link, presencial, "desc", rescheduledFrom:rescheduled_from, subs:stage_subs(id, title, done)';
+  'id, projectId:project_id, ord, title, category, status, owner, start, "end", "time", link, presencial, "desc", rescheduledFrom:rescheduled_from, subs:stage_subs(id, title, done, kind, responsible, due, time, format, link)';
 const PROJECT_COLS =
   'id, code, name, clientId:client_id, status, address, start, due, completedAt:completed_at, accessUntil:access_until';
 const QUOTE_COLS =
@@ -176,7 +176,7 @@ export function makeSupabaseDb() {
       const [{ data: stages }, payRes, projRes, { data: events }] = await Promise.all([
         supabase
           .from('stages')
-          .select('title, category, status, owner, start, "end", "time", link, presencial')
+          .select('title, category, status, owner, start, "end", "time", link, presencial, subs:stage_subs(title, done, kind, due, time, format, link)')
           .eq('project_id', pid),
         supabase
           .from('payments')
@@ -200,6 +200,19 @@ export function makeSupabaseDb() {
             title: s.title + ' — prazo do cliente',
             kind: stageOverdue(s) ? 'atraso' : 'prazo',
           });
+        (s.subs || []).forEach((b) => {
+          if (b.kind === 'reuniao' && b.due)
+            out.push({
+              date: b.due,
+              title: b.title,
+              kind: 'reuniao',
+              time: b.time || '',
+              link: b.link || '',
+              presencial: b.format === 'presencial',
+            });
+          else if (b.kind === 'entrega' && b.due)
+            out.push({ date: b.due, title: b.title, kind: 'entrega' });
+        });
       });
       const insts = (payRes.data && payRes.data.installments) || [];
       insts
@@ -395,7 +408,7 @@ export function makeSupabaseDb() {
         .limit(1);
       must(e1);
       const ord = (rows && rows[0] ? rows[0].ord : 0) + 1;
-      const { error } = await supabase.from('stages').insert({
+      const { data: st, error } = await supabase.from('stages').insert({
         project_id: pid,
         ord,
         title: d.title,
@@ -409,8 +422,24 @@ export function makeSupabaseDb() {
         presencial: !!d.presencial,
         desc: d.desc || null,
         rescheduled_from: null,
-      });
+      })
+        .select('id')
+        .single();
       must(error);
+      const subs = (d.subs || []).map((it) => ({
+        stage_id: st.id,
+        title: it.title,
+        kind: it.kind || 'tarefa',
+        responsible: it.responsible || 'studio',
+        due: it.due || null,
+        time: it.time || null,
+        format: it.format || null,
+        link: it.link || null,
+      }));
+      if (subs.length) {
+        const { error: e2 } = await supabase.from('stage_subs').insert(subs);
+        must(e2);
+      }
     },
     deleteStage: async (sid) => {
       const { error } = await supabase.from('stages').delete().eq('id', sid);
@@ -453,10 +482,18 @@ export function makeSupabaseDb() {
       const { error } = await supabase.from('stages').update({ status }).eq('id', sid);
       must(error);
     },
-    addSub: async (sid, title) => {
-      const { error } = await supabase
-        .from('stage_subs')
-        .insert({ stage_id: sid, title, done: false });
+    addSub: async (sid, d) => {
+      const it = typeof d === 'string' ? { title: d } : d;
+      const { error } = await supabase.from('stage_subs').insert({
+        stage_id: sid,
+        title: it.title,
+        kind: it.kind || 'tarefa',
+        responsible: it.responsible || 'studio',
+        due: it.due || null,
+        time: it.time || null,
+        format: it.format || null,
+        link: it.link || null,
+      });
       must(error);
     },
     toggleSub: async (sid, bid) => {

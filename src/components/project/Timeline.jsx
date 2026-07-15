@@ -7,15 +7,19 @@ import { StatusPill, Empty } from '../atoms.jsx';
 import { STAGE_STATUS, STAGE_CATEGORIES } from '../../lib/constants.js';
 import { stageOverdue, subStats, fmt } from '../../lib/helpers.js';
 
+const SUB_KINDS = { tarefa: 'Tarefa', reuniao: 'Reunião', entrega: 'Entrega' };
+const SUB_RESP = { studio: 'Studio', cliente: 'Cliente', fornecedor: 'Fornecedor' };
+
 export function Timeline({ db, project, isStudio }) {
   const stages = db.stages(project.id);
   const [adding, setAdding] = useState(false);
-  const [nf, setNf] = useState({ title: '', category: 'Reunião', owner: 'studio', start: '', end: '', time: '', link: '', presencial: false, desc: '' });
+  const [nf, setNf] = useState({ title: '', category: 'Reunião', owner: 'studio', start: '', end: '', time: '', link: '', presencial: false, desc: '', subs: [] });
+  const [sd, setSd] = useState({ title: '', kind: 'tarefa', responsible: 'studio', due: '', time: '', format: 'online', link: '' });
   const [tplSel, setTplSel] = useState('');
   const [filter, setFilter] = useState('todas');
   const templates = db.templates();
   const tplPreview = templates.find((t) => t.id === tplSel);
-  const resetNf = () => setNf({ title: '', category: 'Reunião', owner: 'studio', start: '', end: '', time: '', link: '', presencial: false, desc: '' });
+  const resetNf = () => setNf({ title: '', category: 'Reunião', owner: 'studio', start: '', end: '', time: '', link: '', presencial: false, desc: '', subs: [] });
   const FILTERS = [['todas', 'Todas'], ['em_andamento', 'Em andamento'], ['a_fazer', 'Futuras'], ['concluida', 'Concluídas']];
   const count = (f) => (f === 'todas' ? stages.length : stages.filter((s) => s.status === f).length);
   const shown = filter === 'todas' ? stages : stages.filter((s) => s.status === filter);
@@ -77,6 +81,54 @@ export function Timeline({ db, project, isStudio }) {
             </div>
           )}
           <input placeholder="Descrição (opcional)" value={nf.desc} onChange={(e) => setNf({ ...nf, desc: e.target.value })} />
+          <div className="nf-subs">
+            <div className="subs-head">Sub-etapas{nf.subs.length > 0 ? ' · ' + nf.subs.length : ''}</div>
+            {nf.subs.map((b, i) => (
+              <div key={i} className="nf-sub-row">
+                <span className="nf-sub-title">{b.title}</span>
+                <span className="micro">
+                  {[
+                    b.kind !== 'tarefa' ? SUB_KINDS[b.kind] : null,
+                    b.due ? (b.kind === 'reuniao' ? fmt(b.due) + (b.time ? ' às ' + b.time : '') : 'até ' + fmt(b.due)) : null,
+                    b.kind === 'reuniao' ? (b.format === 'presencial' ? 'presencial' : 'online') : null,
+                    SUB_RESP[b.responsible],
+                  ]
+                    .filter(Boolean)
+                    .join(' · ')}
+                </span>
+                <button type="button" className="icon-x" onClick={() => setNf({ ...nf, subs: nf.subs.filter((_, j) => j !== i) })} aria-label="remover"><X size={12} /></button>
+              </div>
+            ))}
+            <div className="nf-sub-grid">
+              <input placeholder="Título da sub-etapa" value={sd.title} onChange={(e) => setSd({ ...sd, title: e.target.value })} />
+              <label className="inline-lab">Tipo
+                <select value={sd.kind} onChange={(e) => setSd({ ...sd, kind: e.target.value })}>
+                  <option value="tarefa">Tarefa</option>
+                  <option value="reuniao">Reunião</option>
+                  <option value="entrega">Entrega</option>
+                </select>
+              </label>
+              <label className="inline-lab">Responsável
+                <select value={sd.responsible} onChange={(e) => setSd({ ...sd, responsible: e.target.value })}>
+                  <option value="studio">Studio</option>
+                  <option value="cliente">Cliente</option>
+                  <option value="fornecedor">Fornecedor</option>
+                </select>
+              </label>
+              <label className="inline-lab">{sd.kind === 'reuniao' ? 'Data' : 'Prazo'}<input type="date" value={sd.due} onChange={(e) => setSd({ ...sd, due: e.target.value })} /></label>
+              {sd.kind === 'reuniao' && (
+                <>
+                  <label className="inline-lab">Horário<input type="time" value={sd.time} onChange={(e) => setSd({ ...sd, time: e.target.value })} /></label>
+                  <div className="seg">
+                    <button type="button" className={'seg-opt' + (sd.format !== 'presencial' ? ' on' : '')} onClick={() => setSd({ ...sd, format: 'online' })}><Video size={13} /> Online</button>
+                    <button type="button" className={'seg-opt' + (sd.format === 'presencial' ? ' on' : '')} onClick={() => setSd({ ...sd, format: 'presencial' })}><MapPin size={13} /> Presencial</button>
+                  </div>
+                  {sd.format !== 'presencial' && <input placeholder="Link da reunião" value={sd.link} onChange={(e) => setSd({ ...sd, link: e.target.value })} />}
+                </>
+              )}
+            </div>
+            <button type="button" className="btn btn-ghost btn-sm" disabled={!sd.title.trim()} onClick={() => { setNf({ ...nf, subs: [...nf.subs, { ...sd, title: sd.title.trim() }] }); setSd({ title: '', kind: 'tarefa', responsible: 'studio', due: '', time: '', format: 'online', link: '' }); }}><Plus size={13} /> Adicionar sub-etapa</button>
+          </div>
           {nf.category === 'Reunião' && nf.start && <p className="micro"><CalendarIcon size={11} /> Reunião entra no calendário em {fmt(nf.start)}{nf.time ? ' às ' + nf.time : ''}.</p>}
           <div className="row">
             <button className="btn btn-primary btn-sm" disabled={!nf.title.trim()} onClick={() => { db.addStage(project.id, nf); resetNf(); setAdding(false); }}>Adicionar</button>
@@ -184,6 +236,18 @@ function StageItem({ db, s, isStudio }) {
                       ? <button className={'sub-box' + (b.done ? ' on' : '')} onClick={isStudio ? () => db.toggleSub(s.id, b.id) : undefined} disabled={!isStudio} aria-label="alternar">{b.done && <Check size={11} />}</button>
                       : <span className={'sub-box' + (b.done ? ' on' : '')}>{b.done && <Check size={11} />}</span>}
                     <span className="sub-title">{b.title}</span>
+                    {(b.kind && b.kind !== 'tarefa') || b.due || (b.responsible && b.responsible !== 'studio') ? (
+                      <span className="micro sub-meta">
+                        {[
+                          b.kind === 'entrega' ? 'Entrega' : null,
+                          b.due ? (b.kind === 'reuniao' ? fmt(b.due) + (b.time ? ' às ' + b.time : '') : 'até ' + fmt(b.due)) : null,
+                          b.kind === 'reuniao' ? (b.format === 'presencial' ? 'presencial' : 'online') : null,
+                          b.responsible && b.responsible !== 'studio' ? SUB_RESP[b.responsible] : null,
+                        ]
+                          .filter(Boolean)
+                          .join(' · ')}
+                      </span>
+                    ) : null}
                     {isStudio && <button className="icon-x" onClick={() => db.deleteSub(s.id, b.id)} aria-label="remover"><X size={12} /></button>}
                   </li>
                 ))}

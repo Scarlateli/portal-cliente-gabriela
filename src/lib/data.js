@@ -82,12 +82,12 @@ const OPTIMISTIC = {
       old ? old.map((s) => (s.id === sid ? { ...s, status } : s)) : old,
     );
   },
-  toggleSub: (qc, pid, [subId, done]) => {
+  toggleSub: (qc, pid, [sid, bid]) => {
     qc.setQueryData(qk.stages(pid), (old) =>
       old
         ? old.map((s) =>
-            s.subs
-              ? { ...s, subs: s.subs.map((x) => (x.id === subId ? { ...x, done } : x)) }
+            s.id === sid
+              ? { ...s, subs: (s.subs || []).map((b) => (b.id === bid ? { ...b, done: !b.done } : b)) }
               : s,
           )
         : old,

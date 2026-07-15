@@ -531,3 +531,10 @@ button.sub-box{cursor:pointer}
 .cp .hero-name{font-family:var(--font-display);font-weight:300;font-size:44px;letter-spacing:.005em;line-height:1.08}
 .cp .login-title{font-family:var(--font-display);font-weight:300;font-size:34px}
 .cp .btn-primary:hover{background:var(--gl-vinho-dark);color:var(--gl-cream)}
+
+/* onda 2B: sub-etapas no formulário de nova etapa */
+.cp .nf-subs{border:1px dashed var(--line);border-radius:4px;padding:12px;margin:10px 0;display:flex;flex-direction:column;gap:8px}
+.cp .nf-sub-row{display:flex;align-items:center;gap:8px}
+.cp .nf-sub-title{font-size:13px}
+.cp .nf-sub-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:end}
+.cp .sub-meta{margin-left:6px}
