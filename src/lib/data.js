@@ -81,6 +81,14 @@ export function invalidationsFor(method, pid) {
 // A interface muda NA HORA do clique; se o servidor falhar, o catch do
 // wrapper invalida a query e o estado real volta. Receitas por mutação:
 const OPTIMISTIC = {
+  sendToAutentique: (qc, pid, [cid]) => {
+    if (!pid) return;
+    qc.setQueryData(qk.contracts(pid), (old) =>
+      old
+        ? old.map((c) => (c.id === cid ? { ...c, sigStatus: 'enviado', provider: 'Autentique' } : c))
+        : old,
+    );
+  },
   deleteContractDoc: (qc, pid, [cid]) => {
     if (!pid) return;
     qc.setQueryData(qk.contracts(pid), (old) => (old ? old.filter((c) => c.id !== cid) : old));
