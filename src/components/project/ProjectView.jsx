@@ -83,6 +83,20 @@ export function ProjectView({ db: baseDb, user, pid, isStudio, onLogout, onBack,
   if (!project) {
     return (
       <div className="shell">
+        <main className="content">
+          <div className="empty">
+            Projeto não encontrado.{' '}
+            <button type="button" className="link" onClick={onBack}>
+              Voltar aos projetos
+            </button>
+          </div>
+        </main>
+      </div>
+    );
+  }
+  if (!project) {
+    return (
+      <div className="shell">
         <TopBar user={user} onLogout={onLogout} />
         <main className="content">
           <ErrorBox text="Projeto não encontrado." />

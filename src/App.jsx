@@ -13,6 +13,14 @@ import { ProjectView } from './components/project/ProjectView.jsx';
 import { PrintView } from './components/PrintView.jsx';
 import { ClientPicker } from './components/ClientPicker.jsx';
 
+// Deep-link do projeto aberto (#p=<id>): F5 mantém a tela e o link é
+// compartilhável. Não interfere no hash de recovery do Supabase.
+const hashPid = () => {
+  const m = window.location.hash.match(/^#p=([A-Za-z0-9-]+)$/);
+  return m ? m[1] : null;
+};
+const INITIAL_PID = hashPid();
+
 function AppInner() {
   // Estado do mock (ignorado no modo supabase). Mantido em useState para
   // que o caminho mock continue idêntico ao de hoje.
@@ -20,9 +28,20 @@ function AppInner() {
 
   const [user, setUser] = useState(null);
   const [bootstrapping, setBootstrapping] = useState(IS_SUPABASE);
-  const [studioPid, setStudioPid] = useState(null);
-  const [clientPid, setClientPid] = useState(null);
+  const [studioPid, setStudioPid] = useState(INITIAL_PID);
+  const [clientPid, setClientPid] = useState(INITIAL_PID);
   const [printPid, setPrintPid] = useState(null);
+
+  // espelha o projeto aberto na URL (e limpa ao voltar)
+  useEffect(() => {
+    const open = studioPid || clientPid;
+    if (open) {
+      const want = '#p=' + open;
+      if (window.location.hash !== want) window.location.hash = want;
+    } else if (window.location.hash.startsWith('#p=')) {
+      window.history.replaceState(null, '', window.location.pathname + window.location.search);
+    }
+  }, [studioPid, clientPid]);
 
   // db: no mock recebe (state,set); no supabase é async e ignora os args.
   const db = getDb({ state: mockState, set: setMockState });
@@ -154,7 +173,8 @@ function ClientArea({ db, user, clientPid, setClientPid, onLogout, onPrint }) {
     );
   }
   const projects = r.db.projectsForClient(user.id) || [];
-  const pid = clientPid || (projects.length === 1 ? projects[0].id : null);
+  const validClientPid = clientPid && projects.some((p) => p.id === clientPid) ? clientPid : null;
+  const pid = validClientPid || (projects.length === 1 ? projects[0].id : null);
   if (pid) {
     return (
       <ProjectView
