@@ -589,3 +589,8 @@ button.sub-box{cursor:pointer}
 .cp .tl-rail{background:var(--gl-hairline)}
 /* superfícies gerais em hairline */
 .cp .panel,.cp .invite-box,.cp .tpl-card{border-color:var(--gl-hairline)}
+
+/* onda 3: rodapé do cliente — falar com o studio */
+.cp .client-foot{display:flex;align-items:center;justify-content:space-between;gap:16px;border:1px solid var(--gl-hairline);border-radius:5px;background:var(--gl-surface-2);padding:18px 22px;margin-top:18px;flex-wrap:wrap}
+.cp .client-foot strong{font-family:var(--font-display);font-weight:400;font-size:19px}
+.cp .client-foot .hint{margin:2px 0 0}

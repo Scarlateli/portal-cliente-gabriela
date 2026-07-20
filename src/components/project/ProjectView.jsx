@@ -15,6 +15,7 @@ import {
   ArrowLeft,
   Printer,
   KeyRound,
+  MessageCircle,
 } from 'lucide-react';
 import { TopBar, Loading, ErrorBox, ErrorBanner } from '../atoms.jsx';
 import { fmt, todayISO } from '../../lib/helpers.js';
@@ -27,6 +28,8 @@ import { Contract } from './Contract.jsx';
 import { Payments } from './Payments.jsx';
 import { Quotes } from './Quotes.jsx';
 import { Suppliers } from './Suppliers.jsx';
+
+const STUDIO_WHATSAPP = 'https://wa.me/5521987751651';
 
 const TABS = [
   { id: 'timeline', label: 'Linha do tempo', I: GitCommitVertical },
@@ -312,6 +315,17 @@ function ProjectInner({
               <CircleCheck size={15} /> Finalizar projeto
             </button>
           </div>
+        )}
+        {!isStudio && (
+          <footer className="client-foot">
+            <div>
+              <strong>Precisa falar com o studio?</strong>
+              <p className="hint">Dúvidas sobre o projeto, documentos ou prazos — é só chamar.</p>
+            </div>
+            <a className="btn btn-primary btn-sm" href={STUDIO_WHATSAPP} target="_blank" rel="noreferrer">
+              <MessageCircle size={14} /> Falar com o studio
+            </a>
+          </footer>
         )}
       </main>
     </div>
