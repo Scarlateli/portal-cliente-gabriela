@@ -133,6 +133,11 @@ function ContractDoc({ db, c, isStudio, clientName }) {
 
       {(c.storagePath || isStudio) && (
         <div className="row contract-actions">
+          {IS_SUPABASE && isStudio && c.sigStatus === 'enviado' && c.studioSignLink && (
+            <a className="btn btn-ghost btn-sm" href={c.studioSignLink} target="_blank" rel="noreferrer">
+              <Send size={12} /> Assinar como studio
+            </a>
+          )}
           {c.storagePath && (
             <button
               type="button"

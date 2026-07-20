@@ -24,7 +24,7 @@ Deno.serve(async (req) => {
     });
     const { data: c } = await caller
       .from('contracts')
-      .select('id, sig_status, provider_doc_id')
+      .select('id, sig_status, provider_doc_id, signer, studio_sign_link')
       .eq('id', contractId)
       .maybeSingle();
     if (!c) return json({ error: 'contrato não encontrado' }, 404);
@@ -36,7 +36,7 @@ Deno.serve(async (req) => {
       headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         query:
-          'query($id: UUID!) { document(id: $id) { id signatures { email action { name } signed { created_at } rejected { created_at } } } }',
+          'query($id: UUID!) { document(id: $id) { id signatures { email action { name } link { short_link } signed { created_at } rejected { created_at } } } }',
         variables: { id: c.provider_doc_id },
       }),
     });
@@ -57,7 +57,23 @@ Deno.serve(async (req) => {
     const signatarios = sigs.filter((s: Sig) => s?.action?.name === 'SIGN');
     const relevantes = signatarios.length > 0 ? signatarios : sigs;
     const todosAssinaram = relevantes.every((s: Sig) => s?.signed?.created_at);
-    if (!todosAssinaram) return json({ status: 'enviado' });
+    if (!todosAssinaram) {
+      // backfill: garante o botão "Assinar como studio" mesmo p/ envios antigos
+      const alvo = String((c as { signer?: string }).signer || '').toLowerCase();
+      const st = sigs.find(
+        (s: Sig & { link?: { short_link?: string } | null }) =>
+          s?.action?.name === 'SIGN' && String(s?.email || '').toLowerCase() !== alvo,
+      ) as { link?: { short_link?: string } | null } | undefined;
+      const link = st?.link?.short_link;
+      if (link && !(c as { studio_sign_link?: string }).studio_sign_link) {
+        const admin0 = createClient(
+          Deno.env.get('SUPABASE_URL')!,
+          Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+        );
+        await admin0.from('contracts').update({ studio_sign_link: link }).eq('id', c.id);
+      }
+      return json({ status: 'enviado' });
+    }
 
     const datas = relevantes
       .map((s: Sig) => s?.signed?.created_at)

@@ -118,6 +118,7 @@ Deno.serve(async (req) => {
         provider: 'Autentique',
         provider_doc_id: String(doc.id),
         signer: prof.email,
+        studio_sign_link: studioSignLink,
       })
       .eq('id', c.id);
     if (upErr) return json({ error: upErr.message }, 500);

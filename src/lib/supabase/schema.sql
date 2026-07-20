@@ -350,3 +350,6 @@ revoke execute on function is_studio() from public, anon;
 revoke execute on function owns_project(uuid) from public, anon;
 grant execute on function is_studio() to authenticated, service_role;
 grant execute on function owns_project(uuid) to authenticated, service_role;
+
+-- link de assinatura do studio persistido (botão no cartão do contrato)
+alter table contracts add column if not exists studio_sign_link text;
