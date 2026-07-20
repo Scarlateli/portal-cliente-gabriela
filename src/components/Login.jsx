@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { loadSupabase } from '../lib/supabase/client.js';
 import { Mail, Lock } from 'lucide-react';
-import { Mark } from './atoms.jsx';
+
 import { STUDIO } from '../lib/constants.js';
 import { loginSchema, validate } from '../lib/validation.js';
 import { IS_SUPABASE } from '../lib/data.js';

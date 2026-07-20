@@ -344,3 +344,9 @@ create policy "stage_subs_client_attach" on stage_subs
     )
   )
   with check (responsible = 'cliente');
+
+-- hardening: RPC das funções de RLS fechado para anon (advisors)
+revoke execute on function is_studio() from public, anon;
+revoke execute on function owns_project(uuid) from public, anon;
+grant execute on function is_studio() to authenticated, service_role;
+grant execute on function owns_project(uuid) to authenticated, service_role;
