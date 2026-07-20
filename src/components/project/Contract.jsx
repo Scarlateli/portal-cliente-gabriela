@@ -136,7 +136,7 @@ function ContractDoc({ db, c, isStudio, clientName }) {
           {IS_SUPABASE && isStudio && c.sigStatus === 'rascunho' && c.storagePath && (
             <button
               type="button"
-              className="link sm"
+              className="btn btn-primary btn-sm"
               disabled={sending}
               onClick={async () => {
                 if (
@@ -171,7 +171,7 @@ function ContractDoc({ db, c, isStudio, clientName }) {
         </div>
       )}
 
-      {isStudio && c.sigStatus === 'rascunho' && (
+      {!IS_SUPABASE && isStudio && c.sigStatus === 'rascunho' && (
         <div className="sign-box">
           <p className="sign-doc">
             Selecione a plataforma e envie para assinatura. Com a integração da Autentique ativa, o
@@ -209,7 +209,7 @@ function ContractDoc({ db, c, isStudio, clientName }) {
               })
             }
           >
-            Simular assinatura concluída
+            Marcar assinado manualmente
           </button>
         </div>
       )}
