@@ -29,13 +29,13 @@ const SUB_RESP = { studio: 'Studio', cliente: 'Cliente', fornecedor: 'Fornecedor
 export function Timeline({ db, project, isStudio }) {
   const stages = db.stages(project.id);
   const [adding, setAdding] = useState(false);
-  const [nf, setNf] = useState({ title: '', category: 'Reunião', owner: 'studio', start: '', end: '', time: '', link: '', presencial: false, desc: '', subs: [] });
+  const [nf, setNf] = useState({ title: '', category: 'Etapa', owner: 'studio', start: '', end: '', time: '', link: '', presencial: false, desc: '', subs: [] });
   const [sd, setSd] = useState({ title: '', kind: 'tarefa', responsible: 'studio', due: '', time: '', format: 'online', link: '' });
   const [tplSel, setTplSel] = useState('');
   const [filter, setFilter] = useState('todas');
   const templates = db.templates();
   const tplPreview = templates.find((t) => t.id === tplSel);
-  const resetNf = () => setNf({ title: '', category: 'Reunião', owner: 'studio', start: '', end: '', time: '', link: '', presencial: false, desc: '', subs: [] });
+  const resetNf = () => setNf({ title: '', category: 'Etapa', owner: 'studio', start: '', end: '', time: '', link: '', presencial: false, desc: '', subs: [] });
   const FILTERS = [['todas', 'Todas'], ['em_andamento', 'Em andamento'], ['a_fazer', 'Futuras'], ['concluida', 'Concluídas']];
   const count = (f) => (f === 'todas' ? stages.length : stages.filter((s) => s.status === f).length);
   const shown = filter === 'todas' ? stages : stages.filter((s) => s.status === filter);
@@ -91,8 +91,8 @@ export function Timeline({ db, project, isStudio }) {
         <div className="add-stage">
           <input placeholder="Título da etapa" value={nf.title} onChange={(e) => setNf({ ...nf, title: e.target.value })} />
           <div className="add-row">
-            <select value={nf.category} onChange={(e) => setNf({ ...nf, category: e.target.value })}>{STAGE_CATEGORIES.map((c) => <option key={c}>{c}</option>)}</select>
-            <select value={nf.owner} onChange={(e) => setNf({ ...nf, owner: e.target.value })}><option value="studio">Responsável: Studio</option><option value="client">Responsável: Cliente</option></select>
+            
+            
           </div>
           <div className="add-row">
             <label className="inline-lab">Início<input type="date" value={nf.start} onChange={(e) => setNf({ ...nf, start: e.target.value })} /></label>

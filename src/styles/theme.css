@@ -549,3 +549,43 @@ button.sub-box{cursor:pointer}
 
 /* onda 4C: upload do cliente na sub-etapa */
 .cp .sub-upload{cursor:pointer}
+
+/* ============ ONDA 3 — visual editorial ============ */
+/* login dividido */
+.cp .login-split{flex-direction:row;align-items:stretch;padding:0;gap:0}
+.cp .login-brand{flex:1 1 52%;background:var(--gl-vinho);color:var(--gl-cream);display:flex;align-items:center;justify-content:center;padding:48px}
+.cp .login-brand-inner{max-width:420px;width:100%}
+.cp .lb-word{font-size:15px;letter-spacing:.22em;text-transform:uppercase;margin:0}
+.cp .lb-sub{font-size:10px;letter-spacing:.34em;text-transform:lowercase;opacity:.75;margin:6px 0 0}
+.cp .lb-statement{font-family:var(--font-display);font-weight:300;font-size:clamp(30px,3.4vw,44px);line-height:1.18;margin:34px 0 0}
+.cp .lb-statement em{font-style:italic}
+.cp .lb-foot{margin-top:48px;font-size:11px;opacity:.6}
+.cp .login-panel{flex:1 1 48%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;background:var(--paper)}
+.cp .login-split .login-card{box-shadow:none;border-color:var(--gl-hairline);max-width:400px;padding:40px 36px}
+.cp .login-split .login-title{font-size:34px;margin-top:0}
+@media (max-width:820px){.cp .login-split{flex-direction:column}.cp .login-brand{flex:none;padding:40px 28px}.cp .lb-statement{margin-top:18px}}
+/* header 88px */
+.cp .topbar{min-height:88px;padding:0 32px;background:rgba(247,242,232,.72);border-bottom:1px solid var(--gl-hairline)}
+/* hero editorial */
+.cp .hero{padding:40px 36px;border-color:var(--gl-hairline)}
+.cp .hero-name{font-size:clamp(36px,4.4vw,54px);margin:14px 0 16px}
+.cp .hero-tag{border-radius:999px}
+.cp .hero-stats{display:flex;gap:0;margin-top:26px;border-top:1px solid var(--gl-hairline);padding-top:18px}
+.cp .hstat{flex:1;padding:0 22px;border-left:1px solid var(--gl-hairline);display:flex;flex-direction:column;gap:3px}
+.cp .hstat:first-child{border-left:none;padding-left:0}
+.cp .hstat strong{font-family:var(--font-display);font-weight:400;font-size:26px;line-height:1}
+.cp .hstat strong span{font-size:15px;color:var(--gl-ink-45)}
+.cp .hstat em{font-style:normal;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--gl-ink-60)}
+/* timeline editorial: ordinais + estados */
+.cp ol:has(> .tl-item){counter-reset:etapa}
+.cp .tl-item{counter-increment:etapa}
+.cp .tl-item .tl-body{position:relative}
+.cp .tl-item .tl-body::before{content:"Nº " counter(etapa,decimal-leading-zero);position:absolute;top:12px;right:16px;font-family:var(--font-display);font-style:italic;font-size:15px;color:var(--gl-ink-45)}
+.cp .tl-edit{counter-increment:none}
+.cp .tl-edit .tl-body::before{content:none}
+.cp .tl-concluida .tl-body{background:var(--gl-surface-2)}
+.cp .tl-em_andamento .tl-body{border-color:var(--gl-vinho);box-shadow:inset 3px 0 0 var(--gl-vinho)}
+.cp .tl-a_fazer .tl-body{background:transparent;border-style:dashed}
+.cp .tl-rail{background:var(--gl-hairline)}
+/* superfícies gerais em hairline */
+.cp .panel,.cp .invite-box,.cp .tpl-card{border-color:var(--gl-hairline)}

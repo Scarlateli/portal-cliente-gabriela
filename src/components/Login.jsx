@@ -38,9 +38,23 @@ export function Login({ db, onLogin }) {
   };
 
   return (
-    <div className="login">
+    <div className="login login-split">
+      <aside className="login-brand">
+        <div className="login-brand-inner">
+          <p className="lb-word">Gabriela Lendecker</p>
+          <p className="lb-sub">arquitetura e interiores</p>
+          <p className="lb-statement">
+            Cada projeto,
+            <br />
+            uma história conduzida
+            <br />
+            <em>com cuidado.</em>
+          </p>
+          <p className="lb-foot">© {new Date().getFullYear()}</p>
+        </div>
+      </aside>
+      <div className="login-panel">
       <div className="login-card">
-        <Mark />
         <h1 className="login-title">Portal do cliente</h1>
         <p className="login-sub">Acompanhe cada etapa do seu projeto.</p>
         <label className="field">
@@ -125,6 +139,7 @@ export function Login({ db, onLogin }) {
       <p className="login-foot">
         © {new Date().getFullYear()} {STUDIO.name}
       </p>
+      </div>
     </div>
   );
 }

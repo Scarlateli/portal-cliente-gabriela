@@ -116,6 +116,9 @@ function ProjectInner({
 }) {
   const [tab, setTab] = useState('timeline');
   const expired = project.accessUntil && todayISO() > project.accessUntil;
+  const heroStages = db.stages(project.id);
+  const heroDocs = db.documents(project.id);
+  const heroPend = heroStages.filter((st) => st.status !== 'concluida' && st.end).map((st) => st.end).sort();
   const [resent, setResent] = useState(null);
   const [resending, setResending] = useState(false);
 
@@ -161,6 +164,23 @@ function ProjectInner({
                 <User size={14} /> {db.clientName(project.id)}
               </span>
             )}
+          </div>
+          <div className="hero-stats">
+            <div className="hstat">
+              <strong>
+                {heroStages.filter((st) => st.status === 'concluida').length}
+                <span>/{heroStages.length}</span>
+              </strong>
+              <em>etapas concluídas</em>
+            </div>
+            <div className="hstat">
+              <strong>{heroDocs.length}</strong>
+              <em>documentos</em>
+            </div>
+            <div className="hstat">
+              <strong>{heroPend.length ? fmt(heroPend[0]) : '—'}</strong>
+              <em>próximo prazo</em>
+            </div>
           </div>
         </div>
 
