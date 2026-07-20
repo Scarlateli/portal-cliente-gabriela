@@ -81,6 +81,25 @@ export function invalidationsFor(method, pid) {
 // A interface muda NA HORA do clique; se o servidor falhar, o catch do
 // wrapper invalida a query e o estado real volta. Receitas por mutação:
 const OPTIMISTIC = {
+  deleteContractDoc: (qc, pid, [cid]) => {
+    if (!pid) return;
+    qc.setQueryData(qk.contracts(pid), (old) => (old ? old.filter((c) => c.id !== cid) : old));
+  },
+  deleteDocument: (qc, pid, [did]) => {
+    if (!pid) return;
+    qc.setQueryData(qk.documents(pid), (old) => (old ? old.filter((d) => d.id !== did) : old));
+  },
+  deleteSub: (qc, pid, [sid, bid]) => {
+    if (!pid) return;
+    qc.setQueryData(qk.stages(pid), (old) =>
+      old
+        ? old.map((s) => (s.id === sid ? { ...s, subs: (s.subs || []).filter((b) => b.id !== bid) } : s))
+        : old,
+    );
+  },
+  deleteTemplate: (qc, _pid, [tid]) => {
+    qc.setQueryData(qk.templates(), (old) => (old ? old.filter((t) => t.id !== tid) : old));
+  },
   setStageStatus: (qc, pid, [sid, status]) => {
     qc.setQueryData(qk.stages(pid), (old) =>
       old ? old.map((s) => (s.id === sid ? { ...s, status } : s)) : old,
@@ -101,5 +120,5 @@ const OPTIMISTIC = {
 
 export function applyOptimistic(qc, method, pid, args) {
   const fn = OPTIMISTIC[method];
-  if (fn && pid) fn(qc, pid, args);
+  if (fn) fn(qc, pid, args);
 }

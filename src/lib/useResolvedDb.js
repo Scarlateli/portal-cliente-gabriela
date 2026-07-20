@@ -105,7 +105,7 @@ export function useResolvedDb(baseDb, specs, scopePid = null) {
   const invalidate = useCallback(
     (method, pid) => {
       for (const key of invalidationsFor(method, pid ?? scopePid)) {
-        queryClient.invalidateQueries({ queryKey: key });
+        queryClient.invalidateQueries({ queryKey: key, refetchType: 'all' });
       }
     },
     [queryClient, scopePid],
