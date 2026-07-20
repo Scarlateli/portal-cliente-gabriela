@@ -98,6 +98,10 @@ export function useResolvedDb(baseDb, specs, scopePid = null) {
       queryKey: s.key,
       queryFn: s.fn,
       enabled: IS_SUPABASE,
+      // CRÍTICO: sem listar 'data' aqui, o react-query (tracked queries) só
+      // re-renderiza quando isLoading/isError mudam — refetch atualizava o
+      // cache e NINGUÉM era avisado. Era a causa-raiz da tela desatualizada.
+      notifyOnChangeProps: ['data', 'dataUpdatedAt', 'isLoading', 'isError'],
     })),
   });
 

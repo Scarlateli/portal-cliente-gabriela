@@ -65,12 +65,25 @@ Deno.serve(async (req) => {
     const dl = await admin.storage.from('documentos').download(c.storage_path);
     if (dl.error || !dl.data) return json({ error: 'não consegui ler o PDF no Storage' }, 500);
 
+    // Studio assina também (parte explícita); dedupe se cliente == studio
+    const studioEmail = (Deno.env.get('STUDIO_SIGNER_EMAIL') || 'contato@gabrielalendecker.com')
+      .trim()
+      .toLowerCase();
+    const clienteEmail = String(prof.email).trim().toLowerCase();
+    const signersInput =
+      studioEmail && studioEmail !== clienteEmail
+        ? [
+            { email: studioEmail, action: 'SIGN' },
+            { email: clienteEmail, action: 'SIGN' },
+          ]
+        : [{ email: clienteEmail, action: 'SIGN' }];
+
     const ops = JSON.stringify({
       query:
         'mutation CreateDocumentMutation($document: DocumentInput!, $signers: [SignerInput!]!, $file: Upload!) { createDocument(document: $document, signers: $signers, file: $file) { id name signatures { email link { short_link } } } }',
       variables: {
         document: { name: c.name },
-        signers: [{ email: prof.email, action: 'SIGN' }],
+        signers: signersInput,
         file: null,
       },
     });
@@ -91,7 +104,7 @@ Deno.serve(async (req) => {
       return json({ error: 'Autentique recusou: ' + String(msg).slice(0, 300) }, 502);
     }
 
-    const cliente = String(prof.email).toLowerCase();
+    const cliente = clienteEmail;
     const sigs = Array.isArray(doc.signatures) ? doc.signatures : [];
     const doStudio = sigs.find(
       (s: { email?: string }) => String(s.email || '').toLowerCase() !== cliente,

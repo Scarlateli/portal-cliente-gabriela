@@ -36,7 +36,7 @@ Deno.serve(async (req) => {
       headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         query:
-          'query($id: UUID!) { document(id: $id) { id signatures { email signed { created_at } rejected { created_at } } } }',
+          'query($id: UUID!) { document(id: $id) { id signatures { email action { name } signed { created_at } rejected { created_at } } } }',
         variables: { id: c.provider_doc_id },
       }),
     });
@@ -47,11 +47,19 @@ Deno.serve(async (req) => {
       return json({ status: c.sig_status, note: String(msg).slice(0, 200) });
     }
 
-    type Sig = { email?: string; signed?: { created_at?: string } | null };
-    const todosAssinaram = sigs.every((s: Sig) => s?.signed?.created_at);
+    type Sig = {
+      email?: string;
+      action?: { name?: string } | null;
+      signed?: { created_at?: string } | null;
+    };
+    // O remetente aparece na lista SEM ação de assinar — só conta quem
+    // tem action SIGN. (Descoberto no teste real de 20/07.)
+    const signatarios = sigs.filter((s: Sig) => s?.action?.name === 'SIGN');
+    const relevantes = signatarios.length > 0 ? signatarios : sigs;
+    const todosAssinaram = relevantes.every((s: Sig) => s?.signed?.created_at);
     if (!todosAssinaram) return json({ status: 'enviado' });
 
-    const datas = sigs
+    const datas = relevantes
       .map((s: Sig) => s?.signed?.created_at)
       .filter(Boolean)
       .sort();
