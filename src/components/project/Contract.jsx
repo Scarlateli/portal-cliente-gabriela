@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { IS_SUPABASE } from '../../lib/data.js';
 import {
   ShieldCheck,
@@ -19,6 +19,18 @@ const KINDS = [
 
 export function Contract({ db, project, isStudio }) {
   const all = db.contracts(project.id) || [];
+
+  // Autentique sem depender do webhook: ao abrir a aba, consulta o status
+  // real dos contratos "enviados" e marca como assinado quando for o caso.
+  useEffect(() => {
+    all
+      .filter((c) => c.sigStatus === 'enviado' && c.providerDocId)
+      .forEach((c) => {
+        Promise.resolve(db.checkAutentique(project.id, c.id)).catch(() => {});
+      });
+    // roda uma vez por abertura da aba
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const clientName = db.clientName(project.id);
   const [kind, setKind] = useState('');
   const [adding, setAdding] = useState(false);

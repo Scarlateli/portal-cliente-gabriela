@@ -660,6 +660,13 @@ export function makeSupabaseDb() {
       }
       return fn;
     },
+    checkAutentique: async (pid, cid) => {
+      const { data: fn, error } = await supabase.functions.invoke('autentique-check', {
+        body: { contractId: cid },
+      });
+      if (error) return null; // verificação silenciosa — não incomoda o usuário
+      return fn;
+    },
     createPlan: async (pid, total, n, firstDue, interval) => {
       const per = Math.round((total / n) * 100) / 100;
       await supabase.from('payments').delete().eq('project_id', pid);

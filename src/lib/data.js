@@ -63,6 +63,7 @@ export function invalidationsFor(method, pid) {
     resendClientAccess: [],
     attachSubFile: [qk.stages(pid)],
     sendToAutentique: [qk.contracts(pid)],
+    checkAutentique: [qk.contracts(pid)],
     createPlan: [qk.payment(pid), qk.calendar(pid)],
     markPaid: [qk.payment(pid), qk.calendar(pid)],
     addQuote: [qk.quotes(pid), qk.suppliers(pid), qk.notifications()],
