@@ -1,7 +1,8 @@
-// Edge Function: autentique-send (verify_jwt = true)
-// Envia o PDF de um contrato/termo para assinatura na Autentique (API v2,
-// GraphQL multipart). Só o studio pode chamar. O signatário é o CLIENTE do
-// projeto — a Autentique envia o e-mail de assinatura para ele.
+// Edge Function: autentique-send v2
+// Cria o documento na Autentique com o CLIENTE como signatário. A conta
+// remetente (studio) também é parte por padrão da plataforma — devolvemos o
+// link de assinatura do studio para o front abrir na hora. O contrato só
+// vira "assinado" quando TODAS as partes assinarem (autentique-check).
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
 const cors = {
@@ -66,7 +67,7 @@ Deno.serve(async (req) => {
 
     const ops = JSON.stringify({
       query:
-        'mutation CreateDocumentMutation($document: DocumentInput!, $signers: [SignerInput!]!, $file: Upload!) { createDocument(document: $document, signers: $signers, file: $file) { id name } }',
+        'mutation CreateDocumentMutation($document: DocumentInput!, $signers: [SignerInput!]!, $file: Upload!) { createDocument(document: $document, signers: $signers, file: $file) { id name signatures { email link { short_link } } } }',
       variables: {
         document: { name: c.name },
         signers: [{ email: prof.email, action: 'SIGN' }],
@@ -90,6 +91,13 @@ Deno.serve(async (req) => {
       return json({ error: 'Autentique recusou: ' + String(msg).slice(0, 300) }, 502);
     }
 
+    const cliente = String(prof.email).toLowerCase();
+    const sigs = Array.isArray(doc.signatures) ? doc.signatures : [];
+    const doStudio = sigs.find(
+      (s: { email?: string }) => String(s.email || '').toLowerCase() !== cliente,
+    );
+    const studioSignLink = (doStudio as { link?: { short_link?: string } })?.link?.short_link || null;
+
     const { error: upErr } = await admin
       .from('contracts')
       .update({
@@ -101,7 +109,7 @@ Deno.serve(async (req) => {
       .eq('id', c.id);
     if (upErr) return json({ error: upErr.message }, 500);
 
-    return json({ ok: true, providerDocId: doc.id, signerEmail: prof.email });
+    return json({ ok: true, providerDocId: doc.id, signerEmail: prof.email, studioSignLink });
   } catch (e) {
     return json({ error: String((e as Error)?.message || e) }, 500);
   }

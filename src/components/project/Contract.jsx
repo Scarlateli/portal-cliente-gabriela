@@ -153,13 +153,14 @@ function ContractDoc({ db, c, isStudio, clientName }) {
               onClick={async () => {
                 if (
                   !window.confirm(
-                    'Enviar "' + c.name + '" para assinatura na Autentique? O cliente recebe o e-mail de assinatura deles.',
+                    'Enviar "' + c.name + '" para assinatura na Autentique? Você será direcionado para assinar, e o cliente recebe o e-mail para a assinatura dele. O status vira "assinado" quando os dois assinarem.',
                   )
                 )
                   return;
                 setSending(true);
                 try {
-                  await db.sendToAutentique(c.projectId, c.id);
+                  const res = await db.sendToAutentique(c.projectId, c.id);
+                  if (res && res.studioSignLink) window.open(res.studioSignLink, '_blank', 'noopener');
                 } finally {
                   setSending(false);
                 }

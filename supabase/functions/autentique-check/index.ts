@@ -1,8 +1,7 @@
-// Edge Function: autentique-check (verify_jwt = true)
-// Consulta o status REAL de um documento na Autentique (pull) e, se estiver
-// assinado, marca o contrato — independência do webhook deles (que se
-// mostrou silencioso). Autorização elegante: o contrato é lido com o JWT de
-// quem chamou; se a RLS deixa ver, a pessoa pode verificar.
+// Edge Function: autentique-check (final)
+// Consulta o status real na Autentique e marca o contrato como "assinado"
+// quando TODAS as partes assinaram (studio + cliente). Autorização via RLS
+// do chamador; data registrada = última assinatura.
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
 const cors = {
@@ -47,13 +46,17 @@ Deno.serve(async (req) => {
       const msg = out?.errors?.[0]?.message || `Autentique HTTP ${r.status}`;
       return json({ status: c.sig_status, note: String(msg).slice(0, 200) });
     }
-    const allSigned = sigs.every((s: { signed?: { created_at?: string } | null }) => s?.signed?.created_at);
-    if (!allSigned) return json({ status: 'enviado' });
 
-    const when = sigs[0]?.signed?.created_at;
-    const dia = when
-      ? new Date(new Date(when).getTime() - 3 * 3600 * 1000).toISOString().slice(0, 10)
-      : new Date(Date.now() - 3 * 3600 * 1000).toISOString().slice(0, 10);
+    type Sig = { email?: string; signed?: { created_at?: string } | null };
+    const todosAssinaram = sigs.every((s: Sig) => s?.signed?.created_at);
+    if (!todosAssinaram) return json({ status: 'enviado' });
+
+    const datas = sigs
+      .map((s: Sig) => s?.signed?.created_at)
+      .filter(Boolean)
+      .sort();
+    const ultima = datas[datas.length - 1] as string;
+    const dia = new Date(new Date(ultima).getTime() - 3 * 3600 * 1000).toISOString().slice(0, 10);
     const admin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
     await admin.from('contracts').update({ sig_status: 'assinado', signed_at: dia }).eq('id', c.id);
     return json({ status: 'assinado', signedAt: dia });
