@@ -17,15 +17,36 @@ contato. Uma página (one-page) já resolve a v1.
 
 ## Identidade (obrigatório seguir)
 
-- Cores: fundo `#d8d4ca` (areia) · cartões `#efece5` · **vinho `#5d1c17`**
-  (marca/acentos) · texto `#210909` · apoio `#7a6f60`.
+- Cores (paleta atual do portal, pós-redesign): fundo `#E3DFD2` · superfície
+  `#F7F2E8` · **vinho `#4B1F1B`** (marca/acentos) · tinta `#2F2119` · creme
+  `#F2E9DC` · filete `rgba(63,32,25,.12)`.
 - Cantos discretos (4–6px). Nada de sombras fortes ou gradientes chamativos.
-- **Fonte: Jost (Google Fonts)** para tudo, com tracking largo em caixa alta
-  nos títulos/wordmark. ⚠️ **NÃO usar/copiar a Futura Std** deste repo — não
-  há licença para distribuição web pública.
+- **Tipografia: Cormorant Garamond** (títulos, com itálico nos destaques) +
+  **Jost** (interface e corpo), ambas do Google Fonts — é a combinação que o
+  portal usa hoje, e o site deve conversar com ela.
+  ⚠️ A Gabriela adquiriu licença da Futura; se quiserem usá-la no site,
+  confirmar antes que a licença cobre **webfont** (uso web), que é diferente
+  da licença de desktop. Na dúvida, seguir com Jost.
 - Assets prontos neste repo (copiar para o site): `public/brand/monograma.png`
   (monograma vinho), `public/brand/lockup.png` (logo completa),
   `public/favicon.png`, `public/apple-touch-icon.png`.
+
+## Banco de dados e domínio (decisão de arquitetura)
+
+- **A v1 do site não precisa de banco de dados.** Conteúdo estático no
+  código: mais rápido, mais barato, menos superfície de risco.
+- **Contato**: usar WhatsApp/e-mail direto. Se um dia quiserem formulário,
+  a saída é uma Edge Function no Supabase existente enviando pelo Resend —
+  ainda sem banco.
+- **Se o portfólio virar editável** pela Gabriela: reusar o **mesmo projeto
+  Supabase**, com tabelas próprias (`site_projetos`, `site_posts`), RLS
+  liberando **só leitura pública** e escrita restrita ao studio. As tabelas
+  do portal não são tocadas. O site usa apenas a chave `anon` — **nunca** a
+  `service_role`.
+- **Domínio**: um domínio, dois projetos na Vercel —
+  `gabrielalendecker.com` (site) e `portal.gabrielalendecker.com` (portal,
+  já no ar). Servir o portal num caminho (`/portal`) é possível via
+  rewrites, mas acopla os deploys sem ganho real: **não recomendado**.
 
 ## Estrutura da página
 
