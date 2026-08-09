@@ -12,7 +12,7 @@
    Regras dos Hooks: os hooks do React Query são sempre chamados; no modo
    mock ficam `enabled: false` e são ignorados.
    --------------------------------------------------------------------- */
-import { useMemo, useState, useCallback } from 'react';
+import { useMemo, useState, useCallback, useReducer, useEffect } from 'react';
 import { useQueries, useQueryClient } from '@tanstack/react-query';
 import { IS_SUPABASE, qk, invalidationsFor, applyOptimistic } from './data.js';
 
@@ -104,6 +104,20 @@ export function useResolvedDb(baseDb, specs, scopePid = null) {
       notifyOnChangeProps: ['data', 'dataUpdatedAt', 'isLoading', 'isError'],
     })),
   });
+
+  // Rede de segurança da reatividade: em vez de depender só da notificação
+  // por props observadas do react-query (que já falhou em produção mesmo com
+  // notifyOnChangeProps), assinamos o cache e forçamos o re-render sempre que
+  // QUALQUER dado muda. As leituras vêm do cache e são baratas, então o custo
+  // é irrelevante perto de uma tela que não atualiza.
+  const [, forcarRender] = useReducer((n) => n + 1, 0);
+  useEffect(() => {
+    if (!IS_SUPABASE) return undefined;
+    return queryClient.getQueryCache().subscribe((evento) => {
+      const t = evento && evento.type;
+      if (t === 'updated' || t === 'added' || t === 'removed') forcarRender();
+    });
+  }, [queryClient]);
 
   const loading = IS_SUPABASE && queries.some((q) => q.isLoading);
   const queryError = IS_SUPABASE ? queries.find((q) => q.isError) : null;
