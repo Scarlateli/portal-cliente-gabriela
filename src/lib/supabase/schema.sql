@@ -353,3 +353,32 @@ grant execute on function owns_project(uuid) to authenticated, service_role;
 
 -- link de assinatura do studio persistido (botão no cartão do contrato)
 alter table contracts add column if not exists studio_sign_link text;
+
+-- Endurecimento (08/08): índices nas FKs, RLS com auth.uid() avaliado uma vez
+-- por consulta, e limites de upload aplicados no servidor.
+create index if not exists idx_contracts_project on contracts(project_id);
+create index if not exists idx_documents_project on documents(project_id);
+create index if not exists idx_events_project on events(project_id);
+create index if not exists idx_installments_payment on installments(payment_id);
+create index if not exists idx_payments_project on payments(project_id);
+create index if not exists idx_projects_client on projects(client_id);
+create index if not exists idx_quote_comments_quote on quote_comments(quote_id);
+create index if not exists idx_quotes_project on quotes(project_id);
+create index if not exists idx_stage_subs_stage on stage_subs(stage_id);
+create index if not exists idx_stages_project on stages(project_id);
+create index if not exists idx_template_items_template on template_items(template_id);
+
+drop policy if exists profiles_self_or_studio on profiles;
+create policy profiles_self_or_studio on profiles
+  for select using ((id = (select auth.uid())) or is_studio());
+drop policy if exists projects_client_read on projects;
+create policy projects_client_read on projects
+  for select using (client_id = (select auth.uid()));
+
+-- bucket "documentos": 20 MB e tipos permitidos (aplicado no servidor)
+update storage.buckets
+set file_size_limit = 20971520,
+    allowed_mime_types = array['application/pdf','image/jpeg','image/png','image/webp','image/heic',
+      'application/msword','application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/vnd.ms-excel','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']
+where id = 'documentos';
