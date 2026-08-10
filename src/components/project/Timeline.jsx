@@ -29,6 +29,7 @@ const SUB_RESP = { studio: 'Studio', cliente: 'Cliente', fornecedor: 'Fornecedor
 export function Timeline({ db, project, isStudio }) {
   const stages = db.stages(project.id);
   const [adding, setAdding] = useState(false);
+  const [salvandoEtapa, setSalvandoEtapa] = useState(false);
   const [nf, setNf] = useState({ title: '', category: 'Etapa', owner: 'studio', start: '', end: '', time: '', link: '', presencial: false, desc: '', subs: [] });
   const [sd, setSd] = useState({ title: '', kind: 'tarefa', responsible: 'studio', due: '', time: '', format: 'online', link: '' });
   const [tplSel, setTplSel] = useState('');
@@ -159,7 +160,22 @@ export function Timeline({ db, project, isStudio }) {
           </div>
           {nf.category === 'Reunião' && nf.start && <p className="micro"><CalendarIcon size={11} /> Reunião entra no calendário em {fmt(nf.start)}{nf.time ? ' às ' + nf.time : ''}.</p>}
           <div className="row">
-            <button className="btn btn-primary btn-sm" disabled={!nf.title.trim()} onClick={() => { db.addStage(project.id, nf); resetNf(); setAdding(false); }}>Adicionar</button>
+            <button
+              className="btn btn-primary btn-sm"
+              disabled={!nf.title.trim() || salvandoEtapa}
+              onClick={async () => {
+                setSalvandoEtapa(true);
+                try {
+                  await db.addStage(project.id, nf);
+                  resetNf();
+                  setAdding(false);
+                } finally {
+                  setSalvandoEtapa(false);
+                }
+              }}
+            >
+              {salvandoEtapa ? 'Adicionando…' : 'Adicionar'}
+            </button>
             <button className="btn btn-ghost btn-sm" onClick={() => { resetNf(); setAdding(false); }}>Cancelar</button>
           </div>
         </div>

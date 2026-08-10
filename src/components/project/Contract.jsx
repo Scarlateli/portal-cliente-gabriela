@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import { Empty } from '../atoms.jsx';
 import { SIG_PROVIDERS } from '../../lib/constants.js';
-import { fmt, todayISO } from '../../lib/helpers.js';
+import { fmt, todayISO, validarArquivo } from '../../lib/helpers.js';
 
 const KINDS = [
   ['contrato', 'Contratos'],
@@ -37,6 +37,8 @@ export function Contract({ db, project, isStudio }) {
   const [nf, setNf] = useState({ name: '', kind: 'termo' });
   const [file, setFile] = useState(null);
   const [fileKey, setFileKey] = useState(0);
+  const [salvandoDoc, setSalvandoDoc] = useState(false);
+  const [avisoArquivo, setAvisoArquivo] = useState('');
   const shown = kind ? all.filter((d) => d.kind === kind) : all;
   return (
     <section className="panel">
@@ -61,21 +63,34 @@ export function Contract({ db, project, isStudio }) {
               <option value="contrato">Contrato</option>
               <option value="termo">Termo</option>
             </select>
-            <input key={fileKey} type="file" accept="application/pdf" onChange={(e) => setFile(e.target.files && e.target.files[0] ? e.target.files[0] : null)} />
+            <input key={fileKey} type="file" accept="application/pdf" onChange={(e) => {
+                const f = e.target.files && e.target.files[0];
+                const problema = f ? validarArquivo(f, { somentePdf: true }) : null;
+                setAvisoArquivo(problema || '');
+                setFile(problema ? null : f || null);
+              }}
+            />
+            {avisoArquivo && <p className="micro aviso-upload">{avisoArquivo}</p>}
           </div>
           <div className="row">
             <button
               className="btn btn-primary btn-sm"
-              disabled={!nf.name.trim()}
-              onClick={() => {
-                db.addContractDoc(project.id, { name: nf.name.trim(), kind: nf.kind }, file);
-                setNf({ name: '', kind: 'termo' });
-                setFile(null);
-                setFileKey((k) => k + 1);
-                setAdding(false);
+              disabled={!nf.name.trim() || salvandoDoc}
+              onClick={async () => {
+                setSalvandoDoc(true);
+                try {
+                  await db.addContractDoc(project.id, { name: nf.name.trim(), kind: nf.kind }, file);
+                  setNf({ name: '', kind: 'termo' });
+                  setFile(null);
+                  setAvisoArquivo('');
+                  setFileKey((k) => k + 1);
+                  setAdding(false);
+                } finally {
+                  setSalvandoDoc(false);
+                }
               }}
             >
-              Adicionar
+              {salvandoDoc ? 'Adicionando…' : 'Adicionar'}
             </button>
             <button className="btn btn-ghost btn-sm" onClick={() => setAdding(false)}>
               Cancelar

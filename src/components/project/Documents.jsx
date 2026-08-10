@@ -2,22 +2,35 @@ import { useState, useRef } from 'react';
 import { Upload, FileText, Download, Trash2 } from 'lucide-react';
 import { Empty } from '../atoms.jsx';
 import { DOC_TYPES } from '../../lib/constants.js';
-import { fmt } from '../../lib/helpers.js';
+import { fmt, validarArquivo } from '../../lib/helpers.js';
 
 export function Documents({ db, project, isStudio }) {
   const docs = db.documents(project.id);
   const [filter, setFilter] = useState('');
   const [type, setType] = useState('geral');
   const fileRef = useRef(null);
-  const onPick = (e) => {
+  const [enviando, setEnviando] = useState(false);
+  const [aviso, setAviso] = useState('');
+  const onPick = async (e) => {
     const f = e.target.files && e.target.files[0];
-    if (f)
-      db.addDocument(
+    e.target.value = '';
+    if (!f) return;
+    const problema = validarArquivo(f);
+    if (problema) {
+      setAviso(problema);
+      return;
+    }
+    setAviso('');
+    setEnviando(true);
+    try {
+      await db.addDocument(
         project.id,
         { name: f.name, type, size: (f.size / 1048576).toFixed(1).replace('.', ',') + ' MB' },
         f,
       );
-    e.target.value = '';
+    } finally {
+      setEnviando(false);
+    }
   };
   const openDoc = async (d) => {
     if (!d.storagePath) return;
@@ -43,13 +56,14 @@ export function Documents({ db, project, isStudio }) {
                 </option>
               ))}
             </select>
-            <button
+            <button disabled={enviando}
               className="btn btn-ghost btn-sm"
               onClick={() => fileRef.current && fileRef.current.click()}
             >
               <Upload size={14} /> Enviar PDF
             </button>
-            <input ref={fileRef} type="file" accept="application/pdf" hidden onChange={onPick} />
+            <input ref={fileRef} type="file" accept="application/pdf,image/*,.doc,.docx,.xls,.xlsx" hidden onChange={onPick} />
+            {aviso && <p className="micro aviso-upload">{aviso}</p>}
           </div>
         )}
       </header>

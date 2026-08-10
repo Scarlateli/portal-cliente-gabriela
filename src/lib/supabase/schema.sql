@@ -382,3 +382,7 @@ set file_size_limit = 20971520,
       'application/msword','application/vnd.openxmlformats-officedocument.wordprocessingml.document',
       'application/vnd.ms-excel','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']
 where id = 'documentos';
+
+-- Consolidação das políticas RLS (08/08): uma política por comando,
+-- com studio e cliente unidos por OR. Ver migração consolidar_politicas_rls.
+-- Padrão: <tabela>_read (select), _insert, _update, _delete.

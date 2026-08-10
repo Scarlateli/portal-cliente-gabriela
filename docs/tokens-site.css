@@ -1,0 +1,21 @@
+/* Tokens visuais do portal — extraídos de src/styles/theme.css em 08/08/2026.
+   Para o site institucional: COPIE estes valores, não importe este arquivo.
+   Os dois projetos são independentes; o que precisa conversar é a aparência,
+   não o código. Se a paleta mudar no portal, atualize aqui conscientemente.
+
+   Tipografia: Cormorant Garamond (títulos, itálico nos destaques) + Jost
+   (interface e corpo), ambas do Google Fonts. Sobre a Futura: a Gabriela
+   tem licença, mas confirme se ela cobre uso WEB (webfont) antes de usar.
+
+   Princípios: muito respiro, cantos discretos (4–6px), sem sombras fortes,
+   filetes finos no lugar de bordas pesadas. */
+
+:root {
+  --gl-bg: #E3DFD2;
+  --gl-ink: #2F2119;
+  --gl-vinho: #4B1F1B;
+  --gl-hairline: rgba(63,32,25,.12);
+  --font-display: 'Cormorant Garamond',Georgia,serif;
+  --font-body: 'Futura Std','Jost','Century Gothic',system-ui,sans-serif;
+  --font-mono: 'IBM Plex Mono',ui-monospace,SFMono-Regular,monospace;
+}

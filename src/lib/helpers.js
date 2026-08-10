@@ -40,3 +40,30 @@ export const subStats = (s) => {
   const list = s.subs || [];
   return { total: list.length, done: list.filter((b) => b.done).length };
 };
+
+/* Limites de upload — espelham o que o bucket "documentos" impõe no
+   servidor. Aqui é só para avisar a pessoa antes de perder tempo subindo. */
+export const LIMITE_MB = 20;
+const TIPOS_OK = [
+  'application/pdf',
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'image/heic',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.ms-excel',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+];
+
+export function validarArquivo(file, { somentePdf = false } = {}) {
+  if (!file) return 'Nenhum arquivo selecionado.';
+  const mb = file.size / 1048576;
+  if (mb > LIMITE_MB)
+    return `Este arquivo tem ${mb.toFixed(1).replace('.', ',')} MB e o limite é ${LIMITE_MB} MB. Tente comprimir o PDF ou reduzir a imagem.`;
+  if (somentePdf && file.type !== 'application/pdf')
+    return 'Para contratos e termos, envie um arquivo PDF.';
+  if (!somentePdf && file.type && !TIPOS_OK.includes(file.type))
+    return 'Formato não aceito. Envie PDF, imagem (JPG, PNG, WEBP) ou documento do Office.';
+  return null;
+}
