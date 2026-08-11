@@ -29,7 +29,7 @@ import { Payments } from './Payments.jsx';
 import { Quotes } from './Quotes.jsx';
 import { Suppliers } from './Suppliers.jsx';
 
-const STUDIO_WHATSAPP = 'https://wa.me/5521987751651';
+const STUDIO_WHATSAPP = 'https://wa.me/5511936209087';
 
 const TABS = [
   { id: 'timeline', label: 'Linha do tempo', I: GitCommitVertical },
