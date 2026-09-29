@@ -107,7 +107,7 @@ function AppInner() {
   if (bootstrapping) {
     body = (
       <div className="shell">
-        <main className="content">
+        <main id="conteudo" className="content">
           <Loading text="Conectando…" />
         </main>
       </div>
@@ -168,7 +168,7 @@ function ClientArea({ db, user, clientPid, setClientPid, onLogout, onPrint }) {
   if (!r.ready) {
     return (
       <div className="shell">
-        <main className="content">{r.error ? <ErrorBox error={r.error} /> : <Loading />}</main>
+        <main id="conteudo" className="content">{r.error ? <ErrorBox error={r.error} /> : <Loading />}</main>
       </div>
     );
   }
@@ -202,6 +202,9 @@ function ClientArea({ db, user, clientPid, setClientPid, onLogout, onPrint }) {
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
+      <a className="skip-link" href="#conteudo">
+        Pular para o conteúdo
+      </a>
       <AppInner />
     </QueryClientProvider>
   );

@@ -64,7 +64,7 @@ export function Quotes({ db, project, isStudio }) {
               ))}
             </select>
             <input
-              placeholder="Fornecedor"
+              placeholder="Fornecedor" aria-label="Nome do fornecedor"
               value={q.supplier}
               onChange={(e) => setQ({ ...q, supplier: e.target.value })}
             />
@@ -72,7 +72,7 @@ export function Quotes({ db, project, isStudio }) {
           <div className="add-row">
             <input
               type="number"
-              placeholder="Valor (R$)"
+              placeholder="Valor (R$)" aria-label="Valor do orçamento em reais"
               value={q.amount}
               onChange={(e) => setQ({ ...q, amount: e.target.value })}
             />
@@ -103,7 +103,7 @@ export function Quotes({ db, project, isStudio }) {
             </div>
           </div>
           <textarea
-            placeholder="Nota para o cliente (aparece antes da decisão)"
+            placeholder="Nota para o cliente (aparece antes da decisão)" aria-label="Nota para o cliente"
             value={q.studioNote}
             onChange={(e) => setQ({ ...q, studioNote: e.target.value })}
           />
@@ -306,7 +306,7 @@ function QuoteCard({ db, q, isStudio }) {
         )}
         <div className="comment-box">
           <input
-            placeholder="Comentar…"
+            placeholder="Comentar…" aria-label="Escrever um comentário"
             value={comment}
             onChange={(e) => setComment(e.target.value)}
             onKeyDown={(e) => {

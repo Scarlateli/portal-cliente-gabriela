@@ -90,7 +90,7 @@ export function Timeline({ db, project, isStudio }) {
 
       {adding && (
         <div className="add-stage">
-          <input placeholder="Título da etapa" value={nf.title} onChange={(e) => setNf({ ...nf, title: e.target.value })} />
+          <input placeholder="Título da etapa" aria-label="Título da etapa" value={nf.title} onChange={(e) => setNf({ ...nf, title: e.target.value })} />
           <div className="add-row">
             
             
@@ -106,10 +106,10 @@ export function Timeline({ db, project, isStudio }) {
                 <button type="button" className={'seg-opt' + (!nf.presencial ? ' on' : '')} onClick={() => setNf({ ...nf, presencial: false })}><Video size={13} /> Online</button>
                 <button type="button" className={'seg-opt' + (nf.presencial ? ' on' : '')} onClick={() => setNf({ ...nf, presencial: true })}><MapPin size={13} /> Presencial</button>
               </div>
-              {!nf.presencial && <input placeholder="Link da reunião (ex.: https://meet.google.com/...)" value={nf.link} onChange={(e) => setNf({ ...nf, link: e.target.value })} />}
+              {!nf.presencial && <input placeholder="Link da reunião (ex.: https://meet.google.com/...)" aria-label="Link da reunião" value={nf.link} onChange={(e) => setNf({ ...nf, link: e.target.value })} />}
             </div>
           )}
-          <input placeholder="Descrição (opcional)" value={nf.desc} onChange={(e) => setNf({ ...nf, desc: e.target.value })} />
+          <input placeholder="Descrição (opcional)" aria-label="Descrição da etapa" value={nf.desc} onChange={(e) => setNf({ ...nf, desc: e.target.value })} />
           <div className="nf-subs">
             <div className="subs-head">Sub-etapas{nf.subs.length > 0 ? ' · ' + nf.subs.length : ''}</div>
             {nf.subs.map((b, i) => (
@@ -129,7 +129,7 @@ export function Timeline({ db, project, isStudio }) {
               </div>
             ))}
             <div className="nf-sub-grid">
-              <input placeholder="Título da sub-etapa" value={sd.title} onChange={(e) => setSd({ ...sd, title: e.target.value })} />
+              <input placeholder="Título da sub-etapa" aria-label="Título da sub-etapa" value={sd.title} onChange={(e) => setSd({ ...sd, title: e.target.value })} />
               <label className="inline-lab">Tipo
                 <select value={sd.kind} onChange={(e) => setSd({ ...sd, kind: e.target.value })}>
                   <option value="tarefa">Tarefa</option>
@@ -152,7 +152,7 @@ export function Timeline({ db, project, isStudio }) {
                     <button type="button" className={'seg-opt' + (sd.format !== 'presencial' ? ' on' : '')} onClick={() => setSd({ ...sd, format: 'online' })}><Video size={13} /> Online</button>
                     <button type="button" className={'seg-opt' + (sd.format === 'presencial' ? ' on' : '')} onClick={() => setSd({ ...sd, format: 'presencial' })}><MapPin size={13} /> Presencial</button>
                   </div>
-                  {sd.format !== 'presencial' && <input placeholder="Link da reunião" value={sd.link} onChange={(e) => setSd({ ...sd, link: e.target.value })} />}
+                  {sd.format !== 'presencial' && <input placeholder="Link da reunião" aria-label="Link da reunião" value={sd.link} onChange={(e) => setSd({ ...sd, link: e.target.value })} />}
                 </>
               )}
             </div>
@@ -206,7 +206,7 @@ function StageItem({ db, s, isStudio }) {
         <span className="tl-node" aria-hidden />
         <div className="tl-body">
           <div className="add-stage">
-            <input placeholder="Título da etapa" value={ef.title} onChange={(e) => setEf({ ...ef, title: e.target.value })} />
+            <input placeholder="Título da etapa" aria-label="Título da etapa" value={ef.title} onChange={(e) => setEf({ ...ef, title: e.target.value })} />
             <div className="add-row">
               <select value={ef.category} onChange={(e) => setEf({ ...ef, category: e.target.value })}>{STAGE_CATEGORIES.map((c) => <option key={c}>{c}</option>)}</select>
               <select value={ef.owner} onChange={(e) => setEf({ ...ef, owner: e.target.value })}><option value="studio">Responsável: Studio</option><option value="client">Responsável: Cliente</option></select>
@@ -222,10 +222,10 @@ function StageItem({ db, s, isStudio }) {
                   <button type="button" className={'seg-opt' + (!ef.presencial ? ' on' : '')} onClick={() => setEf({ ...ef, presencial: false })}><Video size={13} /> Online</button>
                   <button type="button" className={'seg-opt' + (ef.presencial ? ' on' : '')} onClick={() => setEf({ ...ef, presencial: true })}><MapPin size={13} /> Presencial</button>
                 </div>
-                {!ef.presencial && <input placeholder="Link da reunião" value={ef.link || ''} onChange={(e) => setEf({ ...ef, link: e.target.value })} />}
+                {!ef.presencial && <input placeholder="Link da reunião" aria-label="Link da reunião" value={ef.link || ''} onChange={(e) => setEf({ ...ef, link: e.target.value })} />}
               </div>
             )}
-            <input placeholder="Descrição (opcional)" value={ef.desc || ''} onChange={(e) => setEf({ ...ef, desc: e.target.value })} />
+            <input placeholder="Descrição (opcional)" aria-label="Descrição da etapa" value={ef.desc || ''} onChange={(e) => setEf({ ...ef, desc: e.target.value })} />
             <div className="row">
               <button className="btn btn-primary btn-sm" disabled={!ef.title.trim()} onClick={saveEdit}>Salvar</button>
               <button className="btn btn-ghost btn-sm" onClick={() => setEditing(false)}>Cancelar</button>

@@ -597,3 +597,9 @@ button.sub-box{cursor:pointer}
 
 /* aviso de arquivo recusado */
 .cp .aviso-upload{color:#8a3a30;margin-top:6px}
+
+/* Pular para o conteúdo: invisível até receber foco pelo teclado.
+   Evita que quem navega por Tab precise passar por todo o cabeçalho
+   e pelas abas antes de chegar ao que importa. */
+.skip-link{position:absolute;left:-9999px;top:0;z-index:100;background:var(--gl-vinho);color:var(--gl-cream);padding:10px 16px;border-radius:0 0 4px 0;font-size:13px}
+.skip-link:focus{left:0}

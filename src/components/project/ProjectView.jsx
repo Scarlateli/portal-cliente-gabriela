@@ -73,7 +73,7 @@ export function ProjectView({ db: baseDb, user, pid, isStudio, onLogout, onBack,
             ) : null
           }
         />
-        <main className="content">{r.error ? <ErrorBox error={r.error} /> : <Loading />}</main>
+        <main id="conteudo" className="content">{r.error ? <ErrorBox error={r.error} /> : <Loading />}</main>
       </div>
     );
   }
@@ -83,7 +83,7 @@ export function ProjectView({ db: baseDb, user, pid, isStudio, onLogout, onBack,
   if (!project) {
     return (
       <div className="shell">
-        <main className="content">
+        <main id="conteudo" className="content">
           <div className="empty">
             Projeto não encontrado.{' '}
             <button type="button" className="link" onClick={onBack}>
@@ -98,7 +98,7 @@ export function ProjectView({ db: baseDb, user, pid, isStudio, onLogout, onBack,
     return (
       <div className="shell">
         <TopBar user={user} onLogout={onLogout} />
-        <main className="content">
+        <main id="conteudo" className="content">
           <ErrorBox text="Projeto não encontrado." />
         </main>
       </div>
@@ -157,7 +157,7 @@ function ProjectInner({
           </button>
         }
       />
-      <main className="content">
+      <main id="conteudo" className="content">
         <div className="hero">
           <div className="hero-headrow">
             <span className="hero-tag">

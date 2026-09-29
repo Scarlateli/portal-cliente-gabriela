@@ -15,7 +15,7 @@ export function Payments({ db, project, isStudio }) {
         <header className="panel-head"><h2>Pagamentos</h2></header>
         <p className="hint">Cadastre o plano de pagamento do projeto. As parcelas aparecem para você e para o cliente.</p>
         <div className="form-grid">
-          <label className="lab">Valor total (R$)<input type="number" value={f.total} onChange={(e) => setF({ ...f, total: e.target.value })} placeholder="24000" /></label>
+          <label className="lab">Valor total (R$)<input type="number" value={f.total} onChange={(e) => setF({ ...f, total: e.target.value })} placeholder="24000" aria-label="Valor total do contrato em reais" /></label>
           <label className="lab">Nº de parcelas<input type="number" value={f.n} onChange={(e) => setF({ ...f, n: e.target.value })} /></label>
           <label className="lab">1º vencimento<input type="date" value={f.first} onChange={(e) => setF({ ...f, first: e.target.value })} /></label>
           <label className="lab">Intervalo (meses)<input type="number" value={f.interval} onChange={(e) => setF({ ...f, interval: e.target.value })} /></label>

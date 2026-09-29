@@ -33,7 +33,7 @@ export function Calendar({ db, project, isStudio }) {
 
       {adding && (
         <div className="add-stage">
-          <input placeholder="Título do evento" value={ev.title} onChange={(e) => setEv({ ...ev, title: e.target.value })} />
+          <input placeholder="Título do evento" aria-label="Título do evento" value={ev.title} onChange={(e) => setEv({ ...ev, title: e.target.value })} />
           <div className="add-row">
             <input type="date" value={ev.date} onChange={(e) => setEv({ ...ev, date: e.target.value })} />
             <select value={ev.kind} onChange={(e) => setEv({ ...ev, kind: e.target.value })}>

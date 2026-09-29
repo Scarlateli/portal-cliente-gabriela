@@ -55,7 +55,7 @@ export function Contract({ db, project, isStudio }) {
         <div className="add-stage">
           <div className="add-row">
             <input
-              placeholder="Nome do documento (ex.: Termo de autorização de imagens)"
+              placeholder="Nome do documento (ex.: Termo de autorização de imagens)" aria-label="Nome do documento"
               value={nf.name}
               onChange={(e) => setNf({ ...nf, name: e.target.value })}
             />

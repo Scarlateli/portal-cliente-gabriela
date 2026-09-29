@@ -36,7 +36,7 @@ export function AdminHome({ db: baseDb, user, onLogout, onOpen }) {
     return (
       <div className="shell">
         <TopBar user={user} onLogout={onLogout} />
-        <main className="content">{r.error ? <ErrorBox error={r.error} /> : <Loading />}</main>
+        <main id="conteudo" className="content">{r.error ? <ErrorBox error={r.error} /> : <Loading />}</main>
       </div>
     );
   }
@@ -62,7 +62,7 @@ function AdminInner({ db, baseDb, user, onLogout, onOpen, mutationError, clearEr
   return (
     <div className="shell">
       <TopBar user={user} onLogout={onLogout} />
-      <main className="content">
+      <main id="conteudo" className="content">
         <div className="hero">
           <span className="hero-tag">Painel do studio</span>
           <h1 className="hero-name">Olá, {user.name}</h1>
@@ -254,12 +254,12 @@ function NewProject({ db, onDone }) {
         <h4 className="form-sec">Dados do projeto</h4>
         <label className="lab">
           Código do projeto
-          <input value={f.code} onChange={set('code')} placeholder="ex.: FRV-003" />
+          <input value={f.code} onChange={set('code')} placeholder="ex.: FRV-003" aria-label="Código do projeto" />
           {errors.code && <span className="error">{errors.code}</span>}
         </label>
         <label className="lab">
           Nome do projeto
-          <input value={f.name} onChange={set('name')} placeholder="ex.: Residência Oliveira" />
+          <input value={f.name} onChange={set('name')} placeholder="ex.: Residência Oliveira" aria-label="Nome do projeto" />
           {errors.name && <span className="error">{errors.name}</span>}
         </label>
         <label className="lab full">
@@ -267,7 +267,7 @@ function NewProject({ db, onDone }) {
           <input
             value={f.address}
             onChange={set('address')}
-            placeholder="Rua, número — bairro, cidade"
+            placeholder="Rua, número — bairro, cidade" aria-label="Endereço do projeto"
           />
         </label>
         <label className="lab">
@@ -281,7 +281,7 @@ function NewProject({ db, onDone }) {
         <h4 className="form-sec">Dados do cliente</h4>
         <label className="lab">
           Nome do cliente
-          <input value={f.clientName} onChange={set('clientName')} placeholder="Nome completo" />
+          <input value={f.clientName} onChange={set('clientName')} placeholder="Nome completo" aria-label="Nome do cliente" />
           {errors.clientName && <span className="error">{errors.clientName}</span>}
         </label>
         <label className="lab">
@@ -290,7 +290,7 @@ function NewProject({ db, onDone }) {
             type="email"
             value={f.clientEmail}
             onChange={set('clientEmail')}
-            placeholder="email@cliente.com"
+            placeholder="email@cliente.com" aria-label="E-mail de acesso do cliente"
           />
           {errors.clientEmail && <span className="error">{errors.clientEmail}</span>}
         </label>
@@ -406,7 +406,7 @@ function Templates({ db }) {
       <h4 className="form-sec">Novo template</h4>
       <input
         className="tpl-name"
-        placeholder="Nome do template"
+        placeholder="Nome do template" aria-label="Nome do template"
         value={name}
         onChange={(e) => setName(e.target.value)}
       />

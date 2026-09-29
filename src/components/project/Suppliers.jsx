@@ -63,14 +63,14 @@ function SupplierCard({ db, q, isStudio }) {
       ) : (
         <div className="sup-edit">
           <div className="add-row">
-            <label className="lab">Contato<input value={f.contact || ''} onChange={(e) => setF({ ...f, contact: e.target.value })} placeholder="Nome · telefone · e-mail" /></label>
+            <label className="lab">Contato<input value={f.contact || ''} onChange={(e) => setF({ ...f, contact: e.target.value })} placeholder="Nome · telefone · e-mail" aria-label="Contato do fornecedor" /></label>
             <label className="lab">Status do contrato<select value={f.contractStatus || 'a_iniciar'} onChange={(e) => setF({ ...f, contractStatus: e.target.value })}>{CONTRACT_STATUS.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}</select></label>
           </div>
           <div className="add-row">
-            <label className="lab">Prazo de execução<input value={f.deadline || ''} onChange={(e) => setF({ ...f, deadline: e.target.value })} placeholder="ex.: 45 dias" /></label>
-            <label className="lab">Condições de pagamento<input value={f.payment || ''} onChange={(e) => setF({ ...f, payment: e.target.value })} placeholder="ex.: 50% entrada, 50% entrega" /></label>
+            <label className="lab">Prazo de execução<input value={f.deadline || ''} onChange={(e) => setF({ ...f, deadline: e.target.value })} placeholder="ex.: 45 dias" aria-label="Prazo de entrega" /></label>
+            <label className="lab">Condições de pagamento<input value={f.payment || ''} onChange={(e) => setF({ ...f, payment: e.target.value })} placeholder="ex.: 50% entrada, 50% entrega" aria-label="Condições de pagamento" /></label>
           </div>
-          <textarea placeholder="Observações sobre o contrato com o fornecedor" value={f.notes || ''} onChange={(e) => setF({ ...f, notes: e.target.value })} />
+          <textarea placeholder="Observações sobre o contrato com o fornecedor" aria-label="Observações sobre o contrato" value={f.notes || ''} onChange={(e) => setF({ ...f, notes: e.target.value })} />
           <div className="row">
             <button className="btn btn-primary btn-sm" onClick={save}>Salvar</button>
             <button className="btn btn-ghost btn-sm" onClick={() => setEditing(false)}>Cancelar</button>
