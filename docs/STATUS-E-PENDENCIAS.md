@@ -172,3 +172,24 @@ para o portal, tokens visuais copiados (não importados) para o site.
   `supabase` (produção). Toda função nova precisa existir nos dois.
 - Segredos **nunca** entram no repositório: ficam em Supabase → Edge
   Functions → Secrets e nas variáveis de ambiente da Vercel.
+
+
+---
+
+## Revisão de experiência — 28/09/2026
+
+**Feito:** erros traduzidos para português claro (causa técnica recolhida em
+"Detalhe técnico"); login refeito como formulário de verdade, com
+preenchimento automático e recuperação de senha na própria tela; prévia do
+site para WhatsApp/redes; rótulos de acessibilidade e "Pular para o
+conteúdo".
+
+**Ficou para depois, de propósito** (mudança larga demais na véspera da
+validação):
+- **Diálogos de confirmação** — 9 ações ainda usam a caixa cinza do
+  navegador ("Excluir…?", "Finalizar o projeto?", "Enviar para
+  assinatura?"). Funcionam, mas destoam do visual. Trocar por um diálogo
+  próprio é um bom trabalho para o Claude Code: um componente só, aplicado
+  nos 7 arquivos.
+- **Nome do template** — "Salvar como template" ainda pede o nome numa
+  caixa do navegador; entra junto com o item acima.
