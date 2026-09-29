@@ -1,5 +1,11 @@
 # Colocar o Portal em produção
 
+> **O portal já está no ar** em <https://portal.gabrielalendecker.com> desde
+> julho/2026, com deploy automático a cada push na `main`. Este guia continua
+> valendo como referência para recriar o ambiente do zero, publicar uma cópia
+> ou entender como as peças se conectam — não é uma tarefa pendente.
+
+
 Guia passo a passo para ligar o backend Supabase e publicar o app.
 
 > **Importante:** por padrão o app roda 100% no **mock em memória**

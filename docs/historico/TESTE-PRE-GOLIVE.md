@@ -1,3 +1,10 @@
+> **Documento histórico — não é mais o roteiro vigente.**
+> O teste pré-go-live foi realizado em julho/2026. O roteiro em uso agora é docs/ROTEIRO-VALIDACAO-GABRIELA.md.
+> Para o estado atual, veja [`../STATUS-E-PENDENCIAS.md`](../STATUS-E-PENDENCIAS.md)
+> e [`../PLANO-PRODUCAO.md`](../PLANO-PRODUCAO.md).
+
+---
+
 # Teste pré-go-live — roteiro
 
 Objetivo: usar o portal **de verdade** contra o Supabase — **Gabriela como

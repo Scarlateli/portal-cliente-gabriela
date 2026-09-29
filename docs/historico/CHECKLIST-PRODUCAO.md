@@ -1,3 +1,10 @@
+> **Documento histórico — não é mais o roteiro vigente.**
+> O portal foi ao ar em julho/2026 e o checklist foi concluído. Mantido como registro do processo.
+> Para o estado atual, veja [`../STATUS-E-PENDENCIAS.md`](../STATUS-E-PENDENCIAS.md)
+> e [`../PLANO-PRODUCAO.md`](../PLANO-PRODUCAO.md).
+
+---
+
 # Checklist de produção
 
 O que **já está pronto** e o que **falta** para colocar o portal no ar.
