@@ -1,3 +1,4 @@
+import { erroAmigavel } from '../lib/erros.js';
 import {
   Check,
   CircleDot,
@@ -19,18 +20,20 @@ export function Loading({ text = 'Carregando…' }) {
   );
 }
 
-export function ErrorBox({ text = 'Não foi possível carregar os dados.', error, onRetry }) {
-  // Mostra a causa real (ex.: resposta do PostgREST) — sem isso o erro fica
-  // genérico e impossível de diagnosticar em produção.
-  const detail = error ? error.message || String(error) : null;
+export function ErrorBox({ text, error, onRetry }) {
+  // A frase principal é sempre humana; a causa real fica recolhida em
+  // "Detalhe técnico" — útil para diagnosticar, sem assustar o cliente.
+  const amigavel = error ? erroAmigavel(error) : null;
+  const principal = text || (amigavel ? amigavel.texto : 'Não foi possível carregar os dados.');
   return (
     <div className="empty">
       <AlertTriangle size={18} />
-      <span>{text}</span>
-      {detail && (
-        <span className="hint" style={{ maxWidth: 420 }}>
-          Detalhe técnico: {detail}
-        </span>
+      <span>{principal}</span>
+      {amigavel && amigavel.detalhe && (
+        <details className="detalhe-tecnico">
+          <summary>Detalhe técnico</summary>
+          <span>{amigavel.detalhe}</span>
+        </details>
       )}
       {onRetry && (
         <button className="btn btn-ghost btn-sm" onClick={onRetry} style={{ marginTop: 8 }}>
@@ -43,10 +46,19 @@ export function ErrorBox({ text = 'Não foi possível carregar os dados.', error
 
 export function ErrorBanner({ error, onClose }) {
   if (!error) return null;
+  const amigavel = erroAmigavel(error);
   return (
     <div className="alert" role="alert">
       <AlertTriangle size={16} />
-      <span>{error.message || 'Ocorreu um erro ao salvar. Tente novamente.'}</span>
+      <span>
+        {amigavel.texto}
+        {amigavel.detalhe && (
+          <details className="detalhe-tecnico">
+            <summary>Detalhe técnico</summary>
+            <span>{amigavel.detalhe}</span>
+          </details>
+        )}
+      </span>
       {onClose && (
         <button
           className="icon-btn"

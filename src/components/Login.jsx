@@ -12,6 +12,10 @@ export function Login({ db, onLogin }) {
   const [err, setErr] = useState('');
   const [fieldErr, setFieldErr] = useState({});
   const [busy, setBusy] = useState(false);
+  // recuperação de senha na própria tela (antes era uma caixa cinza do
+  // navegador, que no celular e em navegadores embutidos fica ruim)
+  const [recuperando, setRecuperando] = useState(false);
+  const [enviado, setEnviado] = useState(false);
 
   const submit = async () => {
     const { ok, errors } = validate(loginSchema, { email, pass });
@@ -37,6 +41,32 @@ export function Login({ db, onLogin }) {
     }
   };
 
+  const enviarLink = async () => {
+    const alvo = email.trim();
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(alvo)) {
+      setErr('Digite o e-mail cadastrado para receber o link.');
+      return;
+    }
+    setErr('');
+    setBusy(true);
+    try {
+      const sb = await loadSupabase();
+      await sb.functions.invoke('forgot-password', { body: { email: alvo } });
+    } catch {
+      /* a resposta é sempre neutra, por segurança: não revelamos se o
+         e-mail existe na base */
+    } finally {
+      setBusy(false);
+      setEnviado(true);
+    }
+  };
+
+  const voltarAoLogin = () => {
+    setRecuperando(false);
+    setEnviado(false);
+    setErr('');
+  };
+
   return (
     <div className="login login-split">
       <aside className="login-brand">
@@ -55,16 +85,67 @@ export function Login({ db, onLogin }) {
       </aside>
       <div className="login-panel">
       <div className="login-card">
-        <h1 className="login-title">Portal do cliente</h1>
-        <p className="login-sub">Acompanhe cada etapa do seu projeto.</p>
+        <h1 className="login-title">{recuperando ? 'Recuperar senha' : 'Portal do cliente'}</h1>
+        <p className="login-sub">
+          {recuperando
+            ? 'Enviamos um link para você criar uma senha nova.'
+            : 'Acompanhe cada etapa do seu projeto.'}
+        </p>
+        {recuperando ? (
+          enviado ? (
+            <div className="recuperar-ok" role="status">
+              <p>
+                Se <strong>{email.trim()}</strong> estiver cadastrado, o link chega em alguns
+                minutos. Confira também a caixa de spam.
+              </p>
+              <button type="button" className="btn btn-ghost btn-block" onClick={voltarAoLogin}>
+                Voltar para o login
+              </button>
+            </div>
+          ) : (
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                enviarLink();
+              }}
+            >
+              <label className="field">
+                <Mail size={15} />
+                <input
+                  type="email"
+                  placeholder="Seu e-mail"
+                  aria-label="E-mail cadastrado"
+                  autoComplete="email"
+                  autoFocus
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+              </label>
+              {err && <p className="error">{err}</p>}
+              <button type="submit" className="btn btn-primary btn-block" disabled={busy}>
+                {busy ? 'Enviando…' : 'Enviar link'}
+              </button>
+              <button type="button" className="forgot" onClick={voltarAoLogin}>
+                Voltar para o login
+              </button>
+            </form>
+          )
+        ) : (
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            submit();
+          }}
+        >
         <label className="field">
           <Mail size={15} />
           <input
             type="email"
             placeholder="Seu e-mail"
+            aria-label="E-mail"
+            autoComplete="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && submit()}
           />
         </label>
         {fieldErr.email && <p className="error">{fieldErr.email}</p>}
@@ -73,34 +154,28 @@ export function Login({ db, onLogin }) {
           <input
             type="password"
             placeholder="Senha"
+            aria-label="Senha"
+            autoComplete="current-password"
             value={pass}
             onChange={(e) => setPass(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && submit()}
           />
         </label>
         {fieldErr.pass && <p className="error">{fieldErr.pass}</p>}
         {err && <p className="error">{err}</p>}
-        <button className="btn btn-primary btn-block" onClick={submit} disabled={busy}>
+        <button type="submit" className="btn btn-primary btn-block" disabled={busy}>
           {busy ? 'Entrando…' : 'Entrar'}
         </button>
+        </form>
+        )}
 
-        {IS_SUPABASE && (
+        {IS_SUPABASE && !recuperando && (
           <button
             type="button"
             className="forgot"
-            onClick={async () => {
-              const em = window.prompt(
-                'Digite seu e-mail para receber o link de redefinição de senha:',
-                email,
-              );
-              if (!em) return;
-              try {
-                const sb = await loadSupabase();
-                await sb.functions.invoke('forgot-password', { body: { email: em } });
-              } catch {
-                /* resposta é sempre neutra, por segurança */
-              }
-              window.alert('Se este e-mail estiver cadastrado, enviamos um link para redefinir a senha.');
+            onClick={() => {
+              setRecuperando(true);
+              setErr('');
+              setFieldErr({});
             }}
           >
             Esqueci minha senha

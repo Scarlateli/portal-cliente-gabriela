@@ -603,3 +603,14 @@ button.sub-box{cursor:pointer}
    e pelas abas antes de chegar ao que importa. */
 .skip-link{position:absolute;left:-9999px;top:0;z-index:100;background:var(--gl-vinho);color:var(--gl-cream);padding:10px 16px;border-radius:0 0 4px 0;font-size:13px}
 .skip-link:focus{left:0}
+
+/* causa técnica de um erro: recolhida, para não assustar quem lê */
+.cp .detalhe-tecnico{margin-top:6px;font-size:12px;color:var(--muted)}
+.cp .detalhe-tecnico summary{cursor:pointer;list-style:none;text-decoration:underline;text-underline-offset:2px}
+.cp .detalhe-tecnico summary::-webkit-details-marker{display:none}
+.cp .detalhe-tecnico span{display:block;margin-top:4px;max-width:440px;word-break:break-word;font-family:ui-monospace,Menlo,monospace;font-size:11px}
+
+/* recuperação de senha na própria tela */
+.cp .login-card form{display:flex;flex-direction:column;gap:inherit}
+.cp .recuperar-ok{display:flex;flex-direction:column;gap:14px}
+.cp .recuperar-ok p{margin:0;font-size:14px;line-height:1.55;color:var(--ink)}

@@ -95,7 +95,7 @@ export function Documents({ db, project, isStudio }) {
               </span>
               <button
                 className="icon-btn"
-                title={d.storagePath ? 'Baixar' : 'Arquivo disponível ao conectar o Supabase'}
+                title={d.storagePath ? 'Baixar' : 'Arquivo indisponível'}
                 onClick={() => openDoc(d)}
                 disabled={!d.storagePath}
               >
