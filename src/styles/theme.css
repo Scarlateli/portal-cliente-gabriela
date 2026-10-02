@@ -607,3 +607,33 @@ button.sub-box{cursor:pointer}
 .cp .login-card form{display:flex;flex-direction:column;gap:inherit}
 .cp .recuperar-ok{display:flex;flex-direction:column;gap:14px}
 .cp .recuperar-ok p{margin:0;font-size:14px;line-height:1.55;color:var(--ink)}
+
+/* ===== Etapa 2: editor de etapas, templates e gerenciar projeto ===== */
+.cp .ee{display:flex;flex-direction:column;gap:10px;margin:10px 0 14px}
+.cp .ee-etapa{border:1px solid var(--line);border-radius:5px;background:var(--card);padding:10px 12px}
+.cp .ee-linha{display:grid;grid-template-columns:1fr 150px auto;gap:8px;align-items:center}
+.cp .ee-botoes{display:inline-flex;gap:2px}
+.cp .ee-subs{list-style:none;margin:8px 0 0 14px;padding:0 0 0 12px;border-left:1px solid var(--line);display:flex;flex-direction:column;gap:6px}
+.cp .ee-sub{display:grid;grid-template-columns:1fr 112px 122px auto;gap:6px;align-items:center}
+.cp .ee-sub input,.cp .ee-sub select{font-size:13px}
+.cp .ee-add-sub{margin:8px 0 0 14px}
+@media (max-width:640px){
+  .cp .ee-linha{grid-template-columns:1fr auto}
+  .cp .ee-linha select{grid-column:1/-1;grid-row:2}
+  .cp .ee-sub{grid-template-columns:1fr 1fr auto}
+  .cp .ee-sub input{grid-column:1/-1}
+}
+.cp .tpl-acoes{display:inline-flex;gap:14px}
+.cp .tpl-card-ativo{border-color:var(--gl-vinho)}
+.cp .tpl-subs{list-style:none;margin:2px 0 4px 14px;padding:0;font-size:12.5px;color:var(--muted)}
+.cp .tpl-subs li::before{content:"– ";color:var(--gl-areia)}
+.cp .gp{margin-top:14px}
+.cp .gp-acoes{gap:10px;flex-wrap:wrap}
+.cp .gp-perigo{color:var(--gl-vermelho)}
+.cp .gp-painel{margin-top:12px}
+.cp .gp-painel-perigo{border-color:var(--gl-vermelho)}
+.cp .gp-painel-perigo h3{font-weight:500;font-size:17px;margin-bottom:6px}
+.cp .gp-painel-perigo p{font-size:14px;line-height:1.55;margin-bottom:12px;max-width:560px}
+.cp .gp-painel-perigo .lab{max-width:360px;margin-bottom:12px}
+.cp .btn-perigo{background:var(--gl-vermelho);border:1px solid var(--gl-vermelho);color:var(--gl-cream)}
+.cp .btn-perigo:disabled{opacity:.45;cursor:not-allowed}

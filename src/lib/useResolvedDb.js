@@ -45,6 +45,9 @@ const ALL_MUTATIONS = [
   'applyTemplate',
   'addTemplate',
   'deleteTemplate',
+  'updateTemplate',
+  'updateProject',
+  'deleteProject',
   'addDocument',
   'deleteDocument',
   'setContract',
@@ -68,6 +71,8 @@ const ALL_MUTATIONS = [
 
 // métodos cujo 1º argumento é o pid (usado p/ escolher o que invalidar)
 const PID_FIRST = new Set([
+  'updateProject',
+  'deleteProject',
   'addStage',
   'applyTemplate',
   'addDocument',

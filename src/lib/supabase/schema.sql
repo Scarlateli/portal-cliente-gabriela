@@ -136,7 +136,8 @@ create table if not exists template_items (
   title text not null,
   category text not null,
   "desc" text,
-  ord int not null default 1
+  ord int not null default 1,
+  subs jsonb not null default '[]'::jsonb -- sub-etapas do item (Etapa 2)
 );
 
 -- ============================================================

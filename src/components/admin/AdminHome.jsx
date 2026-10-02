@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { EtapasEditor } from './EtapasEditor.jsx';
+import { etapaVazia, copiarItens } from '../../lib/etapas.js';
 import {
   FolderKanban,
   FilePlus2,
@@ -8,16 +10,15 @@ import {
   User,
   MapPin,
   ChevronRight,
-  Plus,
-  X,
   AlertTriangle,
   ThumbsDown,
   CircleCheck,
   Trash2,
+  Pencil,
 } from 'lucide-react';
 import { TopBar, Empty, Loading, ErrorBox, ErrorBanner } from '../atoms.jsx';
 import { stageOverdue, fmt, todayISO } from '../../lib/helpers.js';
-import { STAGE_CATEGORIES } from '../../lib/constants.js';
+
 import { newProjectSchema, validate } from '../../lib/validation.js';
 import { qk, IS_SUPABASE } from '../../lib/data.js';
 import { useResolvedDb, specsFor } from '../../lib/useResolvedDb.js';
@@ -220,7 +221,15 @@ function NewProject({ db, onDone }) {
   const [errors, setErrors] = useState({});
   const [invite, setInvite] = useState(null);
   const [saving, setSaving] = useState(false);
+  const templates = db.templates();
+  const [tplId, setTplId] = useState('');
+  const [etapas, setEtapas] = useState([]);
   const set = (k) => (e) => setF({ ...f, [k]: e.target.value });
+  const escolherTemplate = (id) => {
+    setTplId(id);
+    const t = templates.find((x) => x.id === id);
+    setEtapas(t ? copiarItens(t.items) : []);
+  };
   const create = async () => {
     const res = validate(newProjectSchema, f);
     if (!res.ok) {
@@ -231,7 +240,7 @@ function NewProject({ db, onDone }) {
     setErrors({});
     setSaving(true);
     try {
-      const created = await db.addProject(f);
+      const created = await db.addProject({ ...f, etapas: etapas.filter((e) => e.title.trim()) });
       if (created && created.tempPassword)
         setInvite({
           password: created.tempPassword,
@@ -302,6 +311,23 @@ function NewProject({ db, onDone }) {
           </label>
         )}
       </div>
+      <h4 className="form-sec">Etapas do projeto</h4>
+      <label className="lab">
+        Começar a partir de um template
+        <select value={tplId} onChange={(e) => escolherTemplate(e.target.value)}>
+          <option value="">Nenhum (montar do zero)</option>
+          {templates.map((t) => (
+            <option key={t.id} value={t.id}>
+              {t.name}
+            </option>
+          ))}
+        </select>
+      </label>
+      <p className="hint">
+        Ajuste as etapas e sub-etapas antes de criar o projeto: as mudanças valem só para este projeto e o template
+        continua igual. Depois de criado, tudo segue editável na linha do tempo.
+      </p>
+      <EtapasEditor itens={etapas} onChange={setEtapas} />
       <p className="hint">
         {IS_SUPABASE
           ? 'Ao criar o projeto, uma senha provisória é gerada para o cliente — copie e envie por WhatsApp (ou deixe ir por e-mail, com o Resend ativo). No primeiro acesso, ele cria a senha definitiva.'
@@ -358,19 +384,33 @@ function NewProject({ db, onDone }) {
 
 function Templates({ db }) {
   const templates = db.templates();
+  const [editando, setEditando] = useState(null); // id do template em edição, ou null para novo
   const [name, setName] = useState('');
-  const [items, setItems] = useState([{ title: '', category: 'Reunião', desc: '' }]);
-  const upd = (i, k, v) => setItems(items.map((it, idx) => (idx === i ? { ...it, [k]: v } : it)));
+  const [items, setItems] = useState([etapaVazia()]);
+  const [salvando, setSalvando] = useState(false);
+
+  const limpar = () => {
+    setEditando(null);
+    setName('');
+    setItems([etapaVazia()]);
+  };
+  const editar = (t) => {
+    setEditando(t.id);
+    setName(t.name);
+    setItems(copiarItens(t.items).length ? copiarItens(t.items) : [etapaVazia()]);
+  };
   const save = async () => {
     const clean = items.filter((i) => i.title.trim());
-    if (name.trim() && clean.length) {
-      try {
-        await db.addTemplate(name.trim(), clean);
-        setName('');
-        setItems([{ title: '', category: 'Reunião', desc: '' }]);
-      } catch {
-        /* erro exibido pelo ErrorBanner do contêiner */
-      }
+    if (!name.trim() || !clean.length || salvando) return;
+    setSalvando(true);
+    try {
+      if (editando) await db.updateTemplate(editando, name.trim(), clean);
+      else await db.addTemplate(name.trim(), clean);
+      limpar();
+    } catch {
+      /* erro exibido pelo ErrorBanner do contêiner */
+    } finally {
+      setSalvando(false);
     }
   };
   return (
@@ -380,67 +420,61 @@ function Templates({ db }) {
       </header>
       <div className="tpl-list">
         {templates.map((t) => (
-          <div key={t.id} className="tpl-card">
+          <div key={t.id} className={'tpl-card' + (editando === t.id ? ' tpl-card-ativo' : '')}>
             <div className="row tpl-head">
               <strong>{t.name}</strong>
-              <button
-                type="button"
-                className="link sm danger"
-                onClick={() => {
-                  if (window.confirm('Excluir o template "' + t.name + '"?')) db.deleteTemplate(t.id);
-                }}
-              >
-                <Trash2 size={12} /> Excluir
-              </button>
+              <span className="tpl-acoes">
+                <button type="button" className="link sm" onClick={() => editar(t)}>
+                  <Pencil size={12} /> Editar
+                </button>
+                <button
+                  type="button"
+                  className="link sm danger"
+                  onClick={() => {
+                    if (window.confirm('Excluir o template "' + t.name + '"?')) {
+                      if (editando === t.id) limpar();
+                      db.deleteTemplate(t.id);
+                    }
+                  }}
+                >
+                  <Trash2 size={12} /> Excluir
+                </button>
+              </span>
             </div>
             <ol className="tpl-items">
               {t.items.map((it, i) => (
                 <li key={i}>
                   {it.title} <em>· {it.category}</em>
+                  {(it.subs || []).length > 0 && (
+                    <ul className="tpl-subs">
+                      {it.subs.map((b, k) => (
+                        <li key={k}>{b.title}</li>
+                      ))}
+                    </ul>
+                  )}
                 </li>
               ))}
             </ol>
           </div>
         ))}
       </div>
-      <h4 className="form-sec">Novo template</h4>
+      <h4 className="form-sec">{editando ? 'Editando template' : 'Novo template'}</h4>
       <input
         className="tpl-name"
         placeholder="Nome do template" aria-label="Nome do template"
         value={name}
         onChange={(e) => setName(e.target.value)}
       />
-      {items.map((it, i) => (
-        <div key={i} className="tpl-row">
-          <input
-            placeholder={'Etapa ' + (i + 1)}
-            value={it.title}
-            onChange={(e) => upd(i, 'title', e.target.value)}
-          />
-          <select value={it.category} onChange={(e) => upd(i, 'category', e.target.value)}>
-            {STAGE_CATEGORIES.map((c) => (
-              <option key={c}>{c}</option>
-            ))}
-          </select>
-          <button
-            className="icon-btn"
-            onClick={() => setItems(items.filter((_, idx) => idx !== i))}
-            disabled={items.length === 1}
-          >
-            <X size={14} />
-          </button>
-        </div>
-      ))}
+      <EtapasEditor itens={items} onChange={setItems} />
       <div className="row">
-        <button
-          className="btn btn-ghost btn-sm"
-          onClick={() => setItems([...items, { title: '', category: 'Reunião', desc: '' }])}
-        >
-          <Plus size={14} /> Adicionar etapa
+        <button className="btn btn-primary btn-sm" onClick={save} disabled={salvando}>
+          {salvando ? 'Salvando…' : editando ? 'Salvar alterações' : 'Salvar template'}
         </button>
-        <button className="btn btn-primary btn-sm" onClick={save}>
-          Salvar template
-        </button>
+        {editando && (
+          <button type="button" className="btn btn-ghost btn-sm" onClick={limpar}>
+            Cancelar edição
+          </button>
+        )}
       </div>
     </section>
   );

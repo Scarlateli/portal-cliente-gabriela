@@ -209,10 +209,12 @@ remontada; painel de entrada com logo vinho sobre bege; "Portal do Cliente"
 vira "Portal do Projeto"; nome do projeto em Futura; número de documentos
 sai do topo; e-mails de convite e de senha com logo e cores oficiais.
 
-**Etapa 2 — Cadastro e templates (studio)**
+**Etapa 2 — Cadastro e templates (studio)** ✅ (entregue em 01/10)
 Editar os dados do projeto depois de criado; escolher e ajustar o template
-dentro do cadastro, antes de enviar o acesso; excluir projeto; templates com
-sub-etapas.
+dentro do cadastro, antes de enviar o acesso; excluir projeto (com o código
+digitado para confirmar; apaga também os arquivos do Storage); templates com
+sub-etapas, agora editáveis. Mudança de banco em
+`supabase/sql/2026-10-01-etapa2-subetapas-em-templates.sql`.
 
 **Etapa 3 — Visão do cliente**
 Filtro das etapas na ordem Em andamento, Futuras, Concluídas, Todas, sem a

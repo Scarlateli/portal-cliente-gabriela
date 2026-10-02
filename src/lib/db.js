@@ -6,6 +6,22 @@
    --------------------------------------------------------------------- */
 import { uid, addMonthsISO, todayISO, fmt, stageOverdue } from './helpers.js';
 
+/* Etapas a partir de itens de template (com sub-etapas), no fim da linha do
+   tempo do projeto — mesmo comportamento do modo Supabase. */
+function etapasDeItens(state, pid, itens) {
+  let ord = state.stages.filter((x) => x.projectId === pid).reduce((m, x) => Math.max(m, x.ord), 0);
+  return (itens || [])
+    .filter((it) => it && String(it.title || '').trim())
+    .map((it) => ({
+      id: uid('s'), projectId: pid, ord: ++ord, title: String(it.title).trim(), category: it.category || 'Etapa',
+      status: 'a_fazer', owner: 'studio', start: '', end: '', time: '', link: '', presencial: false, desc: it.desc || '',
+      subs: (it.subs || [])
+        .filter((b) => b && String(b.title || '').trim())
+        .map((b) => ({ id: uid('sb'), title: String(b.title).trim(), done: false, kind: b.kind || 'tarefa', responsible: b.responsible || 'studio', due: '', time: '', format: '', link: '' })),
+      rescheduledFrom: null,
+    }));
+}
+
 export function makeDb(state, set) {
   const byP = (arr, pid) => state[arr].filter((x) => x.projectId === pid);
   return {
@@ -61,6 +77,7 @@ export function makeDb(state, set) {
           address: data.address, start: data.start, due: data.due, completedAt: null, accessUntil: null,
         }],
         contracts: [...s.contracts, { id: uid('c'), projectId: pid, kind: 'contrato', name: 'Contrato de prestação de serviços', sigStatus: 'rascunho', provider: null, signer: null, signedAt: null }],
+        stages: [...s.stages, ...etapasDeItens(s, pid, data.etapas)],
       };
     }),
     addStage: (pid, d) => set((s) => {
@@ -77,12 +94,11 @@ export function makeDb(state, set) {
     setStageStatus: (sid, status) => set((s) => ({ ...s, stages: s.stages.map((x) => x.id === sid ? { ...x, status } : x) })),
     applyTemplate: (pid, tid) => set((s) => {
       const t = s.templates.find((x) => x.id === tid); if (!t) return s;
-      let ord = s.stages.filter((x) => x.projectId === pid).reduce((m, x) => Math.max(m, x.ord), 0);
-      const added = t.items.map((it) => ({ id: uid('s'), projectId: pid, ord: ++ord, title: it.title, category: it.category, status: 'a_fazer', owner: 'studio', start: '', end: '', time: '', link: '', presencial: false, desc: it.desc, subs: [], rescheduledFrom: null }));
-      return { ...s, stages: [...s.stages, ...added] };
+      return { ...s, stages: [...s.stages, ...etapasDeItens(s, pid, t.items)] };
     }),
     addTemplate: (name, items) => set((s) => ({ ...s, templates: [...s.templates, { id: uid('t'), name, items }] })),
     deleteTemplate: (tid) => set((s) => ({ ...s, templates: s.templates.filter((t) => t.id !== tid) })),
+    updateTemplate: (tid, name, items) => set((s) => ({ ...s, templates: s.templates.map((t) => t.id === tid ? { ...t, name, items } : t) })),
     addDocument: (pid, d) => set((s) => ({ ...s, documents: [...s.documents, { id: uid('d'), projectId: pid, name: d.name, type: d.type, size: d.size, date: todayISO() }] })),
     deleteDocument: (did) => set((s) => ({ ...s, documents: s.documents.filter((x) => x.id !== did) })),
     setContract: (cid, patch) => set((s) => ({ ...s, contracts: s.contracts.map((c) => c.id === cid ? { ...c, ...patch } : c) })),
@@ -105,6 +121,15 @@ export function makeDb(state, set) {
     setQuoteNote: (qid, note) => set((s) => ({ ...s, quotes: s.quotes.map((q) => q.id === qid ? { ...q, studioNote: note } : q) })),
     addComment: (qid, author, body) => set((s) => ({ ...s, quotes: s.quotes.map((q) => q.id === qid ? { ...q, comments: [...q.comments, { author, body, at: 'Agora' }] } : q) })),
     addEvent: (pid, d) => set((s) => ({ ...s, events: [...s.events, { id: uid('e'), projectId: pid, date: d.date, title: d.title, kind: d.kind }] })),
+    updateProject: (pid, d) => set((s) => ({ ...s, projects: s.projects.map((p) => p.id === pid ? { ...p, code: d.code, name: d.name, address: d.address, start: d.start, due: d.due } : p) })),
+    deleteProject: (pid) => set((s) => {
+      const etapas = new Set(s.stages.filter((x) => x.projectId === pid).map((x) => x.id));
+      const novo = { ...s, projects: s.projects.filter((p) => p.id !== pid), stages: s.stages.filter((x) => !etapas.has(x.id)) };
+      for (const k of ['documents', 'contracts', 'events', 'quotes', 'payments']) {
+        if (Array.isArray(s[k])) novo[k] = s[k].filter((x) => x.projectId !== pid);
+      }
+      return novo;
+    }),
     completeProject: (pid) => set((s) => ({ ...s, projects: s.projects.map((p) => p.id === pid ? { ...p, status: 'concluido', completedAt: todayISO(), accessUntil: addMonthsISO(todayISO(), 1) } : p) })),
     notifications: () => {
       const out = [];

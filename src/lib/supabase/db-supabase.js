@@ -32,6 +32,79 @@ export function makeSupabaseDb() {
 
   const sortByOrd = (rows) => rows.sort((a, b) => a.ord - b.ord);
 
+  // Cria etapas, cada uma com as suas sub-etapas, no fim da linha do tempo do
+  // projeto. Usado ao aplicar um template e ao criar o projeto já com etapas.
+  const inserirEtapas = async (pid, itens) => {
+    const lista = (itens || []).filter((it) => it && String(it.title || '').trim());
+    if (!lista.length) return;
+    const { data: ult, error: e1 } = await supabase
+      .from('stages')
+      .select('ord')
+      .eq('project_id', pid)
+      .order('ord', { ascending: false })
+      .limit(1);
+    must(e1);
+    let ord = ult && ult[0] ? ult[0].ord : 0;
+    const payload = lista.map((it) => ({
+      project_id: pid,
+      ord: ++ord,
+      title: String(it.title).trim(),
+      category: it.category || 'Etapa',
+      status: 'a_fazer',
+      owner: 'studio',
+      start: null,
+      end: null,
+      time: null,
+      link: null,
+      presencial: false,
+      desc: it.desc || null,
+      rescheduled_from: null,
+    }));
+    const { data: criadas, error: e2 } = await supabase.from('stages').insert(payload).select('id, ord');
+    must(e2);
+    const porOrd = new Map((criadas || []).map((c) => [c.ord, c.id]));
+    const subs = [];
+    payload.forEach((etapa, i) => {
+      const stageId = porOrd.get(etapa.ord);
+      (lista[i].subs || [])
+        .filter((b) => b && String(b.title || '').trim())
+        .forEach((b) =>
+          subs.push({
+            stage_id: stageId,
+            title: String(b.title).trim(),
+            kind: b.kind || 'tarefa',
+            responsible: b.responsible || 'studio',
+            due: null,
+            time: null,
+            format: null,
+            link: null,
+          }),
+        );
+    });
+    if (subs.length) {
+      const { error: e3 } = await supabase.from('stage_subs').insert(subs);
+      must(e3);
+    }
+  };
+
+  // Itens de template sempre no mesmo formato, com a lista de sub-etapas.
+  const normalizarItens = (itens) =>
+    (itens || [])
+      .filter((it) => it && String(it.title || '').trim())
+      .map((it, i) => ({
+        title: String(it.title).trim(),
+        category: it.category || 'Etapa',
+        desc: it.desc || null,
+        ord: i + 1,
+        subs: (it.subs || [])
+          .filter((b) => b && String(b.title || '').trim())
+          .map((b) => ({
+            title: String(b.title).trim(),
+            kind: b.kind || 'tarefa',
+            responsible: b.responsible || 'studio',
+          })),
+      }));
+
   const db = {
     /* ------------------------------ auth ------------------------------ */
     login: async (email, password) => {
@@ -95,7 +168,7 @@ export function makeSupabaseDb() {
     templates: async () => {
       const { data, error } = await supabase
         .from('templates')
-        .select('id, name, items:template_items(title, category, "desc", ord)')
+        .select('id, name, items:template_items(title, category, "desc", ord, subs)')
         .order('created_at');
       must(error);
       return (data || []).map((t) => ({
@@ -104,7 +177,7 @@ export function makeSupabaseDb() {
         items: (t.items || [])
           .slice()
           .sort((a, b) => (a.ord || 0) - (b.ord || 0))
-          .map(({ title, category, desc }) => ({ title, category, desc })),
+          .map(({ title, category, desc, subs }) => ({ title, category, desc, subs: subs || [] })),
       }));
     },
     stages: async (pid) => {
@@ -359,6 +432,8 @@ export function makeSupabaseDb() {
         sig_status: 'rascunho',
       });
       must(cErr);
+      // 4) etapas escolhidas no cadastro (template ajustado antes do envio)
+      if (data.etapas && data.etapas.length) await inserirEtapas(proj.id, data.etapas);
       // devolve a senha provisória do cliente e se o e-mail foi enviado
       return {
         id: proj.id,
@@ -521,38 +596,13 @@ export function makeSupabaseDb() {
       must(error);
     },
     applyTemplate: async (pid, tid) => {
-      const { data: items, error: e1 } = await supabase
+      const { data: items, error } = await supabase
         .from('template_items')
-        .select('title, category, "desc", ord')
+        .select('title, category, "desc", ord, subs')
         .eq('template_id', tid)
         .order('ord');
-      must(e1);
-      if (!items || !items.length) return;
-      const { data: rows, error: e2 } = await supabase
-        .from('stages')
-        .select('ord')
-        .eq('project_id', pid)
-        .order('ord', { ascending: false })
-        .limit(1);
-      must(e2);
-      let ord = rows && rows[0] ? rows[0].ord : 0;
-      const payload = items.map((it) => ({
-        project_id: pid,
-        ord: ++ord,
-        title: it.title,
-        category: it.category,
-        status: 'a_fazer',
-        owner: 'studio',
-        start: null,
-        end: null,
-        time: null,
-        link: null,
-        presencial: false,
-        desc: it.desc || null,
-        rescheduled_from: null,
-      }));
-      const { error } = await supabase.from('stages').insert(payload);
       must(error);
+      await inserirEtapas(pid, items || []);
     },
     addTemplate: async (name, items) => {
       const { data: t, error: e1 } = await supabase
@@ -561,15 +611,23 @@ export function makeSupabaseDb() {
         .select('id')
         .single();
       must(e1);
-      const payload = items.map((it, i) => ({
-        template_id: t.id,
-        title: it.title,
-        category: it.category,
-        desc: it.desc || null,
-        ord: i + 1,
-      }));
-      const { error } = await supabase.from('template_items').insert(payload);
-      must(error);
+      const payload = normalizarItens(items).map((it) => ({ template_id: t.id, ...it }));
+      if (payload.length) {
+        const { error } = await supabase.from('template_items').insert(payload);
+        must(error);
+      }
+    },
+    updateTemplate: async (tid, name, items) => {
+      const { error: e1 } = await supabase.from('templates').update({ name }).eq('id', tid);
+      must(e1);
+      // os itens são trocados por inteiro: mais simples e sem item órfão
+      const { error: e2 } = await supabase.from('template_items').delete().eq('template_id', tid);
+      must(e2);
+      const payload = normalizarItens(items).map((it) => ({ template_id: tid, ...it }));
+      if (payload.length) {
+        const { error: e3 } = await supabase.from('template_items').insert(payload);
+        must(e3);
+      }
     },
     deleteTemplate: async (tid) => {
       const { error } = await supabase.from('templates').delete().eq('id', tid);
@@ -771,6 +829,41 @@ export function makeSupabaseDb() {
       const { error } = await supabase
         .from('events')
         .insert({ project_id: pid, date: d.date, title: d.title, kind: d.kind || 'evento' });
+      must(error);
+    },
+    updateProject: async (pid, d) => {
+      const { error } = await supabase
+        .from('projects')
+        .update({
+          code: d.code,
+          name: d.name,
+          address: d.address || null,
+          start: d.start || null,
+          due: d.due || null,
+        })
+        .eq('id', pid);
+      must(error);
+    },
+    deleteProject: async (pid) => {
+      // 1) arquivos do projeto no Storage (o banco apaga as linhas em cascata,
+      //    mas os arquivos físicos ficariam órfãos)
+      const caminhos = [];
+      const listar = async (prefixo) => {
+        const { data, error } = await supabase.storage.from('documentos').list(prefixo, { limit: 1000 });
+        if (error) return;
+        for (const item of data || []) {
+          const caminho = prefixo + '/' + item.name;
+          if (item.id) caminhos.push(caminho);
+          else await listar(caminho); // pasta
+        }
+      };
+      await listar(pid);
+      if (caminhos.length) {
+        const { error: eArq } = await supabase.storage.from('documentos').remove(caminhos);
+        if (eArq) throw eArq;
+      }
+      // 2) o projeto (etapas, documentos, contratos, pagamentos... vão junto)
+      const { error } = await supabase.from('projects').delete().eq('id', pid);
       must(error);
     },
     completeProject: async (pid) => {

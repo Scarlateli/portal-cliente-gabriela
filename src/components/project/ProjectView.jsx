@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { GerenciarProjeto } from './GerenciarProjeto.jsx';
 import {
   GitCommitVertical,
   CalendarDays,
@@ -325,6 +326,7 @@ function ProjectInner({
             </button>
           </div>
         )}
+        {isStudio && <GerenciarProjeto db={db} project={project} onExcluido={onBack} />}
         {!isStudio && (
           <footer className="client-foot">
             <div>
