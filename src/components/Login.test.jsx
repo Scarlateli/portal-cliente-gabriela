@@ -42,7 +42,7 @@ describe('Login', () => {
     expect(invoke).toHaveBeenCalledWith('forgot-password', { body: { email: 'cliente@teste.com' } });
     expect(prompt).not.toHaveBeenCalled();
     await userEvent.click(screen.getByText('Voltar para o login'));
-    expect(screen.getByText('Portal do cliente')).toBeTruthy();
+    expect(screen.getByText('Portal do projeto')).toBeTruthy();
   });
 
   it('pede o e-mail antes de enviar o link', async () => {

@@ -134,7 +134,6 @@ function ProjectInner({
   const [tab, setTab] = useState('timeline');
   const expired = project.accessUntil && todayISO() > project.accessUntil;
   const heroStages = db.stages(project.id);
-  const heroDocs = db.documents(project.id);
   const heroPend = heroStages.filter((st) => st.status !== 'concluida' && st.end).map((st) => st.end).sort();
   const [resent, setResent] = useState(null);
   const [resending, setResending] = useState(false);
@@ -191,10 +190,6 @@ function ProjectInner({
               <em>etapas concluídas</em>
             </div>
             <div className="hstat">
-              <strong>{heroDocs.length}</strong>
-              <em>documentos</em>
-            </div>
-            <div className="hstat">
               <strong>{heroPend.length ? fmt(heroPend[0]) : '—'}</strong>
               <em>próximo prazo</em>
             </div>
@@ -238,7 +233,7 @@ function ProjectInner({
                 onClick={() =>
                   navigator.clipboard &&
                   navigator.clipboard.writeText(
-                    'Portal do Cliente — ' +
+                    'Portal do Projeto — ' +
                       window.location.origin +
                       '\nE-mail: ' +
                       resent.email +

@@ -330,7 +330,7 @@ function NewProject({ db, onDone }) {
               onClick={() =>
                 navigator.clipboard &&
                 navigator.clipboard.writeText(
-                  'Portal do Cliente — ' +
+                  'Portal do Projeto — ' +
                     window.location.origin +
                     '\nE-mail: ' +
                     invite.email +

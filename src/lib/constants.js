@@ -9,6 +9,7 @@ export const STUDIO = { name: 'Gabriela Lendecker', tagline: 'arquitetura e inte
 /* Monograma oficial do estúdio (public/brand). O lockup completo, com o
    nome, fica em /brand/lockup.png e é usado no histórico impresso. */
 export const LOGO = '/brand/monograma.png';
+export const LOCKUP = '/brand/lockup.png';
 
 export const STAGE_STATUS = [
   { id: 'a_fazer', label: 'A fazer' },

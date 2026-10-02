@@ -193,3 +193,50 @@ validação):
   nos 7 arquivos.
 - **Nome do template** — "Salvar como template" ainda pede o nome numa
   caixa do navegador; entra junto com o item acima.
+
+
+---
+
+## Rodada de ajustes da validação com a Gabriela — 01/10/2026
+
+Pedidos levantados por JP e Gabriela na sessão de validação, organizados em
+etapas. Cada etapa é entregue e testada antes da próxima.
+
+**Etapa 1 — Identidade visual** ✅ (entregue em 01/10)
+Fonte Futura Std nos quatro pesos reais; paleta oficial (convertida dos
+arquivos CMYK pelo perfil de cor embutido); logo oficial no lugar da versão
+remontada; painel de entrada com logo vinho sobre bege; "Portal do Cliente"
+vira "Portal do Projeto"; nome do projeto em Futura; número de documentos
+sai do topo; e-mails de convite e de senha com logo e cores oficiais.
+
+**Etapa 2 — Cadastro e templates (studio)**
+Editar os dados do projeto depois de criado; escolher e ajustar o template
+dentro do cadastro, antes de enviar o acesso; excluir projeto; templates com
+sub-etapas.
+
+**Etapa 3 — Visão do cliente**
+Filtro das etapas na ordem Em andamento, Futuras, Concluídas, Todas, sem a
+contagem entre parênteses; bloco de contato com a chamada "Tem alguma
+dúvida?", a subchamada "Fale com nossa equipe" e o botão "Fale conosco".
+
+**Etapa 4 — Calendário**
+Horário nas reuniões criadas pelo calendário; "Adicionar ao Google Agenda"
+em cada evento.
+
+**Etapa 5 — Documentos com aprovação**
+Para cada documento, a Gabriela escolhe: pede assinatura do cliente (feita
+dentro do portal, sem Autentique) ou pede só um OK. Fica pendente para o
+cliente até ele resolver.
+
+**Etapa 6 — Termos e contratos**
+Termos: o cliente aprova ou recusa com um botão, sem PDF. Contratos: a
+Gabriela escolhe entre a assinatura dentro do portal e a Autentique. O
+contrato oficial do projeto continua pela Autentique.
+
+**Etapa 7 — Notificações**
+Sino com as pendências, para a Gabriela e para o cliente; janela de
+pendências ao entrar, até que sejam resolvidas.
+
+**Etapa 8 — Orçamentos e fornecedores**
+Cadastro prévio de fornecedores, escolhidos no orçamento com os dados já
+preenchidos; o cliente pode pedir negociação de valor pelo portal.

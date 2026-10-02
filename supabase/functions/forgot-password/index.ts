@@ -42,14 +42,13 @@ Deno.serve(async (req) => {
         body: JSON.stringify({
           from,
           to: [clean],
-          subject: 'Redefinição de senha — Portal Gabriela Lendecker',
-          html: `<!doctype html><html><body style="margin:0;background:#d8d4ca;padding:32px 16px;font-family:Futura,'Century Gothic',Arial,sans-serif;color:#210909">
-  <div style="max-width:480px;margin:0 auto;background:#efece5;border:1px solid #cfc8b8;border-radius:6px;padding:32px">
-    <p style="margin:0;font-size:15px;letter-spacing:.14em;text-transform:uppercase;text-align:center">Gabriela Lendecker</p>
-    <p style="margin:4px 0 24px;font-size:11px;letter-spacing:.3em;color:#7a6f60;text-align:center">arquitetura e interiores</p>
-    <p style="font-size:14px;line-height:1.6">Recebemos um pedido para redefinir a sua senha do Portal do Cliente. Se foi você, clique abaixo:</p>
-    <p style="text-align:center;margin:26px 0"><a href="${link}" style="background:#5d1c17;color:#efece5;text-decoration:none;padding:12px 26px;border-radius:5px;font-size:14px;display:inline-block">Redefinir minha senha</a></p>
-    <p style="font-size:12px;color:#7a6f60;line-height:1.5">Se você não pediu isso, pode ignorar este e-mail — nada muda.</p>
+          subject: 'Redefinição de senha — Portal do Projeto Gabriela Lendecker',
+          html: `<!doctype html><html><body style="margin:0;background:#D9D4C9;padding:32px 16px;font-family:'Futura Std',Futura,'Century Gothic',Arial,sans-serif;color:#210B0B">
+  <div style="max-width:480px;margin:0 auto;background:#EFECE6;border:1px solid #CBC4B6;border-radius:6px;padding:34px 32px">
+    <img src="https://portal.gabrielalendecker.com/brand/lockup-email.png" width="280" alt="Gabriela Lendecker — arquitetura e interiores" style="display:block;margin:0 auto 28px;width:280px;max-width:100%;height:auto;border:0">
+    <p style="font-size:14px;line-height:1.6">Recebemos um pedido para redefinir a sua senha do Portal do Projeto. Se foi você, clique abaixo:</p>
+    <p style="text-align:center;margin:26px 0"><a href="${link}" style="background:#391312;color:#EFECE6;text-decoration:none;padding:12px 26px;border-radius:5px;font-size:14px;display:inline-block">Redefinir minha senha</a></p>
+    <p style="font-size:12px;color:#70463A;line-height:1.5">Se você não pediu isso, pode ignorar este e-mail — nada muda.</p>
   </div>
 </body></html>`,
         }),

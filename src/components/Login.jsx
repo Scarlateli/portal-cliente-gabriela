@@ -70,22 +70,11 @@ export function Login({ db, onLogin }) {
   return (
     <div className="login login-split">
       <aside className="login-brand">
-        <div className="login-brand-inner">
-          <p className="lb-word">Gabriela Lendecker</p>
-          <p className="lb-sub">arquitetura e interiores</p>
-          <p className="lb-statement">
-            Cada projeto,
-            <br />
-            uma história conduzida
-            <br />
-            <em>com cuidado.</em>
-          </p>
-          <p className="lb-foot">© {new Date().getFullYear()}</p>
-        </div>
+        <img className="lb-lockup" src="/brand/lockup.png" alt="Gabriela Lendecker — arquitetura e interiores" />
       </aside>
       <div className="login-panel">
       <div className="login-card">
-        <h1 className="login-title">{recuperando ? 'Recuperar senha' : 'Portal do cliente'}</h1>
+        <h1 className="login-title">{recuperando ? 'Recuperar senha' : 'Portal do projeto'}</h1>
         <p className="login-sub">
           {recuperando
             ? 'Enviamos um link para você criar uma senha nova.'

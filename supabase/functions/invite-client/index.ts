@@ -31,21 +31,20 @@ function tempPassword() {
 function inviteHtml(name: string | undefined, appUrl: string, email: string, temp: string) {
   const hello = name ? `Olá, ${name}!` : 'Olá!';
   const btn = appUrl
-    ? `<p style="text-align:center;margin:26px 0 20px"><a href="${appUrl}" style="background:#5d1c17;color:#efece5;text-decoration:none;padding:12px 26px;border-radius:5px;font-size:14px;display:inline-block">Acessar o portal</a></p>`
+    ? `<p style="text-align:center;margin:26px 0 20px"><a href="${appUrl}" style="background:#391312;color:#EFECE6;text-decoration:none;padding:12px 26px;border-radius:5px;font-size:14px;display:inline-block">Acessar o portal</a></p>`
     : '';
-  return `<!doctype html><html><body style="margin:0;background:#d8d4ca;padding:32px 16px;font-family:Futura,'Century Gothic',Arial,sans-serif;color:#210909">
-  <div style="max-width:480px;margin:0 auto;background:#efece5;border:1px solid #cfc8b8;border-radius:6px;padding:32px">
-    <p style="margin:0;font-size:15px;letter-spacing:.14em;text-transform:uppercase;text-align:center">Gabriela Lendecker</p>
-    <p style="margin:4px 0 24px;font-size:11px;letter-spacing:.3em;color:#7a6f60;text-align:center">arquitetura e interiores</p>
-    <p style="font-size:14px;line-height:1.6">${hello} Seu Portal do Cliente está pronto. Nele você acompanha cada etapa do projeto, documentos, contratos e pagamentos.</p>
+  return `<!doctype html><html><body style="margin:0;background:#D9D4C9;padding:32px 16px;font-family:'Futura Std',Futura,'Century Gothic',Arial,sans-serif;color:#210B0B">
+  <div style="max-width:480px;margin:0 auto;background:#EFECE6;border:1px solid #CBC4B6;border-radius:6px;padding:34px 32px">
+    <img src="https://portal.gabrielalendecker.com/brand/lockup-email.png" width="280" alt="Gabriela Lendecker — arquitetura e interiores" style="display:block;margin:0 auto 28px;width:280px;max-width:100%;height:auto;border:0">
+    <p style="font-size:14px;line-height:1.6">${hello} Seu Portal do Projeto está pronto. Nele você acompanha cada etapa do projeto, documentos, contratos e pagamentos.</p>
     ${btn}
-    <div style="background:#d8d4ca;border-radius:5px;padding:14px 16px;font-size:13px;line-height:1.8">
+    <div style="background:#D9D4C9;border-radius:5px;padding:14px 16px;font-size:13px;line-height:1.8">
       <strong>e-mail:</strong> ${email}<br>
       <strong>senha provisória:</strong> ${temp}
     </div>
-    <p style="font-size:12px;color:#7a6f60;line-height:1.5;margin-top:14px">No primeiro acesso, você criará a sua senha definitiva.</p>
+    <p style="font-size:12px;color:#70463A;line-height:1.5;margin-top:14px">No primeiro acesso, você criará a sua senha definitiva.</p>
   </div>
-  <p style="text-align:center;font-size:11px;color:#7a6f60;margin-top:16px">© ${new Date().getFullYear()} Gabriela Lendecker</p>
+  <p style="text-align:center;font-size:11px;color:#70463A;margin-top:16px">© ${new Date().getFullYear()} Gabriela Lendecker</p>
 </body></html>`;
 }
 
@@ -136,7 +135,7 @@ Deno.serve(async (req) => {
           body: JSON.stringify({
             from,
             to: [email],
-            subject: 'Seu acesso ao Portal do Cliente — Gabriela Lendecker',
+            subject: 'Seu acesso ao Portal do Projeto — Gabriela Lendecker',
             html: inviteHtml(name, appUrl, email, temp),
           }),
         });

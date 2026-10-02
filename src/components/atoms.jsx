@@ -9,7 +9,7 @@ import {
   AlertTriangle,
   X,
 } from 'lucide-react';
-import { LOGO, STUDIO } from '../lib/constants.js';
+import { LOCKUP, STUDIO } from '../lib/constants.js';
 
 export function Loading({ text = 'Carregando…' }) {
   return (
@@ -74,13 +74,11 @@ export function ErrorBanner({ error, onClose }) {
 }
 
 export function Mark({ small }) {
+  // Logo oficial da marca (arquivo da identidade), nunca remontado em texto:
+  // a versão anterior digitava o nome em outra fonte ao lado do monograma.
   return (
     <div className={'mark' + (small ? ' mark-sm' : '')}>
-      <img src={LOGO} alt="" className="mark-logo" />
-      <span className="mark-text">
-        <strong>{STUDIO.name}</strong>
-        <em>{STUDIO.tagline}</em>
-      </span>
+      <img src={LOCKUP} alt={STUDIO.name + ' — ' + STUDIO.tagline} className="mark-lockup" />
     </div>
   );
 }
