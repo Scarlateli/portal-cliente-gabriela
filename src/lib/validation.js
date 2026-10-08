@@ -4,6 +4,12 @@
    --------------------------------------------------------------------- */
 import { z } from 'zod';
 
+// Sem compilação dinâmica: o Zod testa `new Function` para acelerar, e a
+// política de segurança do portal (CSP sem 'unsafe-eval') registra esse
+// teste como violação. Os formulários são pequenos; o modo sem JIT é igual
+// para o usuário e deixa o console limpo para ativar a CSP em modo bloqueio.
+z.config({ jitless: true });
+
 export const loginSchema = z.object({
   email: z.string().trim().min(1, 'Informe seu e-mail.').email('E-mail inválido.'),
   pass: z.string().min(1, 'Informe sua senha.'),
