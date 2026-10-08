@@ -18,7 +18,7 @@ const PROJECT_COLS =
 const QUOTE_COLS =
   'id, projectId:project_id, segment, supplier, amount, fileName:file_name, status, studioNote:studio_note, decidedAt:decided_at, contact, deadline, payment, contractStatus:contract_status, notes, storagePath:storage_path, comments:quote_comments(author, body, at)';
 const CONTRACT_COLS =
-  'id, projectId:project_id, name, sigStatus:sig_status, provider, signer, signedAt:signed_at, kind, storagePath:storage_path, providerDocId:provider_doc_id, studioSignLink:studio_sign_link';
+  'id, projectId:project_id, name, sigStatus:sig_status, provider, signer, signedAt:signed_at, kind, storagePath:storage_path, providerDocId:provider_doc_id, studioSignLink:studio_sign_link, method, body, responseNote:response_note, respondedAt:responded_at';
 
 const must = (error) => {
   if (error) throw error;
@@ -192,7 +192,9 @@ export function makeSupabaseDb() {
     documents: async (pid) => {
       const { data, error } = await supabase
         .from('documents')
-        .select('id, projectId:project_id, name, type, size, date, storagePath:storage_path')
+        .select(
+          'id, projectId:project_id, name, type, size, date, storagePath:storage_path, approval, response, respondedAt:responded_at, respondedName:responded_name',
+        )
         .eq('project_id', pid);
       must(error);
       return data;
@@ -648,6 +650,7 @@ export function makeSupabaseDb() {
         size: d.size,
         date: todayISO(),
         storage_path,
+        approval: d.approval || 'nenhuma',
       });
       must(error);
     },
@@ -668,10 +671,38 @@ export function makeSupabaseDb() {
         provider: 'provider',
         signer: 'signer',
         signedAt: 'signed_at',
+        method: 'method',
+        body: 'body',
+        responseNote: 'response_note',
+        respondedAt: 'responded_at',
       };
       const payload = {};
       for (const k of Object.keys(patch)) if (map[k]) payload[map[k]] = patch[k];
       const { error } = await supabase.from('contracts').update(payload).eq('id', cid);
+      must(error);
+    },
+    /* ---- Etapas 5 e 6: respostas do cliente ----
+       O cliente age por funções no banco (responder_documento /
+       responder_contrato), que conferem que o registro é dele e alteram só os
+       campos daquela ação. O studio continua editando direto. */
+    setDocumentApproval: async (did, approval) => {
+      const { error } = await supabase
+        .from('documents')
+        .update({ approval, response: null, responded_at: null, responded_name: null })
+        .eq('id', did);
+      must(error);
+    },
+    responderDocumento: async (did, nome) => {
+      const { error } = await supabase.rpc('responder_documento', { p_documento: did, p_nome: nome || null });
+      must(error);
+    },
+    responderContrato: async (cid, acao, nome, motivo) => {
+      const { error } = await supabase.rpc('responder_contrato', {
+        p_contrato: cid,
+        p_acao: acao,
+        p_nome: nome || null,
+        p_motivo: motivo || null,
+      });
       must(error);
     },
     addContractDoc: async (pid, d, file) => {
@@ -682,11 +713,14 @@ export function makeSupabaseDb() {
         if (upErr) throw upErr;
         storage_path = path;
       }
+      const kind = d.kind || 'termo';
       const { error } = await supabase.from('contracts').insert({
         project_id: pid,
-        kind: d.kind || 'termo',
+        kind,
         name: d.name,
         storage_path,
+        method: d.method || (kind === 'termo' ? 'aceite' : 'autentique'),
+        body: d.body || null,
       });
       must(error);
     },

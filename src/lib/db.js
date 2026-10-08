@@ -99,10 +99,36 @@ export function makeDb(state, set) {
     addTemplate: (name, items) => set((s) => ({ ...s, templates: [...s.templates, { id: uid('t'), name, items }] })),
     deleteTemplate: (tid) => set((s) => ({ ...s, templates: s.templates.filter((t) => t.id !== tid) })),
     updateTemplate: (tid, name, items) => set((s) => ({ ...s, templates: s.templates.map((t) => t.id === tid ? { ...t, name, items } : t) })),
-    addDocument: (pid, d) => set((s) => ({ ...s, documents: [...s.documents, { id: uid('d'), projectId: pid, name: d.name, type: d.type, size: d.size, date: todayISO() }] })),
+    addDocument: (pid, d) => set((s) => ({ ...s, documents: [...s.documents, { id: uid('d'), projectId: pid, name: d.name, type: d.type, size: d.size, date: todayISO(), approval: d.approval || 'nenhuma', response: null, respondedAt: null, respondedName: null }] })),
     deleteDocument: (did) => set((s) => ({ ...s, documents: s.documents.filter((x) => x.id !== did) })),
+    setDocumentApproval: (did, approval) => set((s) => ({ ...s, documents: s.documents.map((x) => x.id === did ? { ...x, approval, response: null, respondedAt: null, respondedName: null } : x) })),
+    // espelha a função responder_documento do banco (mesmas regras)
+    responderDocumento: (did, nome) => {
+      const d = state.documents.find((x) => x.id === did);
+      if (!d || !d.approval || d.approval === 'nenhuma') throw new Error('Este documento não pede resposta.');
+      if (d.response) throw new Error('Este documento já foi respondido.');
+      if (d.approval === 'assinatura' && String(nome || '').trim().length < 3) throw new Error('Digite o seu nome completo para assinar.');
+      const quem = d.approval === 'assinatura' ? String(nome).trim() : (state.users.find((u) => u.id === (state.projects.find((p) => p.id === d.projectId) || {}).clientId) || {}).name;
+      set((s) => ({ ...s, documents: s.documents.map((x) => x.id === did ? { ...x, response: d.approval === 'assinatura' ? 'assinado' : 'aprovado', respondedAt: new Date().toISOString(), respondedName: quem } : x) }));
+    },
+    // espelha a função responder_contrato do banco (mesmas regras)
+    responderContrato: (cid, acao, nome, motivo) => {
+      const c = state.contracts.find((x) => x.id === cid);
+      const metodo = c && (c.method || (c.kind === 'termo' ? 'aceite' : 'autentique'));
+      if (!c || c.sigStatus !== 'enviado') throw new Error('Este documento não está aguardando a sua resposta.');
+      const p = state.projects.find((x) => x.id === c.projectId);
+      const cliente = (state.users.find((u) => u.id === (p || {}).clientId) || {}).name;
+      let patch;
+      if (acao === 'aprovar' && metodo === 'aceite') patch = { sigStatus: 'assinado', signer: cliente, signedAt: todayISO(), provider: 'Portal', responseNote: null };
+      else if (acao === 'recusar' && metodo === 'aceite') patch = { sigStatus: 'recusado', responseNote: String(motivo || '').trim() || null };
+      else if (acao === 'assinar' && metodo === 'portal') {
+        if (String(nome || '').trim().length < 3) throw new Error('Digite o seu nome completo para assinar.');
+        patch = { sigStatus: 'assinado', signer: String(nome).trim(), signedAt: todayISO(), provider: 'Portal', responseNote: null };
+      } else throw new Error('Ação não permitida para este documento.');
+      set((s) => ({ ...s, contracts: s.contracts.map((x) => x.id === cid ? { ...x, ...patch, respondedAt: new Date().toISOString() } : x) }));
+    },
     setContract: (cid, patch) => set((s) => ({ ...s, contracts: s.contracts.map((c) => c.id === cid ? { ...c, ...patch } : c) })),
-    addContractDoc: (pid, d) => set((s) => ({ ...s, contracts: [...s.contracts, { id: uid('c'), projectId: pid, kind: d.kind || 'termo', name: d.name, sigStatus: 'rascunho', provider: null, signer: null, signedAt: null }] })),
+    addContractDoc: (pid, d) => set((s) => ({ ...s, contracts: [...s.contracts, { id: uid('c'), projectId: pid, kind: d.kind || 'termo', name: d.name, sigStatus: 'rascunho', provider: null, signer: null, signedAt: null, method: d.method || ((d.kind || 'termo') === 'termo' ? 'aceite' : 'autentique'), body: d.body || '', responseNote: null, respondedAt: null }] })),
     deleteContractDoc: (pid, cid) => set((s) => ({ ...s, contracts: s.contracts.filter((c) => c.id !== cid) })),
     sendToAutentique: () => null, // assinatura real só no modo Supabase
     checkAutentique: () => null,

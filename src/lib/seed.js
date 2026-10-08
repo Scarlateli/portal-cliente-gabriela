@@ -55,12 +55,12 @@ export const seed = {
   ],
   documents: [
     { id: 'd1', projectId: 'p1', name: 'Ata — reunião de briefing.pdf', type: 'ata', size: '0,3 MB', date: '2026-03-17' },
-    { id: 'd2', projectId: 'p1', name: 'Briefing do cliente.pdf', type: 'briefing', size: '0,9 MB', date: '2026-03-18' },
-    { id: 'd3', projectId: 'p1', name: 'Planta — layout proposto.pdf', type: 'planta', size: '1,8 MB', date: '2026-04-30' },
+    { id: 'd2', projectId: 'p1', name: 'Briefing do cliente.pdf', type: 'briefing', size: '0,9 MB', date: '2026-03-18', approval: 'ok', response: 'aprovado', respondedAt: '2026-03-19T10:00:00Z', respondedName: 'Vanessa Tamura' },
+    { id: 'd3', projectId: 'p1', name: 'Planta — layout proposto.pdf', type: 'planta', size: '1,8 MB', date: '2026-04-30', approval: 'assinatura', response: null, respondedAt: null, respondedName: null },
   ],
   contracts: [
     { id: 'c1', projectId: 'p1', kind: 'contrato', name: 'Contrato de prestação de serviços', sigStatus: 'enviado', provider: 'Autentique', signer: null, signedAt: null },
-    { id: 'c3', projectId: 'p1', kind: 'termo', name: 'Termo de autorização de uso de imagens', sigStatus: 'rascunho', provider: null, signer: null, signedAt: null },
+    { id: 'c3', projectId: 'p1', kind: 'termo', name: 'Termo de autorização de uso de imagens', sigStatus: 'enviado', provider: 'Portal', signer: null, signedAt: null, method: 'aceite', body: 'Autorizo o studio Gabriela Lendecker a usar fotografias do projeto concluído em portfólio, site e redes sociais, sem identificar o endereço do imóvel.', responseNote: null, respondedAt: null },
     { id: 'c2', projectId: 'p2', kind: 'contrato', name: 'Contrato de prestação de serviços', sigStatus: 'rascunho', provider: null, signer: null, signedAt: null },
   ],
   payments: [

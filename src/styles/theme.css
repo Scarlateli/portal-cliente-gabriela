@@ -646,3 +646,21 @@ button.sub-box{cursor:pointer}
 .cp .ev-gcal{display:inline-flex;align-items:center;gap:4px;font-size:12px;color:var(--gl-vinho);text-decoration:none;margin-left:10px;white-space:nowrap}
 .cp .ev-gcal:hover{text-decoration:underline;text-underline-offset:2px}
 @media (max-width:560px){.cp .ev-gcal span{display:none}}
+
+/* Etapa 5: pedido de OK ou assinatura em documentos */
+.cp .doc{flex-wrap:wrap}
+.cp .doc-sit{display:block;margin-top:3px;font-size:12px}
+.cp .doc-sit.pendente{color:var(--gl-vermelho)}
+.cp .doc-sit.ok{color:var(--gl-terra)}
+.cp .doc-pedido{max-width:170px}
+.cp .doc-resposta{display:inline-flex;align-items:center;gap:8px}
+.cp .doc-assinar{flex-basis:100%}
+.cp .assinatura .sign-input{max-width:380px}
+.cp .assinatura-li{display:flex;align-items:flex-start;gap:8px;font-size:13px;line-height:1.45;margin:10px 0}
+.cp .assinatura-li input{margin-top:3px}
+
+/* Etapa 6: termos com texto, recusa com motivo */
+.cp .contract.recusado{border-color:var(--gl-vermelho);background:rgba(93,29,24,.06)}
+.cp .contract-body{white-space:pre-wrap;font-size:14px;line-height:1.6;border-left:2px solid var(--gl-areia);padding:4px 0 4px 14px;margin:0 0 12px;max-height:280px;overflow:auto}
+.cp .contract-motivo{font-size:13px;margin:0 0 10px}
+.cp .contract-block .add-stage textarea,.cp .add-stage .lab textarea{width:100%}
