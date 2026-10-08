@@ -641,3 +641,8 @@ button.sub-box{cursor:pointer}
 /* Etapa 3: bloco "Tem alguma dúvida?" com o balão "Fale conosco" */
 .cp .client-foot strong{font-weight:400;font-size:20px}
 .cp .fale-conosco{border-radius:999px;padding:10px 20px;gap:8px}
+
+/* Etapa 4: atalho para o Google Agenda em cada compromisso */
+.cp .ev-gcal{display:inline-flex;align-items:center;gap:4px;font-size:12px;color:var(--gl-vinho);text-decoration:none;margin-left:10px;white-space:nowrap}
+.cp .ev-gcal:hover{text-decoration:underline;text-underline-offset:2px}
+@media (max-width:560px){.cp .ev-gcal span{display:none}}

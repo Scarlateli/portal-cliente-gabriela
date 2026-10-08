@@ -61,7 +61,7 @@ export function makeDb(state, set) {
       if (pay) pay.installments.forEach((i) => out.push({ date: i.due, title: 'Parcela ' + i.n + '/' + pay.installments.length, kind: 'pagamento' }));
       const p = state.projects.find((x) => x.id === pid);
       if (p && p.due) out.push({ date: p.due, title: 'Entrega prevista', kind: 'entrega' });
-      byP('events', pid).forEach((e) => out.push({ date: e.date, title: e.title, kind: e.kind || 'evento' }));
+      byP('events', pid).forEach((e) => out.push({ date: e.date, title: e.title, kind: e.kind || 'evento', time: e.time || '', link: e.link || '' }));
       return out;
     },
 
@@ -120,7 +120,7 @@ export function makeDb(state, set) {
     setQuoteStatus: (qid, status) => set((s) => ({ ...s, quotes: s.quotes.map((q) => q.id === qid ? { ...q, status, decidedAt: todayISO() } : q) })),
     setQuoteNote: (qid, note) => set((s) => ({ ...s, quotes: s.quotes.map((q) => q.id === qid ? { ...q, studioNote: note } : q) })),
     addComment: (qid, author, body) => set((s) => ({ ...s, quotes: s.quotes.map((q) => q.id === qid ? { ...q, comments: [...q.comments, { author, body, at: 'Agora' }] } : q) })),
-    addEvent: (pid, d) => set((s) => ({ ...s, events: [...s.events, { id: uid('e'), projectId: pid, date: d.date, title: d.title, kind: d.kind }] })),
+    addEvent: (pid, d) => set((s) => ({ ...s, events: [...s.events, { id: uid('e'), projectId: pid, date: d.date, title: d.title, kind: d.kind, time: d.time || '', link: d.link || '' }] })),
     updateProject: (pid, d) => set((s) => ({ ...s, projects: s.projects.map((p) => p.id === pid ? { ...p, code: d.code, name: d.name, address: d.address, start: d.start, due: d.due } : p) })),
     deleteProject: (pid) => set((s) => {
       const etapas = new Set(s.stages.filter((x) => x.projectId === pid).map((x) => x.id));

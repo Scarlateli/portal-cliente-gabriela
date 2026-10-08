@@ -257,7 +257,7 @@ export function makeSupabaseDb() {
           .eq('project_id', pid)
           .maybeSingle(),
         supabase.from('projects').select('due').eq('id', pid).single(),
-        supabase.from('events').select('date, title, kind').eq('project_id', pid),
+        supabase.from('events').select('date, title, kind, time, link').eq('project_id', pid),
       ]);
       (stages || []).forEach((s) => {
         const extra = { time: s.time || '', link: s.link || '', presencial: !!s.presencial };
@@ -301,7 +301,7 @@ export function makeSupabaseDb() {
       if (projRes.data && projRes.data.due)
         out.push({ date: projRes.data.due, title: 'Entrega prevista', kind: 'entrega' });
       (events || []).forEach((e) =>
-        out.push({ date: e.date, title: e.title, kind: e.kind || 'evento' }),
+        out.push({ date: e.date, title: e.title, kind: e.kind || 'evento', time: e.time || '', link: e.link || '' }),
       );
       return out;
     },
@@ -828,7 +828,14 @@ export function makeSupabaseDb() {
     addEvent: async (pid, d) => {
       const { error } = await supabase
         .from('events')
-        .insert({ project_id: pid, date: d.date, title: d.title, kind: d.kind || 'evento' });
+        .insert({
+          project_id: pid,
+          date: d.date,
+          title: d.title,
+          kind: d.kind || 'evento',
+          time: d.time || null,
+          link: d.link || null,
+        });
       must(error);
     },
     updateProject: async (pid, d) => {

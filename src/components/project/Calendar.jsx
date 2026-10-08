@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Plus, ChevronLeft, ChevronRight, MapPin, Video, Link2 } from 'lucide-react';
+import { linkGoogleAgenda } from '../../lib/agenda.js';
+import { Plus, ChevronLeft, ChevronRight, MapPin, Video, Link2, CalendarPlus } from 'lucide-react';
 import { WEEK } from '../../lib/constants.js';
 import { fmt, todayISO } from '../../lib/helpers.js';
 
@@ -12,7 +13,8 @@ export function Calendar({ db, project, isStudio }) {
   const [cur, setCur] = useState({ y: now.getFullYear(), m: now.getMonth() });
   const [sel, setSel] = useState(todayISO());
   const [adding, setAdding] = useState(false);
-  const [ev, setEv] = useState({ title: '', date: todayISO(), kind: 'evento' });
+  const vazio = () => ({ title: '', date: todayISO(), kind: 'evento', time: '', link: '' });
+  const [ev, setEv] = useState(vazio);
 
   const byDay = {};
   events.forEach((e) => { (byDay[e.date] = byDay[e.date] || []).push(e); });
@@ -36,12 +38,16 @@ export function Calendar({ db, project, isStudio }) {
           <input placeholder="Título do evento" aria-label="Título do evento" value={ev.title} onChange={(e) => setEv({ ...ev, title: e.target.value })} />
           <div className="add-row">
             <input type="date" value={ev.date} onChange={(e) => setEv({ ...ev, date: e.target.value })} />
+            <input type="time" aria-label="Horário" value={ev.time} onChange={(e) => setEv({ ...ev, time: e.target.value })} />
             <select value={ev.kind} onChange={(e) => setEv({ ...ev, kind: e.target.value })}>
               <option value="evento">Evento</option><option value="reuniao">Reunião</option><option value="entrega">Entrega</option><option value="visita">Visita</option>
             </select>
+            {ev.kind === 'reuniao' && (
+              <input placeholder="Link da reunião (opcional)" aria-label="Link da reunião" value={ev.link} onChange={(e) => setEv({ ...ev, link: e.target.value })} />
+            )}
           </div>
           <div className="row">
-            <button className="btn btn-primary btn-sm" disabled={!ev.title.trim()} onClick={() => { db.addEvent(project.id, ev); setEv({ title: '', date: todayISO(), kind: 'evento' }); setAdding(false); }}>Adicionar</button>
+            <button className="btn btn-primary btn-sm" disabled={!ev.title.trim()} onClick={() => { db.addEvent(project.id, ev); setEv(vazio()); setAdding(false); }}>Adicionar</button>
             <button className="btn btn-ghost btn-sm" onClick={() => setAdding(false)}>Cancelar</button>
           </div>
         </div>
@@ -82,6 +88,18 @@ export function Calendar({ db, project, isStudio }) {
                   )}
                 </span>
                 <em>{labelKind(e.kind)}</em>
+                {e.kind !== 'atraso' && (
+                  <a
+                    className="ev-gcal"
+                    href={linkGoogleAgenda({ title: e.title, date: e.date, time: e.time, link: e.link, projeto: project.name })}
+                    target="_blank"
+                    rel="noreferrer"
+                    title="Adicionar ao Google Agenda"
+                    aria-label={'Adicionar "' + e.title + '" ao Google Agenda'}
+                  >
+                    <CalendarPlus size={14} /> <span>Google Agenda</span>
+                  </a>
+                )}
               </li>
             ))}
           </ul>

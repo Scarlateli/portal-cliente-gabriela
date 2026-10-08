@@ -120,7 +120,9 @@ create table if not exists events (
   project_id uuid not null references projects (id) on delete cascade,
   date date not null,
   title text not null,
-  kind text default 'evento'
+  kind text default 'evento',
+  time text, -- horário (Etapa 4)
+  link text  -- link da reunião online (Etapa 4)
 );
 
 -- Templates de etapas (ferramenta do studio; clientes não acessam).
