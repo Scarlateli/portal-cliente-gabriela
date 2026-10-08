@@ -216,29 +216,47 @@ digitado para confirmar; apaga também os arquivos do Storage); templates com
 sub-etapas, agora editáveis. Mudança de banco em
 `supabase/sql/2026-10-01-etapa2-subetapas-em-templates.sql`.
 
-**Etapa 3 — Visão do cliente**
+**Etapa 3 — Visão do cliente** ✅ (07/10)
 Filtro das etapas na ordem Em andamento, Futuras, Concluídas, Todas, sem a
 contagem entre parênteses; bloco de contato com a chamada "Tem alguma
 dúvida?", a subchamada "Fale com nossa equipe" e o botão "Fale conosco".
 
-**Etapa 4 — Calendário**
+**Etapa 4 — Calendário** ✅ (07/10; Google Agenda por link, sem conectar a conta)
 Horário nas reuniões criadas pelo calendário; "Adicionar ao Google Agenda"
 em cada evento.
 
-**Etapa 5 — Documentos com aprovação**
+**Etapa 5 — Documentos com aprovação** ✅ (07/10)
 Para cada documento, a Gabriela escolhe: pede assinatura do cliente (feita
 dentro do portal, sem Autentique) ou pede só um OK. Fica pendente para o
 cliente até ele resolver.
 
-**Etapa 6 — Termos e contratos**
+**Etapa 6 — Termos e contratos** ✅ (07/10)
 Termos: o cliente aprova ou recusa com um botão, sem PDF. Contratos: a
 Gabriela escolhe entre a assinatura dentro do portal e a Autentique. O
 contrato oficial do projeto continua pela Autentique.
 
-**Etapa 7 — Notificações**
+**Etapa 7 — Notificações** ✅ (07/10; sino + janela ao entrar)
 Sino com as pendências, para a Gabriela e para o cliente; janela de
 pendências ao entrar, até que sejam resolvidas.
 
-**Etapa 8 — Orçamentos e fornecedores**
+**Etapa 8 — Orçamentos e fornecedores** ✅ (07/10)
 Cadastro prévio de fornecedores, escolhidos no orçamento com os dados já
 preenchidos; o cliente pode pedir negociação de valor pelo portal.
+
+
+### Banco — ordem de aplicação da rodada (07/10/2026)
+
+1. `2026-10-01-etapa2-subetapas-em-templates.sql` — aplicado (07/10).
+2. `2026-10-07-etapa4-eventos.sql` — aplicado.
+3. `2026-10-07-etapas-5-6-respostas-do-cliente.sql` — aplicado e testado
+   simulando cliente, outro cliente e anônimo.
+4. `2026-10-07-etapa8-fornecedores-e-negociacao.sql` — aplicar ANTES de
+   publicar o código das etapas 5 a 8.
+5. `2026-10-07-depois-do-deploy-fechar-edicao-do-cliente.sql` — aplicar
+   DEPOIS do deploy.
+
+Avisos do Supabase depois da rodada: funções SECURITY DEFINER executáveis
+por usuários logados (intencional: responder_documento,
+responder_contrato, decidir_orcamento conferem a posse por dentro; idem
+is_studio/owns_project); proteção contra senhas vazadas desligada (ligar no
+painel: Authentication → Policies/Password); índices sem uso (volume baixo).
