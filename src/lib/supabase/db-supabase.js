@@ -20,6 +20,15 @@ const QUOTE_COLS =
 const CONTRACT_COLS =
   'id, projectId:project_id, name, sigStatus:sig_status, provider, signer, signedAt:signed_at, kind, storagePath:storage_path, providerDocId:provider_doc_id, studioSignLink:studio_sign_link, method, body, responseNote:response_note, respondedAt:responded_at';
 
+const fornecedorRow = (d) => ({
+  name: String(d.name || '').trim(),
+  segment: d.segment || null,
+  contact: d.contact || null,
+  phone: d.phone || null,
+  email: d.email || null,
+  notes: d.notes || null,
+});
+
 const must = (error) => {
   if (error) throw error;
 };
@@ -234,6 +243,15 @@ export function makeSupabaseDb() {
         .eq('project_id', pid);
       must(error);
       return (data || []).map((q) => ({ ...q, amount: num(q.amount), comments: q.comments || [] }));
+    },
+    // cadastro de fornecedores do studio (Etapa 8); RLS: só o studio lê
+    fornecedores: async () => {
+      const { data, error } = await supabase
+        .from('fornecedores')
+        .select('id, name, segment, contact, phone, email, notes')
+        .order('name');
+      must(error);
+      return data || [];
     },
     suppliers: async (pid) => {
       const { data, error } = await supabase
@@ -810,12 +828,33 @@ export function makeSupabaseDb() {
         status: 'pendente',
         studio_note: d.studioNote || null,
         decided_at: null,
-        contact: '',
-        deadline: '',
-        payment: '',
+        contact: d.contact || '',
+        deadline: d.deadline || '',
+        payment: d.payment || '',
         contract_status: 'a_iniciar',
         notes: '',
         storage_path,
+      });
+      must(error);
+    },
+    addFornecedor: async (d) => {
+      const { error } = await supabase.from('fornecedores').insert(fornecedorRow(d));
+      must(error);
+    },
+    updateFornecedor: async (fid, d) => {
+      const { error } = await supabase.from('fornecedores').update(fornecedorRow(d)).eq('id', fid);
+      must(error);
+    },
+    deleteFornecedor: async (fid) => {
+      const { error } = await supabase.from('fornecedores').delete().eq('id', fid);
+      must(error);
+    },
+    // decisão do cliente (Etapa 8): aprovar, reprovar ou pedir negociação
+    decidirOrcamento: async (qid, decisao, mensagem) => {
+      const { error } = await supabase.rpc('decidir_orcamento', {
+        p_orcamento: qid,
+        p_decisao: decisao,
+        p_mensagem: mensagem || null,
       });
       must(error);
     },

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { EtapasEditor } from './EtapasEditor.jsx';
+import { Fornecedores } from './Fornecedores.jsx';
 import { etapaVazia, copiarItens } from '../../lib/etapas.js';
 import {
   FolderKanban,
@@ -15,6 +16,7 @@ import {
   CircleCheck,
   Trash2,
   Pencil,
+  Handshake,
 } from 'lucide-react';
 import { TopBar, Empty, Loading, ErrorBox, ErrorBanner } from '../atoms.jsx';
 import { stageOverdue, fmt, todayISO } from '../../lib/helpers.js';
@@ -30,6 +32,7 @@ export function AdminHome({ db: baseDb, user, onLogout, onOpen }) {
       { key: qk.projects(), method: 'projects' },
       { key: qk.notifications(), method: 'notifications' },
       { key: qk.templates(), method: 'templates' },
+      { key: qk.fornecedores(), method: 'fornecedores' },
     ]),
   );
 
@@ -94,6 +97,12 @@ function AdminInner({ db, baseDb, user, onLogout, onOpen, mutationError, clearEr
             <LayoutTemplate size={15} /> Templates
           </button>
           <button
+            className={'tab' + (tab === 'fornecedores' ? ' active' : '')}
+            onClick={() => setTab('fornecedores')}
+          >
+            <Handshake size={15} /> Fornecedores
+          </button>
+          <button
             className={'tab' + (tab === 'notif' ? ' active' : '')}
             onClick={() => setTab('notif')}
           >
@@ -113,6 +122,7 @@ function AdminInner({ db, baseDb, user, onLogout, onOpen, mutationError, clearEr
           ))}
         {tab === 'novo' && <NewProject db={db} onDone={() => setTab('projetos')} />}
         {tab === 'templates' && <Templates db={db} />}
+        {tab === 'fornecedores' && <Fornecedores db={db} />}
         {tab === 'notif' && <Notifications notes={notes} onOpen={onOpen} />}
       </main>
     </div>

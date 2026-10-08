@@ -77,6 +77,11 @@ export const seed = {
     { id: 'q2', projectId: 'p1', segment: 'Iluminação', supplier: 'Lumini Iluminação', amount: 9800, fileName: 'orcamento-lumini.pdf', status: 'aprovado', studioNote: 'Inclui projeto luminotécnico e instalação.', comments: [{ author: 'client', body: 'Pode aprovar, gostei das luminárias.', at: 'Ontem 14:10' }], decidedAt: '2026-06-10', contact: 'Patrícia · (11) 95555-0102 · contato@lumini.com.br', deadline: '30 dias após aprovação', payment: '50% entrada, 50% na entrega', contractStatus: 'em_producao', notes: 'Garantia de 1 ano nas luminárias. Instalação inclusa.' },
     { id: 'q3', projectId: 'p1', segment: 'Marmoraria', supplier: 'Mármores SP', amount: 14500, fileName: 'orcamento-marmores.pdf', status: 'pendente', studioNote: 'Quartzo branco para bancadas. Aguardo sua aprovação.', comments: [], decidedAt: null, contact: '', deadline: '', payment: '', contractStatus: 'a_iniciar', notes: '' },
   ],
+  // cadastro de fornecedores do studio (Etapa 8)
+  fornecedores: [
+    { id: 'f1', name: 'Marcenaria Bianchi', segment: 'Marcenaria', contact: 'Paulo Bianchi', phone: '(11) 98888-1111', email: 'contato@bianchi.com.br', notes: 'Prazo médio de 45 dias.' },
+    { id: 'f2', name: 'Lumini Iluminação', segment: 'Iluminação', contact: 'Renata', phone: '(11) 97777-2222', email: 'vendas@lumini.com.br', notes: '' },
+  ],
   events: [
     { id: 'e1', projectId: 'p2', date: '2026-06-26', title: 'Envio do contrato', kind: 'evento' },
   ],

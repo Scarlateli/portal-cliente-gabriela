@@ -56,6 +56,8 @@ export function ProjectView({ db: baseDb, user, pid, isStudio, onLogout, onBack,
       { key: qk.payment(pid), method: 'payment', args: [pid] },
       { key: qk.quotes(pid), method: 'quotes', args: [pid] },
       { key: qk.suppliers(pid), method: 'suppliers', args: [pid] },
+      // cadastro de fornecedores: só o studio usa (e só o studio enxerga)
+      ...(isStudio ? [{ key: qk.fornecedores(), method: 'fornecedores' }] : []),
     ]),
     pid,
   );

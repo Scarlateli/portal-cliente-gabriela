@@ -30,6 +30,7 @@ const READ_METHODS = [
   'quotes',
   'suppliers',
   'calendarEvents',
+  'fornecedores',
 ];
 
 const ALL_MUTATIONS = [
@@ -46,6 +47,10 @@ const ALL_MUTATIONS = [
   'addTemplate',
   'deleteTemplate',
   'updateTemplate',
+  'addFornecedor',
+  'updateFornecedor',
+  'deleteFornecedor',
+  'decidirOrcamento',
   'setDocumentApproval',
   'responderDocumento',
   'responderContrato',
@@ -160,7 +165,9 @@ export function useResolvedDb(baseDb, specs, scopePid = null) {
                       ? qk.notifications()
                       : m === 'calendarEvents'
                         ? qk.calendar(args[0])
-                        : [m, args[0]];
+                        : m === 'fornecedores'
+                          ? qk.fornecedores()
+                          : [m, args[0]];
         return queryClient.getQueryData(key);
       };
     }

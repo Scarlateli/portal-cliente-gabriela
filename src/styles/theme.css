@@ -664,3 +664,17 @@ button.sub-box{cursor:pointer}
 .cp .contract-body{white-space:pre-wrap;font-size:14px;line-height:1.6;border-left:2px solid var(--gl-areia);padding:4px 0 4px 14px;margin:0 0 12px;max-height:280px;overflow:auto}
 .cp .contract-motivo{font-size:13px;margin:0 0 10px}
 .cp .contract-block .add-stage textarea,.cp .add-stage .lab textarea{width:100%}
+
+/* Etapa 8: cadastro de fornecedores */
+.cp .forn-lista{list-style:none;margin:12px 0 0;padding:0;border-top:1px solid var(--line)}
+.cp .forn{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
+.cp .forn strong{display:block;font-weight:500;font-size:14px}
+.cp .forn small{display:block;font-size:12px;color:var(--muted);margin-top:2px}
+.cp .forn .forn-obs{font-style:normal;color:var(--gl-terra)}
+
+/* Etapa 8: negociação de orçamento */
+.cp .pill-neg{background:rgba(170,155,131,.25);color:var(--gl-terra)}
+.cp .quote-dados{font-size:12.5px;color:var(--muted);margin:6px 0 0}
+.cp .negociar{flex-basis:100%}
+.cp .reenviar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;flex-basis:100%}
+.cp .reenviar input{max-width:140px}

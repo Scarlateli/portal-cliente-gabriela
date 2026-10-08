@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react';
-import { Plus, Upload, FileText, ThumbsUp, ThumbsDown, MessageCircle, Trash2 } from 'lucide-react';
+import { Plus, Upload, FileText, ThumbsUp, ThumbsDown, MessageCircle, Trash2, Handshake, Send } from 'lucide-react';
+import { erroAmigavel } from '../../lib/erros.js';
 import { Empty } from '../atoms.jsx';
 import { SEGMENTS, STUDIO } from '../../lib/constants.js';
 import { money } from '../../lib/helpers.js';
@@ -14,7 +15,24 @@ export function Quotes({ db, project, isStudio }) {
     studioNote: '',
     fileName: '',
     file: null,
+    contact: '',
+    deadline: '',
+    payment: '',
   });
+  const cadastro = (isStudio && db.fornecedores && db.fornecedores()) || [];
+  const [fornId, setFornId] = useState('');
+  // escolher um fornecedor do cadastro preenche nome, segmento e contato
+  const escolherFornecedor = (id) => {
+    setFornId(id);
+    const f = cadastro.find((x) => x.id === id);
+    if (!f) return;
+    setQ({
+      ...q,
+      supplier: f.name,
+      segment: SEGMENTS.includes(f.segment) ? f.segment : q.segment,
+      contact: [f.contact, f.phone, f.email].filter(Boolean).join(' · '),
+    });
+  };
   const [segFilter, setSegFilter] = useState('todos');
   const [statusFilter, setStatusFilter] = useState('todos');
   const fileRef = useRef(null);
@@ -26,11 +44,15 @@ export function Quotes({ db, project, isStudio }) {
       studioNote: '',
       fileName: '',
       file: null,
+      contact: '',
+      deadline: '',
+      payment: '',
     });
   const STATUS = [
     ['todos', 'Todos'],
     ['pendente', 'Pendentes'],
     ['aprovado', 'Aprovados'],
+    ['negociacao', 'Em negociação'],
     ['reprovado', 'Reprovados'],
   ];
   const segsPresent = SEGMENTS.filter((s) => quotes.some((x) => x.segment === s));
@@ -57,6 +79,20 @@ export function Quotes({ db, project, isStudio }) {
 
       {adding && (
         <div className="add-stage">
+          {cadastro.length > 0 && (
+            <label className="lab">
+              Fornecedor cadastrado
+              <select value={fornId} onChange={(e) => escolherFornecedor(e.target.value)}>
+                <option value="">Digitar um fornecedor novo</option>
+                {cadastro.map((f) => (
+                  <option key={f.id} value={f.id}>
+                    {f.name}
+                    {f.segment ? ' — ' + f.segment : ''}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
           <div className="add-row">
             <select value={q.segment} onChange={(e) => setQ({ ...q, segment: e.target.value })}>
               {SEGMENTS.map((s) => (
@@ -102,6 +138,26 @@ export function Quotes({ db, project, isStudio }) {
               )}
             </div>
           </div>
+          <div className="add-row">
+            <input
+              placeholder="Contato (nome · telefone · e-mail)"
+              aria-label="Contato do fornecedor"
+              value={q.contact}
+              onChange={(e) => setQ({ ...q, contact: e.target.value })}
+            />
+            <input
+              placeholder="Prazo de entrega (ex.: 45 dias)"
+              aria-label="Prazo de entrega"
+              value={q.deadline}
+              onChange={(e) => setQ({ ...q, deadline: e.target.value })}
+            />
+            <input
+              placeholder="Condições de pagamento"
+              aria-label="Condições de pagamento"
+              value={q.payment}
+              onChange={(e) => setQ({ ...q, payment: e.target.value })}
+            />
+          </div>
           <textarea
             placeholder="Nota para o cliente (aparece antes da decisão)" aria-label="Nota para o cliente"
             value={q.studioNote}
@@ -114,6 +170,7 @@ export function Quotes({ db, project, isStudio }) {
               onClick={() => {
                 db.addQuote(project.id, q, q.file);
                 resetQ();
+                setFornId('');
                 setAdding(false);
               }}
             >
@@ -186,7 +243,8 @@ function QuoteCard({ db, q, isStudio }) {
     pendente: ['pill-next', 'Pendente'],
     aprovado: ['pill-done', 'Aprovado'],
     reprovado: ['pill-late', 'Reprovado'],
-  }[q.status];
+    negociacao: ['pill-neg', 'Em negociação'],
+  }[q.status] || ['pill-next', q.status];
   return (
     <div className="quote">
       <div className="quote-top">
@@ -234,6 +292,14 @@ function QuoteCard({ db, q, isStudio }) {
           <em className="muted-line">Sem arquivo anexado</em>
         )}
       </div>
+
+      {(q.contact || q.deadline || q.payment) && (
+        <p className="quote-dados">
+          {[q.contact, q.deadline && 'Prazo: ' + q.deadline, q.payment && 'Pagamento: ' + q.payment]
+            .filter(Boolean)
+            .join(' · ')}
+        </p>
+      )}
 
       {(q.studioNote || isStudio) && (
         <div className="quote-note">
@@ -288,22 +354,11 @@ function QuoteCard({ db, q, isStudio }) {
       )}
 
       <div className="quote-actions">
-        {!isStudio && q.status === 'pendente' && (
-          <>
-            <button
-              className="btn btn-primary btn-sm"
-              onClick={() => db.setQuoteStatus(q.id, 'aprovado')}
-            >
-              <ThumbsUp size={13} /> Aprovar
-            </button>
-            <button
-              className="btn btn-ghost btn-sm"
-              onClick={() => db.setQuoteStatus(q.id, 'reprovado')}
-            >
-              <ThumbsDown size={13} /> Reprovar
-            </button>
-          </>
+        {!isStudio && q.status === 'pendente' && <DecisaoCliente db={db} q={q} />}
+        {!isStudio && q.status === 'negociacao' && (
+          <p className="hint">Você pediu uma negociação. O studio vai conversar com o fornecedor e atualizar o orçamento.</p>
         )}
+        {isStudio && q.status === 'negociacao' && <ReenviarOrcamento db={db} q={q} />}
         <div className="comment-box">
           <input
             placeholder="Comentar…" aria-label="Escrever um comentário"
@@ -329,6 +384,92 @@ function QuoteCard({ db, q, isStudio }) {
           </button>
         </div>
       </div>
+    </div>
+  );
+}
+
+function DecisaoCliente({ db, q }) {
+  const [negociando, setNegociando] = useState(false);
+  const [msg, setMsg] = useState('');
+  const [ocupado, setOcupado] = useState(false);
+  const [erro, setErro] = useState('');
+  const decidir = async (decisao, mensagem) => {
+    setErro('');
+    setOcupado(true);
+    try {
+      await db.decidirOrcamento(q.id, decisao, mensagem);
+      setNegociando(false);
+    } catch (e) {
+      setErro(erroAmigavel(e).texto);
+    } finally {
+      setOcupado(false);
+    }
+  };
+  if (negociando)
+    return (
+      <div className="sign-box negociar">
+        <label className="lab">
+          O que você gostaria de negociar?
+          <textarea
+            rows={3}
+            value={msg}
+            onChange={(e) => setMsg(e.target.value)}
+            placeholder="Ex.: o valor está acima do que planejei; é possível rever o acabamento ou parcelar?"
+          />
+        </label>
+        {erro && <p className="error">{erro}</p>}
+        <div className="row">
+          <button
+            type="button"
+            className="btn btn-primary btn-sm"
+            disabled={!msg.trim() || ocupado}
+            onClick={() => decidir('negociar', msg.trim())}
+          >
+            <Send size={13} /> {ocupado ? 'Enviando…' : 'Enviar pedido'}
+          </button>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={() => setNegociando(false)}>
+            Voltar
+          </button>
+        </div>
+      </div>
+    );
+  return (
+    <>
+      <button className="btn btn-primary btn-sm" disabled={ocupado} onClick={() => decidir('aprovar')}>
+        <ThumbsUp size={13} /> Aprovar
+      </button>
+      <button className="btn btn-ghost btn-sm" disabled={ocupado} onClick={() => setNegociando(true)}>
+        <Handshake size={13} /> Pedir negociação
+      </button>
+      <button className="btn btn-ghost btn-sm" disabled={ocupado} onClick={() => decidir('reprovar')}>
+        <ThumbsDown size={13} /> Reprovar
+      </button>
+      {erro && <span className="error">{erro}</span>}
+    </>
+  );
+}
+
+// Studio: depois de negociar com o fornecedor, atualiza o valor (se mudou) e
+// devolve o orçamento ao cliente para uma nova decisão.
+function ReenviarOrcamento({ db, q }) {
+  const [valor, setValor] = useState(String(q.amount));
+  return (
+    <div className="reenviar">
+      <span className="hint">O cliente pediu negociação (veja o comentário abaixo).</span>
+      <input
+        type="number"
+        aria-label="Novo valor do orçamento em reais"
+        value={valor}
+        onChange={(e) => setValor(e.target.value)}
+      />
+      <button
+        type="button"
+        className="btn btn-primary btn-sm"
+        disabled={!(Number(valor) > 0)}
+        onClick={() => db.updateQuote(q.id, { amount: Number(valor), status: 'pendente' })}
+      >
+        <Send size={13} /> Reenviar ao cliente
+      </button>
     </div>
   );
 }

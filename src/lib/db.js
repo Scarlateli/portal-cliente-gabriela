@@ -43,6 +43,7 @@ export function makeDb(state, set) {
     contracts: (pid) => state.contracts.filter((c) => c.projectId === pid),
     payment: (pid) => state.payments.find((x) => x.projectId === pid),
     quotes: (pid) => byP('quotes', pid),
+    fornecedores: () => (state.fornecedores || []).slice().sort((a, b) => a.name.localeCompare(b.name, 'pt-BR')),
     suppliers: (pid) => byP('quotes', pid).filter((q) => q.status === 'aprovado'),
     calendarEvents: (pid) => {
       const out = [];
@@ -140,7 +141,20 @@ export function makeDb(state, set) {
       return { ...s, payments: [...others, { id: uid('pay'), projectId: pid, total, installments }] };
     }),
     markPaid: (pid, n) => set((s) => ({ ...s, payments: s.payments.map((p) => p.projectId === pid ? { ...p, installments: p.installments.map((i) => i.n === n ? { ...i, status: 'pago', paidAt: todayISO() } : i) } : p) })),
-    addQuote: (pid, d) => set((s) => ({ ...s, quotes: [...s.quotes, { id: uid('q'), projectId: pid, segment: d.segment, supplier: d.supplier, amount: Number(d.amount), fileName: d.fileName || '', status: 'pendente', studioNote: d.studioNote || '', comments: [], decidedAt: null, contact: '', deadline: '', payment: '', contractStatus: 'a_iniciar', notes: '' }] })),
+    addQuote: (pid, d) => set((s) => ({ ...s, quotes: [...s.quotes, { id: uid('q'), projectId: pid, segment: d.segment, supplier: d.supplier, amount: Number(d.amount), fileName: d.fileName || '', status: 'pendente', studioNote: d.studioNote || '', comments: [], decidedAt: null, contact: d.contact || '', deadline: d.deadline || '', payment: d.payment || '', contractStatus: 'a_iniciar', notes: '' }] })),
+    addFornecedor: (d) => set((s) => ({ ...s, fornecedores: [...(s.fornecedores || []), { id: uid('f'), name: String(d.name).trim(), segment: d.segment || '', contact: d.contact || '', phone: d.phone || '', email: d.email || '', notes: d.notes || '' }] })),
+    updateFornecedor: (fid, d) => set((s) => ({ ...s, fornecedores: (s.fornecedores || []).map((f) => f.id === fid ? { ...f, ...d, name: String(d.name).trim() } : f) })),
+    deleteFornecedor: (fid) => set((s) => ({ ...s, fornecedores: (s.fornecedores || []).filter((f) => f.id !== fid) })),
+    // espelha a função decidir_orcamento do banco (mesmas regras)
+    decidirOrcamento: (qid, decisao, mensagem) => {
+      const q = state.quotes.find((x) => x.id === qid);
+      const msg = String(mensagem || '').trim();
+      if (!q || q.status !== 'pendente') throw new Error('Este orçamento não está aguardando a sua decisão.');
+      const status = { aprovar: 'aprovado', reprovar: 'reprovado', negociar: 'negociacao' }[decisao];
+      if (!status) throw new Error('Decisão inválida.');
+      if (decisao === 'negociar' && !msg) throw new Error('Conte o que você gostaria de negociar.');
+      set((s) => ({ ...s, quotes: s.quotes.map((x) => x.id === qid ? { ...x, status, decidedAt: decisao === 'negociar' ? x.decidedAt : todayISO(), comments: msg ? [...x.comments, { author: 'client', body: msg, at: todayISO() }] : x.comments } : x) }));
+    },
     updateQuote: (qid, patch) => set((s) => ({ ...s, quotes: s.quotes.map((q) => q.id === qid ? { ...q, ...patch } : q) })),
     deleteQuote: (qid) => set((s) => ({ ...s, quotes: s.quotes.filter((x) => x.id !== qid) })),
     setQuoteStatus: (qid, status) => set((s) => ({ ...s, quotes: s.quotes.map((q) => q.id === qid ? { ...q, status, decidedAt: todayISO() } : q) })),

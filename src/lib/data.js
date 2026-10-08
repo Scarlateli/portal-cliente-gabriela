@@ -33,6 +33,7 @@ export const qk = {
   quotes: (pid) => ['quotes', pid],
   suppliers: (pid) => ['suppliers', pid],
   calendar: (pid) => ['calendar', pid],
+  fornecedores: () => ['fornecedores'],
 };
 
 /**
@@ -55,6 +56,10 @@ export function invalidationsFor(method, pid) {
     applyTemplate: [qk.stages(pid), qk.calendar(pid)],
     addTemplate: [qk.templates()],
     deleteTemplate: [qk.templates()],
+    addFornecedor: [qk.fornecedores()],
+    updateFornecedor: [qk.fornecedores()],
+    deleteFornecedor: [qk.fornecedores()],
+    decidirOrcamento: [qk.quotes(pid), qk.suppliers(pid), qk.notifications()],
     updateTemplate: [qk.templates()],
     updateProject: [qk.project(pid), qk.projects()],
     deleteProject: [qk.projects(), qk.notifications()],
