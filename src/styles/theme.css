@@ -678,3 +678,21 @@ button.sub-box{cursor:pointer}
 .cp .negociar{flex-basis:100%}
 .cp .reenviar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;flex-basis:100%}
 .cp .reenviar input{max-width:140px}
+
+/* Etapa 7: sino de pendências e janela ao entrar */
+.cp .sino{position:relative}
+.cp .sino-btn{position:relative}
+.cp .sino-n{position:absolute;top:-3px;right:-4px;min-width:17px;height:17px;padding:0 4px;border-radius:9px;background:var(--gl-vermelho);color:var(--gl-cream);font-size:10.5px;line-height:17px;text-align:center;font-weight:500}
+.cp .sino-painel{position:absolute;right:0;top:calc(100% + 8px);z-index:40;width:min(360px,calc(100vw - 32px));max-height:420px;overflow:auto;background:var(--card);border:1px solid var(--line);border-radius:6px;box-shadow:0 10px 30px rgba(33,11,11,.14);padding:8px}
+.cp .sino-vazio{font-size:13px;color:var(--muted);padding:10px}
+.cp .sino-grupo h4{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:500;margin:8px 8px 4px}
+.cp .sino-grupo ul{list-style:none;margin:0;padding:0}
+.cp .sino-grupo button{display:flex;width:100%;align-items:center;justify-content:space-between;gap:10px;text-align:left;background:none;border:0;border-radius:4px;padding:9px 8px;font:inherit;font-size:13.5px;color:var(--ink);cursor:pointer;line-height:1.4}
+.cp .sino-grupo button:hover{background:var(--gl-vinho-10)}
+.cp .sino-grupo button svg{flex:none;color:var(--muted)}
+.cp .janela-fundo{position:fixed;inset:0;z-index:60;background:rgba(33,11,11,.35);display:grid;place-items:center;padding:16px}
+.cp .janela{width:min(480px,100%);max-height:calc(100vh - 32px);display:flex;flex-direction:column;background:var(--gl-surface);border-radius:8px;box-shadow:0 20px 50px rgba(33,11,11,.25)}
+.cp .janela header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:20px 20px 8px}
+.cp .janela h2{font-weight:400;font-size:20px;line-height:1.3;margin:0}
+.cp .janela-corpo{overflow:auto;padding:0 12px}
+.cp .janela footer{padding:12px 20px 18px;display:flex;justify-content:flex-end}

@@ -1,3 +1,4 @@
+import { calcularPendencias } from '../pendencias.js';
 /* --------------------- data layer (Supabase) --------------------------
    Espelho ASSÍNCRONO da interface de src/lib/db.js (makeDb). Cada leitura
    devolve uma Promise; as mutações fazem insert/update/delete. Os SELECTs
@@ -243,6 +244,26 @@ export function makeSupabaseDb() {
         .eq('project_id', pid);
       must(error);
       return (data || []).map((q) => ({ ...q, amount: num(q.amount), comments: q.comments || [] }));
+    },
+    // pendências de quem está logado (Etapa 7). A RLS já limita o cliente
+    // aos projetos dele; o studio enxerga todos.
+    pendencias: async (role) => {
+      const [pr, st, dc, ct, qt] = await Promise.all([
+        supabase.from('projects').select('id, code, name, status'),
+        supabase.from('stages').select('id, projectId:project_id, title, status, owner, "end", subs:stage_subs(title, done, responsible)'),
+        supabase.from('documents').select('id, projectId:project_id, name, approval, response'),
+        supabase.from('contracts').select('id, projectId:project_id, name, kind, method, sigStatus:sig_status'),
+        supabase.from('quotes').select('id, projectId:project_id, supplier, segment, status'),
+      ]);
+      for (const r of [pr, st, dc, ct, qt]) must(r.error);
+      return calcularPendencias({
+        role,
+        projects: pr.data || [],
+        stages: st.data || [],
+        documents: dc.data || [],
+        contracts: ct.data || [],
+        quotes: qt.data || [],
+      });
     },
     // cadastro de fornecedores do studio (Etapa 8); RLS: só o studio lê
     fornecedores: async () => {

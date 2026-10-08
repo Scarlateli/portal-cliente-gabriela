@@ -31,6 +31,7 @@ const READ_METHODS = [
   'suppliers',
   'calendarEvents',
   'fornecedores',
+  'pendencias',
 ];
 
 const ALL_MUTATIONS = [
@@ -167,7 +168,9 @@ export function useResolvedDb(baseDb, specs, scopePid = null) {
                         ? qk.calendar(args[0])
                         : m === 'fornecedores'
                           ? qk.fornecedores()
-                          : [m, args[0]];
+                          : m === 'pendencias'
+                            ? qk.pendencias()
+                            : [m, args[0]];
         return queryClient.getQueryData(key);
       };
     }

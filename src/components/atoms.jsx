@@ -1,3 +1,4 @@
+import { SinoPendencias } from './Pendencias.jsx';
 import { erroAmigavel } from '../lib/erros.js';
 import {
   Check,
@@ -115,6 +116,7 @@ export function TopBar({ user, onLogout, left, right }) {
       </div>
       <div className="topbar-right">
         {right}
+        <SinoPendencias />
         {user.role === 'studio' && (
           <span className="badge">
             <Building2 size={12} /> Studio

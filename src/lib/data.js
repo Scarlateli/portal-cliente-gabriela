@@ -34,6 +34,7 @@ export const qk = {
   suppliers: (pid) => ['suppliers', pid],
   calendar: (pid) => ['calendar', pid],
   fornecedores: () => ['fornecedores'],
+  pendencias: () => ['pendencias'],
 };
 
 /**
@@ -86,7 +87,8 @@ export function invalidationsFor(method, pid) {
     addEvent: [qk.calendar(pid)],
     completeProject: [qk.project(pid), qk.projects(), qk.notifications()],
   };
-  return map[method] || [];
+  // toda ação pode criar ou resolver uma pendência: o sino sempre atualiza
+  return [...(map[method] || []), qk.pendencias()];
 }
 
 // ===== atualização otimista (redesign §3.1 nº 1) =====

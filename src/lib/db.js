@@ -1,3 +1,4 @@
+import { calcularPendencias } from './pendencias.js';
 /* ------------------------------- db -----------------------------------
    Camada de dados MOCK em memória (não persiste entre sessões).
    A interface aqui é a "fonte da verdade" que o backend real deve espelhar
@@ -43,6 +44,19 @@ export function makeDb(state, set) {
     contracts: (pid) => state.contracts.filter((c) => c.projectId === pid),
     payment: (pid) => state.payments.find((x) => x.projectId === pid),
     quotes: (pid) => byP('quotes', pid),
+    pendencias: (role, uid) => {
+      const meus = role === 'studio' ? state.projects : state.projects.filter((p) => p.clientId === uid);
+      const ids = new Set(meus.map((p) => p.id));
+      const doProjeto = (lista) => (lista || []).filter((x) => ids.has(x.projectId));
+      return calcularPendencias({
+        role,
+        projects: meus,
+        stages: doProjeto(state.stages),
+        documents: doProjeto(state.documents),
+        contracts: doProjeto(state.contracts),
+        quotes: doProjeto(state.quotes),
+      });
+    },
     fornecedores: () => (state.fornecedores || []).slice().sort((a, b) => a.name.localeCompare(b.name, 'pt-BR')),
     suppliers: (pid) => byP('quotes', pid).filter((q) => q.status === 'aprovado'),
     calendarEvents: (pid) => {

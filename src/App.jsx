@@ -1,3 +1,4 @@
+import { PendenciasCtx, pedirAba, CHAVE_JANELA } from './lib/pendenciasContexto.js';
 import { useState, useEffect } from 'react';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { seed } from './lib/seed.js';
@@ -101,6 +102,12 @@ function AppInner() {
     setStudioPid(null);
     setClientPid(null);
     queryClient.clear();
+    // a janela de pendências volta a abrir no próximo login
+    try {
+      sessionStorage.removeItem(CHAVE_JANELA);
+    } catch {
+      /* ignora */
+    }
   };
 
   let body;
@@ -152,7 +159,19 @@ function AppInner() {
     );
   }
 
-  return <div className="cp">{body}</div>;
+  // sino de pendências: navega até o projeto e a aba onde a pendência se resolve
+  const irPara = (pid, aba) => {
+    pedirAba(pid, aba);
+    if (user && user.role === 'studio') setStudioPid(pid);
+    else setClientPid(pid);
+  };
+  const ctxPendencias = user && !needsPassword ? { baseDb: db, user, irPara } : null;
+
+  return (
+    <PendenciasCtx.Provider value={ctxPendencias}>
+      <div className="cp">{body}</div>
+    </PendenciasCtx.Provider>
+  );
 }
 
 // Área do cliente: replica a regra original — 1 projeto abre direto (sem

@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { consumirAba } from '../../lib/pendenciasContexto.js';
+import { useState, useEffect } from 'react';
 import { GerenciarProjeto } from './GerenciarProjeto.jsx';
 import {
   GitCommitVertical,
@@ -134,7 +135,18 @@ function ProjectInner({
   mutationError,
   clearError,
 }) {
-  const [tab, setTab] = useState('timeline');
+  // aba pedida pelo sino de pendências (vale uma vez); senão, a linha do tempo
+  const [tab, setTab] = useState(() => consumirAba(project.id) || 'timeline');
+  useEffect(() => {
+    const ir = (e) => {
+      if (e.detail && e.detail.pid === project.id) {
+        consumirAba(project.id);
+        setTab(e.detail.aba);
+      }
+    };
+    window.addEventListener('gl-ir-aba', ir);
+    return () => window.removeEventListener('gl-ir-aba', ir);
+  }, [project.id]);
   const expired = project.accessUntil && todayISO() > project.accessUntil;
   const heroStages = db.stages(project.id);
   const heroPend = heroStages.filter((st) => st.status !== 'concluida' && st.end).map((st) => st.end).sort();
