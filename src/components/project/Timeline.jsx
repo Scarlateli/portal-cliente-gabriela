@@ -33,12 +33,16 @@ export function Timeline({ db, project, isStudio }) {
   const [nf, setNf] = useState({ title: '', category: 'Etapa', owner: 'studio', start: '', end: '', time: '', link: '', presencial: false, desc: '', subs: [] });
   const [sd, setSd] = useState({ title: '', kind: 'tarefa', responsible: 'studio', due: '', time: '', format: 'online', link: '' });
   const [tplSel, setTplSel] = useState('');
-  const [filter, setFilter] = useState('todas');
+  // Cliente abre em "Em andamento" (o que importa agora); se não houver nada
+  // em andamento, cai em "Todas" para a tela não começar vazia.
+  const [filter, setFilter] = useState(() =>
+    !isStudio && stages.some((st) => st.status === 'em_andamento') ? 'em_andamento' : 'todas',
+  );
   const templates = db.templates();
   const tplPreview = templates.find((t) => t.id === tplSel);
   const resetNf = () => setNf({ title: '', category: 'Etapa', owner: 'studio', start: '', end: '', time: '', link: '', presencial: false, desc: '', subs: [] });
-  const FILTERS = [['todas', 'Todas'], ['em_andamento', 'Em andamento'], ['a_fazer', 'Futuras'], ['concluida', 'Concluídas']];
-  const count = (f) => (f === 'todas' ? stages.length : stages.filter((s) => s.status === f).length);
+  // ordem pedida pela Gabriela: o presente primeiro, depois o futuro, o passado e tudo
+  const FILTERS = [['em_andamento', 'Em andamento'], ['a_fazer', 'Futuras'], ['concluida', 'Concluídas'], ['todas', 'Todas']];
   const shown = filter === 'todas' ? stages : stages.filter((s) => s.status === filter);
 
   return (
@@ -69,7 +73,7 @@ export function Timeline({ db, project, isStudio }) {
       </header>
 
       <div className="filter-row">
-        {FILTERS.map(([f, label]) => <button key={f} className={'filter' + (filter === f ? ' on' : '')} onClick={() => setFilter(f)}>{label} ({count(f)})</button>)}
+        {FILTERS.map(([f, label]) => <button key={f} className={'filter' + (filter === f ? ' on' : '')} onClick={() => setFilter(f)}>{label}</button>)}
       </div>
 
       {isStudio && tplPreview && (

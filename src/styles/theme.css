@@ -637,3 +637,7 @@ button.sub-box{cursor:pointer}
 .cp .gp-painel-perigo .lab{max-width:360px;margin-bottom:12px}
 .cp .btn-perigo{background:var(--gl-vermelho);border:1px solid var(--gl-vermelho);color:var(--gl-cream)}
 .cp .btn-perigo:disabled{opacity:.45;cursor:not-allowed}
+
+/* Etapa 3: bloco "Tem alguma dúvida?" com o balão "Fale conosco" */
+.cp .client-foot strong{font-weight:400;font-size:20px}
+.cp .fale-conosco{border-radius:999px;padding:10px 20px;gap:8px}

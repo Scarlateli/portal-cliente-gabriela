@@ -330,11 +330,11 @@ function ProjectInner({
         {!isStudio && (
           <footer className="client-foot">
             <div>
-              <strong>Precisa falar com o studio?</strong>
-              <p className="hint">Dúvidas sobre o projeto, documentos ou prazos — é só chamar.</p>
+              <strong>Tem alguma dúvida?</strong>
+              <p className="hint">Fale com nossa equipe.</p>
             </div>
-            <a className="btn btn-primary btn-sm" href={STUDIO_WHATSAPP} target="_blank" rel="noreferrer">
-              <MessageCircle size={14} /> Falar com o studio
+            <a className="btn btn-primary fale-conosco" href={STUDIO_WHATSAPP} target="_blank" rel="noreferrer">
+              <MessageCircle size={16} /> Fale conosco
             </a>
           </footer>
         )}
