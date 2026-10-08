@@ -60,6 +60,51 @@ e-mail com o link para criar uma senha nova.
 
 ---
 
+## O que mudou depois da última conversa (outubro/2026)
+
+Tudo o que você e o JP pediram na validação. Para ver os dois lados, use
+o projeto de teste e entre também como cliente numa janela anônima.
+
+### 11. Cadastro do projeto
+- Em **Novo projeto**, escolha um template em **Etapas do projeto**: as
+  etapas aparecem ali mesmo e dá para renomear, reordenar, tirar e incluir
+  etapas e sub-etapas antes de criar.
+- Na aba **Templates**, edite um template e inclua sub-etapas.
+- Dentro de um projeto, no fim da página: **Editar dados do projeto** e
+  **Excluir projeto** (pede o código do projeto para confirmar).
+
+### 12. Documentos com OK ou assinatura
+Ao enviar um documento, escolha **Pedir OK do cliente** ou **Pedir
+assinatura**. Como cliente, abra **Documentos**: o documento aparece com o
+botão **Dar OK** ou **Assinar** (nome completo + "li e concordo").
+
+### 13. Termos e contratos
+- **Novo documento → Termo**: escreva o texto no próprio portal (sem PDF) e
+  clique em **Liberar para o cliente**. Como cliente, **Aprovar** ou
+  **Recusar** (com o motivo, que aparece para você).
+- **Novo documento → Contrato**: escolha entre **Autentique** (contrato
+  oficial) e **Dentro do portal**.
+
+### 14. Sino de pendências
+Ao entrar, uma janela lista o que está esperando uma ação. O sino no topo
+mostra o número de pendências; cada item leva direto à aba certa. Teste
+como cliente e como studio.
+
+### 15. Orçamentos e fornecedores
+- Aba **Fornecedores** no painel: cadastre um fornecedor.
+- Num projeto, **Novo orçamento → Fornecedor cadastrado**: os dados vêm
+  preenchidos.
+- Como cliente, **Pedir negociação** num orçamento. Como studio, ajuste o
+  valor e **Reenviar ao cliente**.
+
+### 16. Calendário e tela do cliente
+- No calendário, crie uma reunião com horário e use **Google Agenda** no
+  compromisso.
+- Como cliente, a linha do tempo abre em **Em andamento**, e o fim da página
+  traz **Tem alguma dúvida?** com o botão **Fale conosco**.
+
+---
+
 ## Além do roteiro
 
 Fique à vontade para explorar Pagamentos, Orçamentos e Fornecedores, e para

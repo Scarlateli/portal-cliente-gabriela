@@ -1,7 +1,7 @@
 # Guia para agentes (Warp, Claude Code, etc.)
 
-Portal do Cliente — Gabriela Lendecker (arquitetura e interiores).
-React 19 + Vite, dados em **dois modos**: mock (dev) e Supabase (produção).
+Portal do Projeto — Gabriela Lendecker (arquitetura e interiores).
+React 19 + Vite, dados em **dois modos**: mock (demonstração) e Supabase (produção).
 O **site institucional é OUTRO repositório** — veja `docs/BRIEFING-SITE.md`.
 
 ## Comandos
@@ -19,13 +19,26 @@ O **site institucional é OUTRO repositório** — veja `docs/BRIEFING-SITE.md`.
 2. **Nunca commitar `.env`**, chaves ou senhas. Secrets de servidor vivem no
    painel do Supabase (Edge Functions → Secrets), nunca no código.
 3. **Banco muda por migração**: alterações de schema são aplicadas no projeto
-   Supabase (`acqagwwjdaoodmnmtpgp`) E espelhadas em
-   `src/lib/supabase/schema.sql` no MESMO commit. RLS em tudo.
+   Supabase (`acqagwwjdaoodmnmtpgp`), registradas como arquivo datado em
+   `supabase/sql/` E espelhadas em `src/lib/supabase/schema.sql` no MESMO
+   commit. RLS em tudo. O `schema.sql` deve continuar montando do zero o
+   mesmo banco da produção (conferido em 07/10/2026). Mudança aditiva
+   (coluna, tabela, função) entra ANTES do código que depende dela; aperto
+   de permissão entra DEPOIS do deploy do código novo.
 4. A Edge Function `supabase/functions/invite-client/index.ts` é a fonte da
    verdade do convite (senha provisória). Alterou? Precisa de redeploy.
 5. Strings de interface em **pt-BR**. Estética: ver tokens em
    `src/styles/theme.css` (bloco `.cp`); não introduzir libs visuais pesadas.
 6. Commits em português, mensagem explicando o porquê.
+7. **O cliente não faz UPDATE direto** em contratos, termos, documentos ou
+   orçamentos. Ações do cliente passam por funções `security definer` com
+   `search_path = ''` que conferem `owns_project` e alteram só o campo da
+   ação (`responder_documento`, `responder_contrato`, `decidir_orcamento`).
+   Nova ação do cliente = nova função, testada no banco simulando o dono,
+   outro cliente e anônimo. O espelho no `db.js` repete as mesmas regras.
+8. **CSP**: a política de conteúdo do `vercel.json` não permite
+   `unsafe-eval`. Por isso o Zod roda com `z.config({ jitless: true })`
+   (`src/lib/validation.js`); o teste `src/lib/csp.test.js` garante isso.
 
 ## Arquitetura de dados (importante!)
 
@@ -35,7 +48,10 @@ O **site institucional é OUTRO repositório** — veja `docs/BRIEFING-SITE.md`.
   react-query e entrega um `db` síncrono aos componentes.
 - **Novo método = 4 lugares**: db.js, db-supabase.js, listas do
   useResolvedDb (`READ_METHODS`/`ALL_MUTATIONS`/`PID_FIRST`) e
-  `invalidationsFor` em `src/lib/data.js`.
+  `invalidationsFor` em `src/lib/data.js`. Leitura global (sem projeto)
+  também precisa da chave própria no mapeamento do `supaSyncDb`.
+- **Pendências** (sino): regra única em `src/lib/pendencias.js`, usada pelos
+  dois modos. Toda mutação invalida `qk.pendencias()` automaticamente.
 
 ## Fluxos de auth (não quebrar)
 
@@ -47,6 +63,7 @@ O **site institucional é OUTRO repositório** — veja `docs/BRIEFING-SITE.md`.
 
 ## Docs
 
-`docs/DEPLOY.md` (produção) · `docs/CHECKLIST-PRODUCAO.md` (o que falta) ·
-`docs/TESTE-PRE-GOLIVE.md` (roteiro do teste) · `docs/BRIEFING-SITE.md`
-(site institucional, repo separado).
+`docs/DEPLOY.md` (produção) · `docs/STATUS-E-PENDENCIAS.md` (o que existe e o
+que falta) · `docs/ROTEIRO-VALIDACAO-GABRIELA.md` (roteiro de teste) ·
+`docs/PLANO-PRODUCAO.md` · `docs/BRIEFING-SITE.md` (site institucional, repo
+separado). Guias já cumpridos ficam em `docs/historico/`.

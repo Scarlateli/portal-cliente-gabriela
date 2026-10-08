@@ -244,19 +244,52 @@ Cadastro prévio de fornecedores, escolhidos no orçamento com os dados já
 preenchidos; o cliente pode pedir negociação de valor pelo portal.
 
 
-### Banco — ordem de aplicação da rodada (07/10/2026)
+### Banco — o que foi aplicado nesta rodada (tudo em produção)
 
-1. `2026-10-01-etapa2-subetapas-em-templates.sql` — aplicado (07/10).
-2. `2026-10-07-etapa4-eventos.sql` — aplicado.
-3. `2026-10-07-etapas-5-6-respostas-do-cliente.sql` — aplicado e testado
-   simulando cliente, outro cliente e anônimo.
-4. `2026-10-07-etapa8-fornecedores-e-negociacao.sql` — aplicar ANTES de
-   publicar o código das etapas 5 a 8.
-5. `2026-10-07-depois-do-deploy-fechar-edicao-do-cliente.sql` — aplicar
-   DEPOIS do deploy.
+| Arquivo em `supabase/sql/` | Aplicado | Observação |
+|---|---|---|
+| `2026-10-01-etapa2-subetapas-em-templates.sql` | 07/10 | o código da Etapa 2 subiu antes; a aba de templates falhou até aqui |
+| `2026-10-07-etapa4-eventos.sql` | 07/10 | antes do código |
+| `2026-10-07-etapas-5-6-respostas-do-cliente.sql` | 07/10 | antes do código; testado simulando dono, outro cliente e anônimo |
+| `2026-10-07-etapa8-fornecedores-e-negociacao.sql` | 07/10 | **depois** do código (três tentativas canceladas); entrou em duas partes |
+| `2026-10-07-depois-do-deploy-fechar-edicao-do-cliente.sql` | 07/10 | depois do deploy, como previsto |
+| `2026-10-07-stage-subs-confere-projeto.sql` | 07/10 | correção encontrada na validação (abaixo) |
 
-Avisos do Supabase depois da rodada: funções SECURITY DEFINER executáveis
-por usuários logados (intencional: responder_documento,
-responder_contrato, decidir_orcamento conferem a posse por dentro; idem
-is_studio/owns_project); proteção contra senhas vazadas desligada (ligar no
-painel: Authentication → Policies/Password); índices sem uso (volume baixo).
+**Lição:** o código das etapas 5 a 8 ficou no ar alguns minutos sem a
+mudança da Etapa 8; nesse intervalo o painel do studio e a decisão de
+orçamentos falhavam. Mudança aditiva no banco vai SEMPRE antes do push.
+
+### Validação pós-deploy (07/10/2026)
+
+- GitHub `main` idêntico ao código entregue; deploy da Vercel pronto; nenhum
+  erro de execução registrado.
+- Portal real aberto no navegador: título, logo oficial e Futura Std
+  carregados, nenhum arquivo falhando.
+- Banco: todas as colunas lidas pelo código novo existem e respondem para
+  cliente e studio, com o isolamento certo (cliente vê só o projeto dele).
+- Funções do cliente testadas no banco real (transação desfeita): cliente de
+  outro projeto, resposta dupla, assinatura sem nome, negociação sem
+  mensagem e usuário anônimo são barrados.
+- Brecha antiga fechada: o cliente não consegue mais marcar contrato como
+  assinado nem mudar valor de orçamento por fora da tela (0 linhas).
+- **Encontrado e corrigido:** a regra de edição de sub-etapas pelo cliente
+  não conferia o projeto depois da edição (dava para mover uma sub-etapa
+  para o projeto de outra pessoa, sabendo o identificador). Agora confere.
+- **Encontrado e corrigido:** o `schema.sql` estava defasado da produção
+  desde a consolidação das políticas (agosto). Ganhou, no fim, o retrato
+  das permissões de produção (`supabase/sql/permissoes-producao.sql`) e foi
+  conferido montando um banco do zero e comparando com a produção: tabelas,
+  colunas, regras, políticas e funções idênticas.
+- **Encontrado e corrigido:** a biblioteca de validação (Zod) testava
+  `new Function` ao carregar, o que gerava um aviso da CSP no console. Com
+  isso resolvido, a CSP pode passar de "relatório" para "bloqueio" sem
+  ruído.
+
+### Avisos do Supabase (esperados)
+
+- Funções `security definer` executáveis por usuários logados: intencional
+  (as três funções do cliente conferem a posse por dentro; `is_studio` e
+  `owns_project` são usadas pelas políticas).
+- Proteção contra senhas vazadas desligada: ligar no painel do Supabase
+  (Authentication → configurações de senha).
+- Índices sem uso: volume ainda baixo; manter.

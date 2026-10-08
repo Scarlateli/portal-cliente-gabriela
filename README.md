@@ -1,101 +1,118 @@
-# Portal do Cliente — Gabriela Lendecker
+# Portal do Projeto — Gabriela Lendecker
 
-Portal para o studio acompanhar projetos de arquitetura de interiores junto aos clientes:
-linha do tempo, calendário, documentos, contrato/assinatura, pagamentos, orçamentos e
-fornecedores. Inclui geração de **histórico em PDF**.
+Portal em que o studio Gabriela Lendecker (arquitetura e interiores) acompanha
+cada projeto junto com o cliente. Em produção em
+**[portal.gabrielalendecker.com](https://portal.gabrielalendecker.com)**.
 
-> Estágio atual: **protótipo navegável** com dados mock em memória (não persistem entre
-> sessões). A estrutura já está preparada para plugar o Supabase — ver
-> [Backend](#backend-supabase) e [O que falta para produção](#o-que-falta-para-produção).
+## O que faz
+
+**Para o studio**
+- Cadastra projetos e convida o cliente (senha provisória por e-mail; troca
+  obrigatória no primeiro acesso). Edita os dados do projeto e pode excluí-lo.
+- Monta a linha do tempo com etapas e sub-etapas, a partir de templates
+  (editáveis, com sub-etapas) ajustados já no cadastro.
+- Publica documentos pedindo ao cliente só um OK ou uma assinatura.
+- Contratos e termos: termo aprovado ou recusado com um botão; contrato
+  assinado dentro do portal ou pela Autentique (validade jurídica).
+- Orçamentos com fornecedores do cadastro do studio; o cliente pode aprovar,
+  reprovar ou pedir negociação.
+- Pagamentos, calendário (com atalho para o Google Agenda), histórico em PDF.
+
+**Para o cliente**
+- Vê só os projetos dele: etapas, calendário, documentos, contratos,
+  pagamentos, orçamentos e fornecedores.
+- Responde ao que o studio pede (OK, assinatura, aprovação de termo, decisão
+  de orçamento) e envia arquivos nas sub-etapas sob responsabilidade dele.
+
+**Para os dois:** sino de pendências no topo de todas as telas e uma janela
+ao entrar enquanto houver algo esperando uma ação.
 
 ## Stack
-- **React 18 + Vite** (build e dev server)
-- **lucide-react** (ícones)
-- **Zod** (validação de formulários)
-- **Vitest + Testing Library** (testes)
-- **ESLint + Prettier** (qualidade de código)
+
+React 19 + Vite · TanStack Query · Supabase (Postgres com RLS, Auth, Storage,
+Edge Functions) · Vercel · Zod · Vitest + Testing Library · ESLint + Prettier.
 
 ## Rodando localmente
-Requisitos: Node 18+ (recomendado 20+).
+
+Requisito: Node 20+.
 
 ```bash
 npm install
-npm run dev
+cp .env.example .env   # escolha o modo em VITE_DATA_SOURCE
+npm run dev            # http://localhost:5173
 ```
 
-Abra **http://localhost:5173**.
+Há dois modos, escolhidos por `VITE_DATA_SOURCE`:
 
-### Acessos de teste
-- Studio: `studio@demo.com` / `1234`
-- Cliente: `cliente@demo.com` / `1234`
-- Cliente: `cliente2@demo.com` / `1234`
+- **`mock` (demonstração):** dados em memória, não persistem. Acessos de teste:
+  studio `studio@demo.com` / `1234`; clientes `cliente@demo.com` e
+  `cliente2@demo.com` / `1234`.
+- **`supabase` (produção):** precisa de `VITE_SUPABASE_URL` e
+  `VITE_SUPABASE_ANON_KEY`. Nunca use a `service_role` no front-end.
 
 ## Scripts
-- `npm run dev` — ambiente de desenvolvimento (localhost)
-- `npm run build` — build de produção (gera `dist/`)
-- `npm run preview` — serve o build de produção localmente
-- `npm test` — roda os testes (Vitest)
-- `npm run lint` — checagem de lint
-- `npm run format` — formata o código com Prettier
+
+| Comando | O que faz |
+|---|---|
+| `npm run dev` | ambiente de desenvolvimento |
+| `npm run build` | build de produção em `dist/` |
+| `npm run preview` | serve o build localmente |
+| `npm test` / `npm run test:watch` | testes (Vitest) |
+| `npm run lint` | ESLint + Prettier |
+| `npm run format` | formata o código |
+
+Antes de cada commit de código: testes verdes, lint limpo e build nos dois
+modos (ver [AGENTS.md](AGENTS.md)).
 
 ## Estrutura
+
 ```
 src/
-  lib/            # constantes, helpers, dados mock (seed), camada de dados (db) e validação
-    supabase/     # cliente, schema.sql e esqueleto do data layer (futuro backend)
-  components/     # UI: átomos, login, área admin e abas do projeto
-  styles/theme.css# tema (BRAND TOKENS: cores e fontes em um só lugar)
-public/
-  fonts/          # Futura Std (.otf)
-  logo.svg        # logo (placeholder — ver abaixo)
+  App.jsx                 login, roteamento studio/cliente, contexto do sino
+  components/
+    admin/                painel do studio, novo projeto, templates, fornecedores
+    project/              abas do projeto (linha do tempo, calendário, documentos,
+                          contratos, pagamentos, orçamentos, fornecedores)
+    Pendencias.jsx        sino e janela de pendências
+  lib/
+    db.js                 banco de demonstração (síncrono) — especificação de referência
+    supabase/db-supabase.js  mesmo contrato, assíncrono, contra o Supabase
+    supabase/schema.sql   banco completo (tabelas, funções, RLS) — monta a produção do zero
+    useResolvedDb.js, data.js  fachada de dados, cache e invalidações
+    pendencias.js         regra do que é pendência (studio e cliente)
+  styles/theme.css        identidade visual (paleta oficial, Futura Std)
+supabase/
+  functions/              Edge Functions (convite, senha, Autentique)
+  sql/                    histórico das mudanças de banco, na ordem em que entraram
+docs/                     deploy, status e pendências, roteiro de validação
 ```
 
-## Marca (cores, fonte e logo)
-- **Cores e fontes**: tudo em `src/styles/theme.css`, no bloco `BRAND TOKENS`.
-  Paleta: off-white `#d8d4ca`, bege `#ab9b83`, vermelho `#5d1c17`, terra `#704538`,
-  marrom `#44261e`, vinho `#391312`, dark `#210909`.
-- **Fonte**: **Futura Std** (arquivo em `public/fonts/FuturaStd-Book.otf`), com **Jost**
-  como fallback. Só a variante *Book* foi fornecida; pesos mais fortes são sintetizados
-  pelo navegador. Para refinar, adicione as variantes (ex.: *Medium*, *Bold*) e novos
-  blocos `@font-face`.
-- **Logo**: `public/logo.svg` é um **placeholder** (monograma). Para usar o logo real,
-  substitua esse arquivo (`.svg` ou `.png`); se mudar a extensão, ajuste `LOGO` em
-  `src/lib/constants.js`. O logo do protótipo original pode ser reaproveitado a partir do
-  código antigo (estava embutido em base64).
+## Banco de dados
 
-## Backend (Supabase)
-O app roda por padrão no **mock** (`src/lib/db.js`). O backend Supabase já está
-**implementado** — basta ligar a chave `VITE_DATA_SOURCE=supabase`:
+- `src/lib/supabase/schema.sql` é a fonte da verdade e reproduz a produção
+  (conferido em 07/10/2026 contra o banco real: tabelas, colunas, regras,
+  políticas e funções).
+- Cada mudança entra também como arquivo datado em `supabase/sql/`, para
+  aplicar num banco que já existe.
+- O cliente nunca altera contratos, termos, documentos ou orçamentos
+  diretamente: responde pelas funções `responder_documento`,
+  `responder_contrato` e `decidir_orcamento`, que conferem a posse e mexem só
+  no campo da ação.
 
-1. Copie `.env.example` para `.env` e preencha `VITE_SUPABASE_URL`,
-   `VITE_SUPABASE_ANON_KEY` (chave **anon**; nunca a service_role no front) e
-   `VITE_DATA_SOURCE=supabase`.
-2. Rode `src/lib/supabase/schema.sql` no SQL Editor (tabelas + RLS + Storage).
-3. Faça deploy da Edge Function: `supabase functions deploy invite-client`.
+## Edge Functions
 
-A camada `src/lib/supabase/db-supabase.js` é o espelho assíncrono completo do
-mock; o React Query (só no modo supabase) é carregado sob demanda. Em modo mock
-nada do Supabase entra no bundle. Passo a passo completo em
-[`docs/DEPLOY.md`](docs/DEPLOY.md).
+| Função | Para quê |
+|---|---|
+| `invite-client` | cria o acesso do cliente e envia o convite |
+| `forgot-password` | e-mail de redefinição de senha (sem login) |
+| `autentique-send` | envia o contrato para assinatura na Autentique |
+| `autentique-check` | consulta o status da assinatura |
+| `autentique-webhook` | recebe avisos da Autentique (redundância) |
 
-## Deploy (Vercel)
-Resumo: importe o repo em [vercel.com](https://vercel.com) (framework Vite
-detectado, build `npm run build`, output `dist`), configure as variáveis
-`VITE_*` e publique. Detalhes e domínio próprio em
-[`docs/DEPLOY.md`](docs/DEPLOY.md).
+## Documentação
 
-## O que falta para produção
-Checklist completo (com o que já está pronto e o que falta) em
-[`docs/CHECKLIST-PRODUCAO.md`](docs/CHECKLIST-PRODUCAO.md). Em resumo, ainda
-faltam: deploy no Vercel + variáveis de ambiente, URLs de auth no Supabase e,
-opcionais, domínio `.com.br` e SMTP para e-mails automáticos (o convite do
-cliente é por link copiável). Outras melhorias de produto:
-
-- **Assinatura de contrato** real via **Autentique** (API GraphQL + webhook) — falta criar a conta e o token.
-- **E-mails automáticos** (atraso de etapa, lembrete de parcela) via Resend/SendGrid.
-- **Pagamento online** (opcional): Asaas/Stripe/Mercado Pago (PIX/boleto).
-- **LGPD**: política de privacidade, consentimento e backups.
-- **Licenciar a Futura Std** para uso em produção web.
-
----
-© Gabriela Lendecker · arquitetura de interiores
+- [docs/DEPLOY.md](docs/DEPLOY.md) — colocar em produção
+- [docs/STATUS-E-PENDENCIAS.md](docs/STATUS-E-PENDENCIAS.md) — o que existe, o que falta
+- [docs/ROTEIRO-VALIDACAO-GABRIELA.md](docs/ROTEIRO-VALIDACAO-GABRIELA.md) — roteiro de teste
+- [docs/PLANO-PRODUCAO.md](docs/PLANO-PRODUCAO.md) — plano de produção
+- [AGENTS.md](AGENTS.md) — regras para quem mexe no código
