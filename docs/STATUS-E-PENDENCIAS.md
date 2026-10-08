@@ -281,15 +281,26 @@ orçamentos falhavam. Mudança aditiva no banco vai SEMPRE antes do push.
   conferido montando um banco do zero e comparando com a produção: tabelas,
   colunas, regras, políticas e funções idênticas.
 - **Encontrado e corrigido:** a biblioteca de validação (Zod) testava
-  `new Function` ao carregar, o que gerava um aviso da CSP no console. Com
-  isso resolvido, a CSP pode passar de "relatório" para "bloqueio" sem
-  ruído.
+  `new Function` ao carregar, o que gerava um aviso da CSP no console.
+- **CSP em modo bloqueio** (`Content-Security-Policy` no `vercel.json`, antes
+  `-Report-Only`). Antes da troca, o build foi servido com os mesmos headers
+  do `vercel.json` e todas as abas foram percorridas como cliente e como
+  studio (20 telas, incluindo sino, painel, templates, fornecedores e
+  histórico em PDF): nenhuma violação nem erro de console. Um controle
+  positivo (imagem externa) confirmou que o detector acusa bloqueios.
+  Se algo novo precisar carregar de outro domínio (fonte, imagem, API),
+  é preciso incluí-lo na diretiva certa do `vercel.json`, senão o navegador
+  bloqueia.
 
 ### Avisos do Supabase (esperados)
 
 - Funções `security definer` executáveis por usuários logados: intencional
   (as três funções do cliente conferem a posse por dentro; `is_studio` e
   `owns_project` são usadas pelas políticas).
-- Proteção contra senhas vazadas desligada: ligar no painel do Supabase
-  (Authentication → configurações de senha).
+- Proteção contra senhas vazadas desligada: só existe no plano Pro (o
+  projeto está no gratuito; ver `PLANO-PRODUCAO.md`). Enquanto isso, o
+  mínimo de 8 caracteres deve valer também no servidor: Authentication →
+  provedor Email → tamanho mínimo da senha = 8 (a interface já exige 8; a
+  senha provisória do convite tem 12). Não exigir tipos de caractere: a
+  senha provisória usa só minúsculas, números e hífen.
 - Índices sem uso: volume ainda baixo; manter.

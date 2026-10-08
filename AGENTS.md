@@ -39,6 +39,10 @@ O **site institucional é OUTRO repositório** — veja `docs/BRIEFING-SITE.md`.
 8. **CSP**: a política de conteúdo do `vercel.json` não permite
    `unsafe-eval`. Por isso o Zod roda com `z.config({ jitless: true })`
    (`src/lib/validation.js`); o teste `src/lib/csp.test.js` garante isso.
+   A CSP está em **modo bloqueio**: biblioteca nova, fonte, imagem ou API de
+   outro domínio é barrada no navegador até entrar na diretiva certa do
+   `vercel.json`. Ao adicionar algo assim, servir o build com esses headers
+   e percorrer as telas antes do push.
 
 ## Arquitetura de dados (importante!)
 
