@@ -1,6 +1,8 @@
 -- Etapa 8 — cadastro prévio de fornecedores e pedido de negociação.
 -- Parte ADITIVA: o código anterior do portal continua funcionando.
--- Aplicada no projeto em 07/10/2026 (migração etapa8_fornecedores_e_negociacao).
+-- Aplicada no projeto em 07/10/2026, em duas partes (etapa8a_fornecedores_e_funcao_decidir
+-- e etapa8b_status_negociacao): a versão única foi cancelada três vezes,
+-- provavelmente pelo "drop policy if exists" de uma política que ainda não existia.
 
 -- Cadastro de fornecedores do studio (vale para todos os projetos). Ao criar
 -- um orçamento, a Gabriela escolhe um daqui e os dados vêm preenchidos.
