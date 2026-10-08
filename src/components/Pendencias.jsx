@@ -1,4 +1,5 @@
 import { useContext, useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Bell, ChevronRight, X } from 'lucide-react';
 import { PendenciasCtx, CHAVE_JANELA } from '../lib/pendenciasContexto.js';
 import { qk } from '../lib/data.js';
@@ -75,7 +76,12 @@ function Sino({ baseDb, user, irPara }) {
         </div>
       )}
       {janela && n > 0 && (
-        <JanelaPendencias lista={lista} studio={user.role === 'studio'} onIr={ir} onFechar={fecharJanela} />
+        <JanelaPendencias
+          lista={lista}
+          studio={user.role === 'studio'}
+          onIr={ir}
+          onFechar={fecharJanela}
+        />
       )}
     </div>
   );
@@ -116,7 +122,10 @@ function JanelaPendencias({ lista, studio, onIr, onFechar }) {
     return () => document.removeEventListener('keydown', esc);
   }, [onFechar]);
   const n = lista.length;
-  return (
+  // fora do cabeçalho (que cria seu próprio contexto de posição), dentro da
+  // raiz .cp para manter os estilos
+  const raiz = document.querySelector('.cp') || document.body;
+  return createPortal(
     <div className="janela-fundo" onMouseDown={(e) => e.target === e.currentTarget && onFechar()}>
       <div className="janela" role="dialog" aria-modal="true" aria-labelledby="janela-titulo">
         <header>
@@ -129,7 +138,13 @@ function JanelaPendencias({ lista, studio, onIr, onFechar }) {
                 ? 'Você tem 1 pendência no projeto'
                 : 'Você tem ' + n + ' pendências no projeto'}
           </h2>
-          <button type="button" className="icon-btn" aria-label="Fechar" ref={fechar} onClick={onFechar}>
+          <button
+            type="button"
+            className="icon-btn"
+            aria-label="Fechar"
+            ref={fechar}
+            onClick={onFechar}
+          >
             <X size={16} />
           </button>
         </header>
@@ -142,6 +157,7 @@ function JanelaPendencias({ lista, studio, onIr, onFechar }) {
           </button>
         </footer>
       </div>
-    </div>
+    </div>,
+    raiz,
   );
 }

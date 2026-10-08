@@ -696,3 +696,7 @@ button.sub-box{cursor:pointer}
 .cp .janela h2{font-weight:400;font-size:20px;line-height:1.3;margin:0}
 .cp .janela-corpo{overflow:auto;padding:0 12px}
 .cp .janela footer{padding:12px 20px 18px;display:flex;justify-content:flex-end}
+
+/* ajustes finos da revisão visual */
+.cp .fale-conosco,.cp .fale-conosco:hover{text-decoration:none}
+.cp .gp{margin-top:10px}

@@ -34,10 +34,10 @@ describe('calcularPendencias', () => {
       ],
     });
     expect(r.map((x) => [x.aba, x.texto])).toEqual([
-      ['docs', 'Assinar o documento Planta'],
-      ['contract', 'Aprovar ou recusar o termo Imagens'],
-      ['quotes', 'Decidir sobre o orçamento de Bianchi (Marcenaria)'],
-      ['timeline', 'Enviar plantas (Briefing)'],
+      ['docs', 'Assinar: Planta'],
+      ['contract', 'Aprovar ou recusar: Imagens'],
+      ['quotes', 'Decidir orçamento: Bianchi (Marcenaria)'],
+      ['timeline', 'Tarefa: Enviar plantas (Briefing)'],
     ]);
   });
 
@@ -56,7 +56,7 @@ describe('calcularPendencias', () => {
       '2026-10-07',
     );
     expect(r.map((x) => x.texto)).toEqual([
-      'Termo recusado pelo cliente: Imagens',
+      'Recusado pelo cliente: Imagens',
       'Pedido de negociação: Bianchi',
       'Etapa do cliente atrasada: Medidas',
     ]);
@@ -82,7 +82,7 @@ describe('sino e janela', () => {
   it('cliente vê a janela ao entrar e vai direto à aba da pendência', async () => {
     const irPara = montar({ id: 'u1', role: 'client', name: 'Vanessa' });
     expect(screen.getByRole('dialog', { name: /pendências no projeto/i })).toBeTruthy();
-    await userEvent.click(screen.getByText(/Assinar o documento Planta/));
+    await userEvent.click(screen.getByText(/Assinar: Planta/));
     expect(irPara).toHaveBeenCalledWith('p1', 'docs');
     expect(screen.queryByRole('dialog')).toBeNull();
   });

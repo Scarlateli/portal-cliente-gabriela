@@ -21,7 +21,7 @@ export function calcularPendencias({ role, projects = [], stages = [], documents
     contracts
       .filter((c) => c.sigStatus === 'recusado')
       .forEach((c) =>
-        add('c-' + c.id, c.projectId, 'contract', (c.kind === 'termo' ? 'Termo' : 'Contrato') + ' recusado pelo cliente: ' + c.name),
+        add('c-' + c.id, c.projectId, 'contract', 'Recusado pelo cliente: ' + c.name),
       );
     quotes
       .filter((q) => q.status === 'negociacao')
@@ -36,7 +36,7 @@ export function calcularPendencias({ role, projects = [], stages = [], documents
   documents
     .filter((d) => d.approval && d.approval !== 'nenhuma' && !d.response)
     .forEach((d) =>
-      add('d-' + d.id, d.projectId, 'docs', (d.approval === 'assinatura' ? 'Assinar o documento ' : 'Dar OK no documento ') + d.name),
+      add('d-' + d.id, d.projectId, 'docs', (d.approval === 'assinatura' ? 'Assinar: ' : 'Dar OK: ') + d.name),
     );
   contracts
     .filter((c) => c.sigStatus === 'enviado')
@@ -44,23 +44,23 @@ export function calcularPendencias({ role, projects = [], stages = [], documents
       const m = metodo(c);
       const texto =
         m === 'aceite'
-          ? 'Aprovar ou recusar o termo ' + c.name
+          ? 'Aprovar ou recusar: ' + c.name
           : m === 'portal'
-            ? 'Assinar o contrato ' + c.name
-            : 'Assinar o contrato ' + c.name + ' (link no seu e-mail, pela Autentique)';
+            ? 'Assinar: ' + c.name
+            : 'Assinar pelo e-mail da Autentique: ' + c.name;
       add('c-' + c.id, c.projectId, 'contract', texto);
     });
   quotes
     .filter((q) => q.status === 'pendente')
-    .forEach((q) => add('q-' + q.id, q.projectId, 'quotes', 'Decidir sobre o orçamento de ' + q.supplier + ' (' + q.segment + ')'));
+    .forEach((q) => add('q-' + q.id, q.projectId, 'quotes', 'Decidir orçamento: ' + q.supplier + ' (' + q.segment + ')'));
   stages
     .filter((s) => s.status !== 'concluida')
     .forEach((s) => {
       (s.subs || [])
         .filter((b) => b.responsible === 'cliente' && !b.done)
-        .forEach((b, i) => add('b-' + s.id + '-' + i, s.projectId, 'timeline', b.title + ' (' + s.title + ')'));
+        .forEach((b, i) => add('b-' + s.id + '-' + i, s.projectId, 'timeline', 'Tarefa: ' + b.title + ' (' + s.title + ')'));
       if (s.owner === 'client' && s.end)
-        add('s-' + s.id, s.projectId, 'timeline', s.title + (s.end < hoje ? ' — prazo vencido' : ''));
+        add('s-' + s.id, s.projectId, 'timeline', (s.end < hoje ? 'Prazo vencido: ' : 'Etapa sua: ') + s.title);
     });
   return out;
 }
