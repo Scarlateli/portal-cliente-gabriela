@@ -13,9 +13,9 @@ import { getSupabase } from './client.js';
 import { addMonthsISO, todayISO, fmt, stageOverdue } from '../helpers.js';
 
 const STAGE_COLS =
-  'id, projectId:project_id, ord, title, category, status, owner, start, "end", "time", link, presencial, "desc", rescheduledFrom:rescheduled_from, subs:stage_subs(id, title, done, kind, responsible, due, time, format, link, storagePath:storage_path, fileName:file_name)';
+  'id, projectId:project_id, ord, title, category, status, owner, start, "end", "time", link, presencial, "desc", rescheduledFrom:rescheduled_from, subs:stage_subs(id, ord, title, done, kind, kindLabel:kind_label, responsible, due, time, format, link, storagePath:storage_path, fileName:file_name)';
 const PROJECT_COLS =
-  'id, code, name, clientId:client_id, status, address, start, due, completedAt:completed_at, accessUntil:access_until';
+  'id, code, name, clientId:client_id, status, address, addressComplement:address_complement, neighborhood, city, state, cep, greeting, start, due, completedAt:completed_at, accessUntil:access_until';
 const QUOTE_COLS =
   'id, projectId:project_id, segment, supplier, amount, fileName:file_name, status, studioNote:studio_note, decidedAt:decided_at, contact, deadline, payment, contractStatus:contract_status, notes, storagePath:storage_path, comments:quote_comments(author, body, at)';
 const CONTRACT_COLS =
@@ -41,6 +41,60 @@ export function makeSupabaseDb() {
     throw new Error('Supabase não configurado: defina VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY.');
 
   const sortByOrd = (rows) => rows.sort((a, b) => a.ord - b.ord);
+  // sub-etapas na ordem definida pelo studio (empate: ordem de gravação)
+  const ordenarSubs = (stages) => {
+    (stages || []).forEach((st) => st.subs && st.subs.sort((a, b) => (a.ord || 0) - (b.ord || 0)));
+    return stages;
+  };
+  const linhaSub = (stageId, b, ord) => ({
+    stage_id: stageId,
+    ord,
+    title: String(b.title).trim(),
+    kind: b.kind || 'tarefa',
+    kind_label: b.kind === 'outro' ? String(b.kindLabel || '').trim().slice(0, 40) || null : null,
+    responsible: b.responsible || 'studio',
+    due: b.due || null,
+    time: b.time || null,
+    format: b.format || null,
+    link: b.link || null,
+  });
+  // campos de projeto que o cadastro e a edição gravam
+  const camposProjeto = (d) => ({
+    address: d.address || null,
+    address_complement: d.addressComplement || null,
+    neighborhood: d.neighborhood || null,
+    city: d.city || null,
+    state: d.state || null,
+    cep: d.cep || null,
+    greeting: (d.greeting || '').trim() || null,
+    start: d.start || null,
+    due: d.due || null,
+  });
+
+  // Chama uma Edge Function e devolve o corpo da resposta. Se a função
+  // responder 401 (token velho, por exemplo depois de o iPad ficar parado),
+  // renova a sessão uma vez e tenta de novo antes de desistir.
+  const invocar = async (nome, body) => {
+    const chamar = () => supabase.functions.invoke(nome, { body });
+    let { data, error } = await chamar();
+    const status = error && error.context && error.context.status;
+    if (error && status === 401) {
+      const { error: rErr } = await supabase.auth.refreshSession();
+      if (!rErr) ({ data, error } = await chamar());
+    }
+    if (error) {
+      // FunctionsHttpError traz o Response em .context — extrai o erro real
+      let msg = error.message;
+      try {
+        const corpo = error.context && (await error.context.json());
+        if (corpo && corpo.error) msg = corpo.error;
+      } catch {
+        /* mantém a mensagem genérica */
+      }
+      throw new Error(msg);
+    }
+    return data;
+  };
 
   // Cria etapas, cada uma com as suas sub-etapas, no fim da linha do tempo do
   // projeto. Usado ao aplicar um template e ao criar o projeto já com etapas.
@@ -78,18 +132,7 @@ export function makeSupabaseDb() {
       const stageId = porOrd.get(etapa.ord);
       (lista[i].subs || [])
         .filter((b) => b && String(b.title || '').trim())
-        .forEach((b) =>
-          subs.push({
-            stage_id: stageId,
-            title: String(b.title).trim(),
-            kind: b.kind || 'tarefa',
-            responsible: b.responsible || 'studio',
-            due: null,
-            time: null,
-            format: null,
-            link: null,
-          }),
-        );
+        .forEach((b, k) => subs.push(linhaSub(stageId, { ...b, due: null, time: null, format: null, link: null }, k + 1)));
     });
     if (subs.length) {
       const { error: e3 } = await supabase.from('stage_subs').insert(subs);
@@ -111,6 +154,7 @@ export function makeSupabaseDb() {
           .map((b) => ({
             title: String(b.title).trim(),
             kind: b.kind || 'tarefa',
+            kindLabel: b.kind === 'outro' ? String(b.kindLabel || '').trim().slice(0, 40) : '',
             responsible: b.responsible || 'studio',
           })),
       }));
@@ -131,7 +175,9 @@ export function makeSupabaseDb() {
       if (!profile) return null;
       return { id: profile.id, role: profile.role, name: profile.name };
     },
-    logout: () => supabase.auth.signOut(),
+    // scope 'local': sair num aparelho não derruba a sessão dos outros
+    // (o padrão 'global' encerrava o iPad quando ela saía no computador).
+    logout: () => supabase.auth.signOut({ scope: 'local' }),
     user: async (id) => {
       const { data, error } = await supabase
         .from('profiles')
@@ -197,7 +243,7 @@ export function makeSupabaseDb() {
         .eq('project_id', pid)
         .order('ord');
       must(error);
-      return sortByOrd(data || []);
+      return ordenarSubs(sortByOrd(data || []));
     },
     documents: async (pid) => {
       const { data, error } = await supabase
@@ -324,6 +370,8 @@ export function makeSupabaseDb() {
               link: b.link || '',
               presencial: b.format === 'presencial',
             });
+          else if (b.kind === 'visita' && b.due)
+            out.push({ date: b.due, title: b.title, kind: 'visita', time: b.time || '' });
           else if (b.kind === 'entrega' && b.due)
             out.push({ date: b.due, title: b.title, kind: 'entrega' });
         });
@@ -434,20 +482,14 @@ export function makeSupabaseDb() {
     /* ---------------------------- mutações ---------------------------- */
     addProject: async (data) => {
       // 1) cria o login do cliente via Edge Function (service_role no servidor)
-      const { data: fn, error: fnErr } = await supabase.functions.invoke('invite-client', {
-        body: { email: data.clientEmail.trim().toLowerCase(), name: data.clientName },
+      // reset: false — se o cliente já tem acesso (outro projeto), a senha
+      // dele continua valendo; o projeto novo só aparece no portal dele.
+      const fn = await invocar('invite-client', {
+        email: data.clientEmail.trim().toLowerCase(),
+        name: data.clientName,
+        greeting: data.greeting || '',
+        reset: false,
       });
-      if (fnErr) {
-        // FunctionsHttpError traz o Response em .context — extrai o erro real
-        let msg = fnErr.message;
-        try {
-          const body = fnErr.context && (await fnErr.context.json());
-          if (body && body.error) msg = body.error;
-        } catch {
-          /* mantém a mensagem genérica */
-        }
-        throw new Error(msg);
-      }
       const clientId = fn && fn.userId;
       if (!clientId) throw new Error('Falha ao criar o usuário do cliente.');
       // 2) projeto
@@ -458,9 +500,7 @@ export function makeSupabaseDb() {
           name: data.name,
           client_id: clientId,
           status: 'em_andamento',
-          address: data.address || null,
-          start: data.start || null,
-          due: data.due || null,
+          ...camposProjeto(data),
         })
         .select('id')
         .single();
@@ -480,6 +520,7 @@ export function makeSupabaseDb() {
         id: proj.id,
         tempPassword: (fn && fn.tempPassword) || null,
         inviteEmailSent: !!(fn && fn.emailSent),
+        jaTinhaAcesso: !!(fn && fn.existing),
       };
     },
     resendClientAccess: async (pid) => {
@@ -495,19 +536,7 @@ export function makeSupabaseDb() {
         .eq('id', proj.client_id)
         .single();
       must(e2);
-      const { data: fn, error: fnErr } = await supabase.functions.invoke('invite-client', {
-        body: { email: prof.email, name: prof.name },
-      });
-      if (fnErr) {
-        let msg = fnErr.message;
-        try {
-          const body = fnErr.context && (await fnErr.context.json());
-          if (body && body.error) msg = body.error;
-        } catch {
-          /* mantém a mensagem genérica */
-        }
-        throw new Error(msg);
-      }
+      const fn = await invocar('invite-client', { email: prof.email, name: prof.name });
       return {
         email: prof.email,
         tempPassword: (fn && fn.tempPassword) || null,
@@ -542,16 +571,9 @@ export function makeSupabaseDb() {
         .select('id')
         .single();
       must(error);
-      const subs = (d.subs || []).map((it) => ({
-        stage_id: st.id,
-        title: it.title,
-        kind: it.kind || 'tarefa',
-        responsible: it.responsible || 'studio',
-        due: it.due || null,
-        time: it.time || null,
-        format: it.format || null,
-        link: it.link || null,
-      }));
+      const subs = (d.subs || [])
+        .filter((it) => it && String(it.title || '').trim())
+        .map((it, k) => linhaSub(st.id, it, k + 1));
       if (subs.length) {
         const { error: e2 } = await supabase.from('stage_subs').insert(subs);
         must(e2);
@@ -600,17 +622,43 @@ export function makeSupabaseDb() {
     },
     addSub: async (sid, d) => {
       const it = typeof d === 'string' ? { title: d } : d;
-      const { error } = await supabase.from('stage_subs').insert({
-        stage_id: sid,
-        title: it.title,
-        kind: it.kind || 'tarefa',
-        responsible: it.responsible || 'studio',
-        due: it.due || null,
-        time: it.time || null,
-        format: it.format || null,
-        link: it.link || null,
-      });
+      const { data: ult, error: e1 } = await supabase
+        .from('stage_subs')
+        .select('ord')
+        .eq('stage_id', sid)
+        .order('ord', { ascending: false })
+        .limit(1);
+      must(e1);
+      const { error } = await supabase
+        .from('stage_subs')
+        .insert(linhaSub(sid, it, (ult && ult[0] ? ult[0].ord : 0) + 1));
       must(error);
+    },
+    updateSub: async (sid, bid, d) => {
+      const campos = linhaSub(sid, d, 0);
+      delete campos.stage_id; // a sub-etapa não muda de etapa nem de lugar aqui
+      delete campos.ord;
+      const { error } = await supabase.from('stage_subs').update(campos).eq('id', bid);
+      must(error);
+    },
+    // sobe (-1) ou desce (+1) a sub-etapa, trocando de lugar com a vizinha;
+    // regrava a ordem de todas para não depender de empates antigos
+    moveSub: async (sid, bid, dir) => {
+      const { data: rows, error: e1 } = await supabase
+        .from('stage_subs')
+        .select('id, ord')
+        .eq('stage_id', sid);
+      must(e1);
+      const lista = (rows || []).slice().sort((a, b) => (a.ord || 0) - (b.ord || 0));
+      const i = lista.findIndex((r) => r.id === bid);
+      const j = i + dir;
+      if (i < 0 || j < 0 || j >= lista.length) return;
+      [lista[i], lista[j]] = [lista[j], lista[i]];
+      for (let k = 0; k < lista.length; k++) {
+        if (lista[k].ord === k + 1) continue;
+        const { error } = await supabase.from('stage_subs').update({ ord: k + 1 }).eq('id', lista[k].id);
+        must(error);
+      }
     },
     toggleSub: async (sid, bid) => {
       const { data: cur, error: e1 } = await supabase
@@ -776,20 +824,7 @@ export function makeSupabaseDb() {
       must(error);
     },
     sendToAutentique: async (pid, cid) => {
-      const { data: fn, error: fnErr } = await supabase.functions.invoke('autentique-send', {
-        body: { contractId: cid },
-      });
-      if (fnErr) {
-        let msg = fnErr.message;
-        try {
-          const body = fnErr.context && (await fnErr.context.json());
-          if (body && body.error) msg = body.error;
-        } catch {
-          /* mantém a genérica */
-        }
-        throw new Error(msg);
-      }
-      return fn;
+      return invocar('autentique-send', { contractId: cid });
     },
     checkAutentique: async (pid, cid) => {
       const { data: fn, error } = await supabase.functions.invoke('autentique-check', {
@@ -938,9 +973,7 @@ export function makeSupabaseDb() {
         .update({
           code: d.code,
           name: d.name,
-          address: d.address || null,
-          start: d.start || null,
-          due: d.due || null,
+          ...camposProjeto(d),
         })
         .eq('id', pid);
       must(error);

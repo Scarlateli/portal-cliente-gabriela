@@ -7,6 +7,18 @@ import { calcularPendencias } from './pendencias.js';
    --------------------------------------------------------------------- */
 import { uid, addMonthsISO, todayISO, fmt, stageOverdue } from './helpers.js';
 
+// sub-etapa no formato guardado (igual ao do modo Supabase)
+const novaSub = (b) => ({
+  id: uid('sb'), title: String(b.title).trim(), done: false, kind: b.kind || 'tarefa',
+  kindLabel: b.kind === 'outro' ? String(b.kindLabel || '').trim().slice(0, 40) : '',
+  responsible: b.responsible || 'studio', due: b.due || '', time: b.time || '', format: b.format || '', link: b.link || '',
+});
+const camposProjeto = (d) => ({
+  address: d.address || '', addressComplement: d.addressComplement || '', neighborhood: d.neighborhood || '',
+  city: d.city || '', state: d.state || '', cep: d.cep || '', greeting: (d.greeting || '').trim(),
+  start: d.start || '', due: d.due || '',
+});
+
 /* Etapas a partir de itens de template (com sub-etapas), no fim da linha do
    tempo do projeto — mesmo comportamento do modo Supabase. */
 function etapasDeItens(state, pid, itens) {
@@ -18,7 +30,7 @@ function etapasDeItens(state, pid, itens) {
       status: 'a_fazer', owner: 'studio', start: '', end: '', time: '', link: '', presencial: false, desc: it.desc || '',
       subs: (it.subs || [])
         .filter((b) => b && String(b.title || '').trim())
-        .map((b) => ({ id: uid('sb'), title: String(b.title).trim(), done: false, kind: b.kind || 'tarefa', responsible: b.responsible || 'studio', due: '', time: '', format: '', link: '' })),
+        .map((b) => novaSub({ ...b, due: '', time: '', format: '', link: '' })),
       rescheduledFrom: null,
     }));
 }
@@ -69,6 +81,7 @@ export function makeDb(state, set) {
         if (s.owner === 'client' && s.end && s.status !== 'concluida') out.push({ date: s.end, title: s.title + ' — prazo do cliente', kind: stageOverdue(s) ? 'atraso' : 'prazo' });
         (s.subs || []).forEach((b) => {
           if (b.kind === 'reuniao' && b.due) out.push({ date: b.due, title: b.title, kind: 'reuniao', time: b.time || '', link: b.link || '', presencial: b.format === 'presencial' });
+          else if (b.kind === 'visita' && b.due) out.push({ date: b.due, title: b.title, kind: 'visita', time: b.time || '' });
           else if (b.kind === 'entrega' && b.due) out.push({ date: b.due, title: b.title, kind: 'entrega' });
         });
       });
@@ -89,7 +102,7 @@ export function makeDb(state, set) {
         users: [...s.users, { id: cid, role: 'client', name: data.clientName, email: data.clientEmail.trim().toLowerCase(), pass: data.pass }],
         projects: [...s.projects, {
           id: pid, code: data.code, name: data.name, clientId: cid, status: 'em_andamento',
-          address: data.address, start: data.start, due: data.due, completedAt: null, accessUntil: null,
+          ...camposProjeto(data), completedAt: null, accessUntil: null,
         }],
         contracts: [...s.contracts, { id: uid('c'), projectId: pid, kind: 'contrato', name: 'Contrato de prestação de serviços', sigStatus: 'rascunho', provider: null, signer: null, signedAt: null }],
         stages: [...s.stages, ...etapasDeItens(s, pid, data.etapas)],
@@ -97,12 +110,22 @@ export function makeDb(state, set) {
     }),
     addStage: (pid, d) => set((s) => {
       const ord = (s.stages.filter((x) => x.projectId === pid).reduce((m, x) => Math.max(m, x.ord), 0)) + 1;
-      return { ...s, stages: [...s.stages, { id: uid('s'), projectId: pid, ord, title: d.title, category: d.category, status: 'a_fazer', owner: d.owner || 'studio', start: d.start || '', end: d.end || '', time: d.time || '', link: d.link || '', presencial: !!d.presencial, desc: d.desc || '', subs: (d.subs || []).map((it) => ({ id: uid('sb'), title: it.title, done: false, kind: it.kind || 'tarefa', responsible: it.responsible || 'studio', due: it.due || '', time: it.time || '', format: it.format || '', link: it.link || '' })), rescheduledFrom: null }] };
+      return { ...s, stages: [...s.stages, { id: uid('s'), projectId: pid, ord, title: d.title, category: d.category, status: 'a_fazer', owner: d.owner || 'studio', start: d.start || '', end: d.end || '', time: d.time || '', link: d.link || '', presencial: !!d.presencial, desc: d.desc || '', subs: (d.subs || []).filter((it) => it && String(it.title || '').trim()).map(novaSub), rescheduledFrom: null }] };
     }),
     deleteStage: (sid) => set((s) => ({ ...s, stages: s.stages.filter((x) => x.id !== sid) })),
     updateStage: (sid, patch) => set((s) => ({ ...s, stages: s.stages.map((x) => x.id === sid ? { ...x, ...patch } : x) })),
     rescheduleStage: (sid, newEnd) => set((s) => ({ ...s, stages: s.stages.map((x) => x.id === sid ? { ...x, rescheduledFrom: x.rescheduledFrom || x.end, end: newEnd } : x) })),
-    addSub: (sid, d) => set((s) => { const it = typeof d === 'string' ? { title: d } : d; return { ...s, stages: s.stages.map((x) => x.id === sid ? { ...x, subs: [...(x.subs || []), { id: uid('sb'), title: it.title, done: false, kind: it.kind || 'tarefa', responsible: it.responsible || 'studio', due: it.due || '', time: it.time || '', format: it.format || '', link: it.link || '' }] } : x) }; }),
+    addSub: (sid, d) => set((s) => { const it = typeof d === 'string' ? { title: d } : d; return { ...s, stages: s.stages.map((x) => x.id === sid ? { ...x, subs: [...(x.subs || []), novaSub(it)] } : x) }; }),
+    updateSub: (sid, bid, d) => set((s) => ({ ...s, stages: s.stages.map((x) => x.id === sid ? { ...x, subs: (x.subs || []).map((b) => b.id === bid ? { ...novaSub(d), id: b.id, done: b.done, fileName: b.fileName, storagePath: b.storagePath } : b) } : x) })),
+    moveSub: (sid, bid, dir) => set((s) => ({ ...s, stages: s.stages.map((x) => {
+      if (x.id !== sid) return x;
+      const subs = (x.subs || []).slice();
+      const i = subs.findIndex((b) => b.id === bid);
+      const j = i + dir;
+      if (i < 0 || j < 0 || j >= subs.length) return x;
+      [subs[i], subs[j]] = [subs[j], subs[i]];
+      return { ...x, subs };
+    }) })),
     toggleSub: (sid, bid) => set((s) => ({ ...s, stages: s.stages.map((x) => x.id === sid ? { ...x, subs: (x.subs || []).map((b) => b.id === bid ? { ...b, done: !b.done } : b) } : x) })),
     deleteSub: (sid, bid) => set((s) => ({ ...s, stages: s.stages.map((x) => x.id === sid ? { ...x, subs: (x.subs || []).filter((b) => b.id !== bid) } : x) })),
     attachSubFile: (pid, sid, bid, file) => set((s) => ({ ...s, stages: s.stages.map((x) => x.id === sid ? { ...x, subs: (x.subs || []).map((b) => b.id === bid ? { ...b, fileName: file && file.name ? file.name : 'arquivo' } : b) } : x) })),
@@ -175,7 +198,7 @@ export function makeDb(state, set) {
     setQuoteNote: (qid, note) => set((s) => ({ ...s, quotes: s.quotes.map((q) => q.id === qid ? { ...q, studioNote: note } : q) })),
     addComment: (qid, author, body) => set((s) => ({ ...s, quotes: s.quotes.map((q) => q.id === qid ? { ...q, comments: [...q.comments, { author, body, at: 'Agora' }] } : q) })),
     addEvent: (pid, d) => set((s) => ({ ...s, events: [...s.events, { id: uid('e'), projectId: pid, date: d.date, title: d.title, kind: d.kind, time: d.time || '', link: d.link || '' }] })),
-    updateProject: (pid, d) => set((s) => ({ ...s, projects: s.projects.map((p) => p.id === pid ? { ...p, code: d.code, name: d.name, address: d.address, start: d.start, due: d.due } : p) })),
+    updateProject: (pid, d) => set((s) => ({ ...s, projects: s.projects.map((p) => p.id === pid ? { ...p, code: d.code, name: d.name, ...camposProjeto(d) } : p) })),
     deleteProject: (pid) => set((s) => {
       const etapas = new Set(s.stages.filter((x) => x.projectId === pid).map((x) => x.id));
       const novo = { ...s, projects: s.projects.filter((p) => p.id !== pid), stages: s.stages.filter((x) => !etapas.has(x.id)) };

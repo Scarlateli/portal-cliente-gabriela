@@ -1,8 +1,10 @@
-// Edge Function: invite-client (v5 — senha provisória)
+// Edge Function: invite-client (v6 — senha provisória; cliente existente preservado no cadastro)
 // 1) valida que quem chama é usuário do studio;
 // 2) cria o usuário do cliente com uma SENHA PROVISÓRIA gerada aqui; se o
 //    e-mail já existir, redefine a provisória do usuário existente. Marca
-//    must_change_password — o app força a troca no 1º login;
+//    must_change_password — o app força a troca no 1º login. Com
+//    { reset: false } (cadastro de projeto) e um cliente que já criou a
+//    senha dele, nada muda na conta: devolve { userId, existing: true };
 // 3) recusa o e-mail do próprio studio (proteção contra reset acidental);
 // 4) garante a linha em profiles (role client) via service_role;
 // 5) se o secret RESEND_API_KEY existir, envia e-mail com as credenciais;
@@ -81,6 +83,24 @@ Deno.serve(async (req) => {
     if (taken && taken.role === 'studio')
       return json({ error: 'esse e-mail pertence ao studio — use o e-mail do cliente' }, 400);
 
+    // reset: false (cadastro de projeto) — se o cliente já tem acesso e já
+    // criou a senha dele, não mexe na senha: o projeto novo só aparece no
+    // portal dele. "Reenviar acesso" manda sem o campo e gera senha nova.
+    if (body.reset === false && taken && taken.role === 'client') {
+      const { data: perfil } = await admin
+        .from('profiles')
+        .select('id')
+        .eq('email', email)
+        .maybeSingle();
+      if (perfil) {
+        const { data: u } = await admin.auth.admin.getUserById(perfil.id);
+        const pendente = u?.user?.user_metadata?.must_change_password === true;
+        if (u?.user && !pendente) {
+          return json({ userId: perfil.id, existing: true, tempPassword: null, emailSent: false, emailError: null });
+        }
+      }
+    }
+
     const appUrl = req.headers.get('origin') || '';
     const temp = tempPassword();
     let userId: string | null = null;
@@ -136,7 +156,8 @@ Deno.serve(async (req) => {
             from,
             to: [email],
             subject: 'Seu acesso ao Portal do Projeto — Gabriela Lendecker',
-            html: inviteHtml(name, appUrl, email, temp),
+            // o e-mail cumprimenta pelo vocativo do projeto, quando houver
+            html: inviteHtml(String(body.greeting || '').trim() || name, appUrl, email, temp),
           }),
         });
         if (r.ok) emailSent = true;

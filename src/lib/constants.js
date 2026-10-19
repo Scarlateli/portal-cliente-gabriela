@@ -17,7 +17,10 @@ export const STAGE_STATUS = [
   { id: 'concluida', label: 'Concluída' },
 ];
 
+// "Etapa" é a fase do projeto (Briefing, Anteprojeto…), que agrupa
+// sub-etapas; os demais tipos servem para etapas que são um evento só.
 export const STAGE_CATEGORIES = [
+  'Etapa',
   'Reunião',
   'Entrega',
   'Visita técnica',
@@ -57,3 +60,9 @@ export const CONTRACT_STATUS = [
 ];
 
 export const WEEK = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+
+// Foto de capa da tela de entrada (arquivo em public/brand/). Vazio = fundo
+// liso na cor bege. Ao receber a foto da Gabriela: salvar em
+// public/brand/capa-login.jpg (paisagem, ~2400 px de largura, até ~400 KB)
+// e preencher abaixo com '/brand/capa-login.jpg'.
+export const CAPA_LOGIN = '';

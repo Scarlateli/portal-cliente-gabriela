@@ -304,3 +304,74 @@ orçamentos falhavam. Mudança aditiva no banco vai SEMPRE antes do push.
   senha provisória do convite tem 12). Não exigir tipos de caractere: a
   senha provisória usa só minúsculas, números e hífen.
 - Índices sem uso: volume ainda baixo; manter.
+
+## Rodada 3 — revisão da Gabriela em 19/10/2026
+
+Feedback em anotações sobre prints (iPad e computador) e na ata da reunião.
+
+**Erro ao criar projeto ("Sua sessão expirou")** ✅
+- Causa (logs do Supabase): sair do portal num aparelho encerrava a sessão
+  em **todos** os aparelhos (`signOut` no modo padrão, global). Ela usava o
+  iPad e o computador com a mesma conta; ao sair no computador, o iPad
+  passava a receber 401 da função `invite-client` (`session_not_found`).
+- Correção: sair encerra só o aparelho atual (`signOut({ scope: 'local' })`)
+  e, se uma Edge Function responder 401, o portal renova a sessão uma vez e
+  tenta de novo (`invocar` em `db-supabase.js`).
+- Achado junto: cadastrar um projeto para um e-mail que **já** tinha acesso
+  gerava senha provisória nova para esse cliente. Agora (`invite-client` v6,
+  `reset: false`) o cliente que já criou a senha dele continua com ela; o
+  projeto novo só aparece no portal dele. "Reenviar acesso" continua gerando
+  senha nova. O convite por e-mail foi conferido no Resend (entregue).
+
+**Capa e visual**
+- "Portal do Projeto" com P maiúsculo; os dois blocos de cor do login
+  viraram um fundo só. A foto de capa com névoa está pronta para entrar:
+  ver `CAPA_LOGIN` em `src/lib/constants.js` (aguardando a foto da Gabriela).
+- Nome do projeto azul no iPad: o Safari pinta de azul texto de botão sem
+  cor definida (os cartões são botões). Corrigido.
+- Setinhas para cima e para baixo nas abas, no computador: barra de rolagem
+  do Windows. Escondida (a faixa continua rolando no toque e no trackpad).
+- Painel do topo menor no computador; "Etapas do projeto" com respiro no
+  cadastro; botões do fim do projeto (reenviar acesso, finalizar, editar,
+  excluir) numa linha só, todos do mesmo tamanho; aba "Contratos e termos";
+  "Cliente: …" escrito no painel e no projeto (o "teste 08/08" era o nome
+  cadastrado do cliente de teste).
+
+**Cadastro**
+- Endereço completo: rua e número, complemento, bairro, CEP, cidade e
+  estado. As telas mostram a forma curta; o histórico em PDF mostra com CEP.
+- Vocativo ("Como o portal cumprimenta"): o portal diz "Olá, Marília e
+  Vitor" em vez do nome do contrato. Em branco, usa o primeiro nome. Também
+  usado no e-mail de convite.
+- Vários acessos para o mesmo projeto (ex.: consultório com 3 médicos):
+  deixado para depois, como combinado.
+
+**Templates e etapas**
+- Sub-etapas com os mesmos tipos das etapas (Reunião, Entrega, Visita
+  técnica, Documentação, Produção), mais Tarefa e "Outro (escrever)".
+- Etapa nova começa com o tipo "Etapa" (fase que agrupa sub-etapas, como
+  Briefing), em vez de "Reunião".
+- Sub-etapas sobem e descem com as setas (template, cadastro e linha do
+  tempo), sem apagar e criar de novo.
+- Templates aparecem recolhidos; "Editar" abre dentro do próprio template.
+- "Salvar como template" agora leva as sub-etapas junto.
+
+**Linha do tempo**
+- Cada sub-etapa mostra, com nome, o tipo, o responsável (Studio, Cliente
+  ou Fornecedor) e o prazo: "Sem prazo", "Até 03/02/2026", "Vence hoje" ou
+  "Atrasada · venceu …" (em vermelho). Reunião e visita mostram data,
+  horário e formato.
+- Sub-etapas existentes podem ser editadas (título, tipo, responsável,
+  prazo, horário, link). O formulário de nova etapa voltou a ter tipo e
+  responsável (tinham sumido).
+- Formatação: as caixas tracejadas grossas ("A fazer") e a faixa por cima do
+  conteúdo ("Em andamento") vinham de uma regra de CSS incompleta; cada
+  etapa agora é um cartão com borda fina. O "Nº 01" não fica mais por cima
+  da data.
+
+**Banco** (aplicado em 19/10, antes do código, só acréscimos):
+`supabase/sql/2026-10-19-rodada3-endereco-vocativo-subetapas.sql` — também
+no fim do `schema.sql`.
+
+**Pendente da Gabriela:** a foto de capa do login (paisagem, ~2400 px) e
+testar o lado do cliente (roteiro, passos 17 a 22).

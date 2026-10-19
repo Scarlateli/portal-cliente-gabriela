@@ -1,10 +1,13 @@
 import { useState } from 'react';
 import { Pencil, Trash2 } from 'lucide-react';
+import { CamposEndereco } from './CamposEndereco.jsx';
 
 /* Editar os dados do projeto e excluir o projeto (só o studio vê). A exclusão
    pede o código do projeto digitado: apaga etapas, documentos, contratos,
-   pagamentos e os arquivos, e não tem como desfazer. */
-export function GerenciarProjeto({ db, project, onExcluido }) {
+   pagamentos e os arquivos, e não tem como desfazer.
+   `acoes`: outros botões do studio (reenviar acesso, finalizar), que entram
+   na mesma linha e no mesmo tamanho. */
+export function GerenciarProjeto({ db, project, onExcluido, acoes = null }) {
   const [aberto, setAberto] = useState(null); // 'editar' | 'excluir' | null
   const [f, setF] = useState(null);
   const [salvando, setSalvando] = useState(false);
@@ -15,6 +18,12 @@ export function GerenciarProjeto({ db, project, onExcluido }) {
       code: project.code || '',
       name: project.name || '',
       address: project.address || '',
+      addressComplement: project.addressComplement || '',
+      neighborhood: project.neighborhood || '',
+      cep: project.cep || '',
+      city: project.city || '',
+      state: project.state || '',
+      greeting: project.greeting || '',
       start: project.start || '',
       due: project.due || '',
     });
@@ -50,19 +59,20 @@ export function GerenciarProjeto({ db, project, onExcluido }) {
   return (
     <div className="gp">
       <div className="row gp-acoes">
-        <button type="button" className="btn btn-ghost" onClick={abrirEdicao} aria-expanded={aberto === 'editar'}>
-          <Pencil size={15} /> Editar dados do projeto
+        {acoes}
+        <button type="button" className="btn btn-ghost btn-sm" onClick={abrirEdicao} aria-expanded={aberto === 'editar'}>
+          <Pencil size={14} /> Editar dados do projeto
         </button>
         <button
           type="button"
-          className="btn btn-ghost gp-perigo"
+          className="btn btn-ghost btn-sm gp-perigo"
           onClick={() => {
             setConfirmacao('');
             setAberto(aberto === 'excluir' ? null : 'excluir');
           }}
           aria-expanded={aberto === 'excluir'}
         >
-          <Trash2 size={15} /> Excluir projeto
+          <Trash2 size={14} /> Excluir projeto
         </button>
       </div>
 
@@ -77,10 +87,9 @@ export function GerenciarProjeto({ db, project, onExcluido }) {
               Nome do projeto
               <input value={f.name} onChange={campo('name')} aria-label="Nome do projeto" />
             </label>
-            <label className="lab full">
-              Endereço
-              <input value={f.address} onChange={campo('address')} aria-label="Endereço do projeto" />
-            </label>
+            <h4 className="form-sec">Endereço da obra</h4>
+            <CamposEndereco f={f} setF={setF} />
+            <h4 className="form-sec">Prazos e cumprimento</h4>
             <label className="lab">
               Início
               <input type="date" value={f.start} onChange={campo('start')} />
@@ -88,6 +97,16 @@ export function GerenciarProjeto({ db, project, onExcluido }) {
             <label className="lab">
               Entrega prevista
               <input type="date" value={f.due} onChange={campo('due')} />
+            </label>
+            <label className="lab full">
+              Como o portal cumprimenta (opcional)
+              <input
+                value={f.greeting}
+                onChange={campo('greeting')}
+                placeholder="ex.: Marília e Vitor · Família Silva"
+                aria-label="Como o portal cumprimenta o cliente"
+                maxLength={60}
+              />
             </label>
           </div>
           <div className="row">

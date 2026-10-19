@@ -54,6 +54,8 @@ export function invalidationsFor(method, pid) {
     addSub: [qk.stages(pid)],
     toggleSub: [qk.stages(pid)],
     deleteSub: [qk.stages(pid)],
+    updateSub: [qk.stages(pid), qk.calendar(pid)],
+    moveSub: [qk.stages(pid)],
     applyTemplate: [qk.stages(pid), qk.calendar(pid)],
     addTemplate: [qk.templates()],
     deleteTemplate: [qk.templates()],
@@ -135,6 +137,21 @@ const OPTIMISTIC = {
               ? { ...s, subs: (s.subs || []).map((b) => (b.id === bid ? { ...b, done: !b.done } : b)) }
               : s,
           )
+        : old,
+    );
+  },
+  moveSub: (qc, pid, [sid, bid, dir]) => {
+    qc.setQueryData(qk.stages(pid), (old) =>
+      old
+        ? old.map((s) => {
+            if (s.id !== sid) return s;
+            const subs = (s.subs || []).slice();
+            const i = subs.findIndex((b) => b.id === bid);
+            const j = i + dir;
+            if (i < 0 || j < 0 || j >= subs.length) return s;
+            [subs[i], subs[j]] = [subs[j], subs[i]];
+            return { ...s, subs };
+          })
         : old,
     );
   },

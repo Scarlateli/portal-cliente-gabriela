@@ -43,6 +43,10 @@ O **site institucional é OUTRO repositório** — veja `docs/BRIEFING-SITE.md`.
    outro domínio é barrada no navegador até entrar na diretiva certa do
    `vercel.json`. Ao adicionar algo assim, servir o build com esses headers
    e percorrer as telas antes do push.
+9. **Sessão**: sair do portal encerra só o aparelho atual
+   (`signOut({ scope: 'local' })`). O modo global derrubava o iPad quando a
+   Gabriela saía no computador. Edge Functions são chamadas por `invocar`
+   (em `db-supabase.js`), que renova a sessão e tenta de novo após um 401.
 
 ## Arquitetura de dados (importante!)
 

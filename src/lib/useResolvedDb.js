@@ -44,6 +44,8 @@ const ALL_MUTATIONS = [
   'addSub',
   'toggleSub',
   'deleteSub',
+  'updateSub',
+  'moveSub',
   'applyTemplate',
   'addTemplate',
   'deleteTemplate',

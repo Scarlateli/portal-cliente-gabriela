@@ -117,7 +117,8 @@ html,body{margin:0;padding:0;background:var(--gl-bg)}
 .access-off{background:var(--late-soft);color:var(--late)}
 
 /* tabs */
-.tabs{display:flex;gap:2px;margin:26px 0 20px;overflow-x:auto;border-bottom:1px solid var(--line)}
+.tabs{display:flex;gap:2px;margin:26px 0 20px;overflow-x:auto;overflow-y:hidden;border-bottom:1px solid var(--line);scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
 .tab-badge{display:inline-grid;place-items:center;min-width:17px;height:17px;padding:0 5px;border-radius:4px;background:var(--late);color:#fff;font-size:10px;font-weight:500;margin-left:3px}
 .tab{display:inline-flex;align-items:center;gap:6px;background:none;border:none;padding:10px 12px;font-size:13px;font-weight:500;color:var(--muted);border-bottom:2px solid transparent;white-space:nowrap;margin-bottom:-1px}
 .tab:hover{color:var(--ink)}
@@ -570,15 +571,20 @@ button.sub-box{cursor:pointer}
 .cp .hstat strong span{font-size:15px;color:var(--gl-ink-45)}
 .cp .hstat em{font-style:normal;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--gl-ink-60)}
 /* timeline editorial: ordinais + estados */
-.cp ol:has(> .tl-item){counter-reset:etapa}
-.cp .tl-item{counter-increment:etapa}
-.cp .tl-item .tl-body{position:relative}
-.cp .tl-item .tl-body::before{content:"Nº " counter(etapa,decimal-leading-zero);position:absolute;top:12px;right:16px;font-family:var(--font-display);font-weight:300;font-size:13px;letter-spacing:.06em;color:var(--gl-ink-45)}
-.cp .tl-edit{counter-increment:none}
-.cp .tl-edit .tl-body::before{content:none}
-.cp .tl-concluida .tl-body{background:var(--gl-surface-2)}
-.cp .tl-em_andamento .tl-body{border-color:var(--gl-vinho);box-shadow:inset 3px 0 0 var(--gl-vinho)}
-.cp .tl-a_fazer .tl-body{background:transparent;border-style:dashed}
+/* cada etapa é um cartão com borda fina; o estado muda o fundo e a borda.
+   (Antes "A fazer" ganhava borda tracejada grossa e "Em andamento" uma faixa
+   por cima do conteúdo — os dois corrigidos na rodada 3.) */
+.cp .tl-item .tl-body{position:relative;border:1px solid var(--gl-hairline-2);border-radius:6px;background:var(--card);padding:12px 16px 12px}
+.cp .tl-concluida .tl-body{background:var(--gl-surface-2);border-color:var(--gl-hairline)}
+.cp .tl-em_andamento .tl-body{border-color:var(--gl-vinho);border-left-width:3px;padding-left:14px}
+.cp .tl-a_fazer .tl-body{background:transparent}
+.cp .tl-late .tl-body{border-color:var(--gl-vermelho)}
+.cp .tl-edit .tl-body{border:0;padding:0;background:transparent}
+.cp .tl-ordinal{display:block;font-family:var(--font-display);font-weight:400;font-size:11px;letter-spacing:.12em;color:var(--gl-ink-45);margin-bottom:2px}
+.cp .tl-node{top:12px}
+.cp .tl-rail{top:36px}
+.cp .tl-top{flex-wrap:wrap;row-gap:2px}
+.cp .tl-date{white-space:normal}
 .cp .tl-rail{background:var(--gl-hairline)}
 /* superfícies gerais em hairline */
 .cp .panel,.cp .invite-box,.cp .tpl-card{border-color:var(--gl-hairline)}
@@ -700,3 +706,89 @@ button.sub-box{cursor:pointer}
 /* ajustes finos da revisão visual */
 .cp .fale-conosco,.cp .fale-conosco:hover{text-decoration:none}
 .cp .gp{margin-top:10px}
+
+/* ===== Rodada 3 (revisão de 19/10) ===== */
+/* iPad/Safari pinta texto de botão de azul quando o botão não define cor:
+   os cartões de projeto são botões, então o nome do projeto ficava azul. */
+button{color:inherit}
+.proj-card,.proj-card h3{color:var(--ink)}
+
+/* painel do topo menor no computador (no iPad já estava bom) */
+@media (min-width:900px){
+  .cp .hero{padding:26px 32px}
+  .cp .hero-name{font-size:clamp(30px,3vw,40px);margin:10px 0 12px}
+  .cp .hero::after{width:150px;height:150px;top:-14px;right:-10px}
+  .cp .hero-stats{margin-top:18px;padding-top:14px}
+}
+.cp .hero-ola{margin:12px 0 -6px;font-size:15px;color:var(--gl-terra)}
+
+/* login: um fundo só (sem os dois blocos de cor); com foto de capa, ela
+   aparece clara, com névoa por cima, atrás do logo e do cartão */
+.cp .login-split{position:relative;background:var(--gl-bege);isolation:isolate}
+.cp .login-split .login-brand,.cp .login-split .login-panel{background:transparent}
+.cp .login-split.com-capa::before{content:"";position:absolute;inset:0;z-index:-2;background:var(--capa) center/cover no-repeat}
+.cp .login-split.com-capa::after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(180deg,rgba(217,212,201,.80),rgba(217,212,201,.72));-webkit-backdrop-filter:blur(2px) saturate(.7);backdrop-filter:blur(2px) saturate(.7)}
+.cp .login-split .login-card{background:rgba(239,236,230,.94)}
+
+/* cadastro: respiro antes de "Etapas do projeto" e dicas dos campos */
+.cp .form-sec-bloco{margin-top:30px;padding-top:20px;border-top:1px solid var(--gl-hairline);margin-bottom:10px}
+.cp .lab-hint{font-size:12px;margin:0}
+
+/* templates recolhidos */
+.cp .tpl-card{padding:0}
+.cp .tpl-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px}
+.cp .tpl-toggle{display:flex;align-items:baseline;gap:8px;flex:1;min-width:0;background:none;border:0;padding:0;text-align:left;cursor:pointer;font:inherit}
+.cp .tpl-seta{flex:none;align-self:center;color:var(--muted);transition:transform .15s ease}
+.cp .tpl-card-aberto .tpl-seta{transform:rotate(90deg)}
+.cp .tpl-resumo{font-size:12px;color:var(--muted)}
+.cp .tpl-items{margin:0 14px 14px 36px}
+.cp .tpl-subs em{color:var(--muted);font-style:normal}
+.cp .tpl-card-ativo{padding:14px}
+.cp .tpl-form .form-sec{margin-top:0}
+.cp .tpl-acoes{flex:none}
+
+/* editor de etapas: sub-etapa com setas e tipo livre */
+.cp .ee-sub{grid-template-columns:1fr 140px 112px auto}
+.cp .ee-sub-tipo-livre{grid-column:1/-1}
+@media (max-width:640px){.cp .ee-sub{grid-template-columns:1fr 1fr}.cp .ee-sub .ee-botoes{grid-column:1/-1;justify-self:end}}
+
+/* linha do tempo: sub-etapa com tipo, responsável e prazo sempre à vista */
+.cp .sub{align-items:flex-start;padding:7px 0;border-bottom:1px solid var(--gl-hairline)}
+.cp .sub:last-child{border-bottom:0}
+.cp .sub .sub-box{margin-top:1px}
+.cp .sub-corpo{flex:1;min-width:0;display:flex;flex-wrap:wrap;align-items:center;gap:5px 10px}
+.cp .sub-corpo .sub-title{flex:0 1 auto;font-size:13.5px}
+.cp .sub-chips{display:inline-flex;flex-wrap:wrap;gap:5px}
+.cp .sub-chip{display:inline-flex;align-items:center;gap:4px;font-size:11px;line-height:1.5;padding:1px 8px;border-radius:999px;background:rgba(170,155,131,.18);color:var(--gl-terra);white-space:nowrap}
+.cp .sub-resp-cliente{background:rgba(93,29,24,.09);color:var(--gl-vermelho)}
+.cp .sub-resp-fornecedor{background:rgba(69,39,31,.08);color:var(--gl-marrom)}
+.cp .sub-prazo-sem{background:transparent;border:1px solid var(--gl-hairline-2);color:var(--muted)}
+.cp .sub-prazo-hoje{background:rgba(170,155,131,.38);color:var(--gl-marrom);font-weight:500}
+.cp .sub-prazo-atrasado{background:rgba(93,29,24,.14);color:var(--gl-vermelho);font-weight:500}
+.cp .sub-prazo-feito{opacity:.75}
+.cp .sub-extra{display:inline-flex;flex-wrap:wrap;gap:10px}
+.cp .sub-extra:empty{display:none}
+.cp .sub-acoes{display:inline-flex;gap:0;flex:none}
+.cp .sub-acoes .icon-x:disabled{opacity:.3;cursor:default;background:none;color:var(--muted)}
+.cp .sub-editando{display:block}
+.cp .sub-form{display:flex;flex-direction:column;gap:8px;border:1px solid var(--gl-hairline-2);border-radius:5px;padding:10px 12px;background:var(--card);width:100%}
+.cp .sub-form-titulo{border:1px solid var(--line);border-radius:4px;padding:8px 11px;font-size:13px;outline:none}
+.cp .sub-form-grade{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:end}
+.cp .sub-form-reuniao{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.cp .sub-form-reuniao input{flex:1;min-width:180px;border:1px solid var(--line);border-radius:4px;padding:8px 11px;font-size:13px}
+.cp .sub-form .row{margin-top:0}
+.cp .sub-add{display:block;margin-top:4px}
+.cp .nf-sub-row{flex-wrap:wrap;padding:4px 0;border-bottom:1px solid var(--gl-hairline)}
+.cp .tag-owner.owner-studio{color:var(--gl-terra)}
+.cp .tag-owner.owner-client{color:var(--gl-vermelho);border-color:rgba(93,29,24,.25);background:rgba(93,29,24,.07)}
+
+/* ações do studio no fim do projeto: uma linha, todos do mesmo tamanho */
+.cp .gp-acoes{gap:8px;align-items:center}
+.cp .gp-acoes .btn{min-height:34px}
+
+/* campos dos editores de etapa e sub-etapa no mesmo desenho dos demais */
+.cp .ee input,.cp .ee select,.cp .sub-form select,.cp .sub-form input,.cp .add-stage select,.cp .add-stage input[type="date"],.cp .add-stage input[type="time"]{border:1px solid var(--line);border-radius:4px;padding:7px 10px;font:inherit;font-size:13px;color:var(--ink);background:var(--card);outline:none;min-height:34px}
+.cp .ee input:focus,.cp .ee select:focus,.cp .sub-form select:focus,.cp .sub-form input:focus{border-color:var(--brand)}
+.cp .sub-form .inline-lab{display:flex;flex-direction:column;align-items:flex-start;gap:4px;font-size:11.5px;color:var(--muted)}
+.cp .tl-late .tl-body{border-color:rgba(93,29,24,.55)}
+.cp .proj-foot{gap:12px;flex-wrap:wrap}

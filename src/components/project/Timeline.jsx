@@ -18,20 +18,48 @@ import {
   Save,
   Paperclip,
   Upload,
+  ArrowUp,
+  ArrowDown,
 } from 'lucide-react';
 import { StatusPill, Empty } from '../atoms.jsx';
 import { STAGE_STATUS, STAGE_CATEGORIES } from '../../lib/constants.js';
 import { stageOverdue, subStats, fmt } from '../../lib/helpers.js';
+import {
+  SUB_TIPOS,
+  SUB_RESPONSAVEIS,
+  SUB_COM_HORARIO,
+  ROTULO_RESP,
+  rotuloTipoSub,
+  prazoSub,
+  subCompletaVazia,
+} from '../../lib/etapas.js';
 
-const SUB_KINDS = { tarefa: 'Tarefa', reuniao: 'Reunião', entrega: 'Entrega' };
-const SUB_RESP = { studio: 'Studio', cliente: 'Cliente', fornecedor: 'Fornecedor' };
+const etapaNova = () => ({
+  title: '',
+  category: STAGE_CATEGORIES[0],
+  owner: 'studio',
+  start: '',
+  end: '',
+  time: '',
+  link: '',
+  presencial: false,
+  desc: '',
+  subs: [],
+});
+
+// ordem pedida pela Gabriela: o presente primeiro, depois o futuro, o passado e tudo
+const FILTERS = [
+  ['em_andamento', 'Em andamento'],
+  ['a_fazer', 'Futuras'],
+  ['concluida', 'Concluídas'],
+  ['todas', 'Todas'],
+];
 
 export function Timeline({ db, project, isStudio }) {
   const stages = db.stages(project.id);
   const [adding, setAdding] = useState(false);
   const [salvandoEtapa, setSalvandoEtapa] = useState(false);
-  const [nf, setNf] = useState({ title: '', category: 'Etapa', owner: 'studio', start: '', end: '', time: '', link: '', presencial: false, desc: '', subs: [] });
-  const [sd, setSd] = useState({ title: '', kind: 'tarefa', responsible: 'studio', due: '', time: '', format: 'online', link: '' });
+  const [nf, setNf] = useState(etapaNova);
   const [tplSel, setTplSel] = useState('');
   // Cliente abre em "Em andamento" (o que importa agora); se não houver nada
   // em andamento, cai em "Todas" para a tela não começar vazia.
@@ -40,10 +68,26 @@ export function Timeline({ db, project, isStudio }) {
   );
   const templates = db.templates();
   const tplPreview = templates.find((t) => t.id === tplSel);
-  const resetNf = () => setNf({ title: '', category: 'Etapa', owner: 'studio', start: '', end: '', time: '', link: '', presencial: false, desc: '', subs: [] });
-  // ordem pedida pela Gabriela: o presente primeiro, depois o futuro, o passado e tudo
-  const FILTERS = [['em_andamento', 'Em andamento'], ['a_fazer', 'Futuras'], ['concluida', 'Concluídas'], ['todas', 'Todas']];
   const shown = filter === 'todas' ? stages : stages.filter((s) => s.status === filter);
+
+  const salvarComoTemplate = () => {
+    const name = window.prompt('Nome do template (as etapas e sub-etapas atuais viram um modelo reutilizável):');
+    if (!name || !name.trim()) return;
+    db.addTemplate(
+      name.trim(),
+      stages.map((st) => ({
+        title: st.title,
+        category: st.category,
+        desc: st.desc || '',
+        subs: (st.subs || []).map((b) => ({
+          title: b.title,
+          kind: b.kind || 'tarefa',
+          kindLabel: b.kindLabel || '',
+          responsible: b.responsible || 'studio',
+        })),
+      })),
+    );
+  };
 
   return (
     <section className="panel">
@@ -51,20 +95,19 @@ export function Timeline({ db, project, isStudio }) {
         <h2>Etapas do projeto</h2>
         {isStudio && (
           <div className="head-actions">
-            <select className="mini-select" value={tplSel} onChange={(e) => setTplSel(e.target.value)}>
+            <select className="mini-select" aria-label="Usar template" value={tplSel} onChange={(e) => setTplSel(e.target.value)}>
               <option value="">Usar template…</option>
-              {templates.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+              {templates.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.name}
+                </option>
+              ))}
             </select>
-            <button className="btn btn-ghost btn-sm" onClick={() => setAdding(!adding)}><Plus size={14} /> Nova etapa</button>
+            <button className="btn btn-ghost btn-sm" onClick={() => setAdding(!adding)}>
+              <Plus size={14} /> Nova etapa
+            </button>
             {stages.length > 0 && (
-              <button
-                className="btn btn-ghost btn-sm"
-                onClick={() => {
-                  const name = window.prompt('Nome do template (as etapas atuais viram um modelo reutilizável):');
-                  if (name && name.trim())
-                    db.addTemplate(name.trim(), stages.map((st) => ({ title: st.title, category: st.category, desc: st.desc || '' })));
-                }}
-              >
+              <button className="btn btn-ghost btn-sm" onClick={salvarComoTemplate}>
                 <Save size={14} /> Salvar como template
               </button>
             )}
@@ -73,7 +116,11 @@ export function Timeline({ db, project, isStudio }) {
       </header>
 
       <div className="filter-row">
-        {FILTERS.map(([f, label]) => <button key={f} className={'filter' + (filter === f ? ' on' : '')} onClick={() => setFilter(f)}>{label}</button>)}
+        {FILTERS.map(([f, label]) => (
+          <button key={f} className={'filter' + (filter === f ? ' on' : '')} onClick={() => setFilter(f)}>
+            {label}
+          </button>
+        ))}
       </div>
 
       {isStudio && tplPreview && (
@@ -83,86 +130,62 @@ export function Timeline({ db, project, isStudio }) {
             <span>{tplPreview.items.length} etapas serão adicionadas a este projeto</span>
           </div>
           <ol className="tpl-preview-list">
-            {tplPreview.items.map((it, i) => <li key={i}>{it.title} <em>· {it.category}</em></li>)}
+            {tplPreview.items.map((it, i) => (
+              <li key={i}>
+                {it.title} <em>· {it.category}</em>
+              </li>
+            ))}
           </ol>
           <div className="row">
-            <button className="btn btn-primary btn-sm" onClick={() => { db.applyTemplate(project.id, tplPreview.id); setTplSel(''); }}>Aplicar etapas ao projeto</button>
-            <button className="btn btn-ghost btn-sm" onClick={() => setTplSel('')}>Cancelar</button>
+            <button
+              className="btn btn-primary btn-sm"
+              onClick={() => {
+                db.applyTemplate(project.id, tplPreview.id);
+                setTplSel('');
+              }}
+            >
+              Aplicar etapas ao projeto
+            </button>
+            <button className="btn btn-ghost btn-sm" onClick={() => setTplSel('')}>
+              Cancelar
+            </button>
           </div>
         </div>
       )}
 
       {adding && (
         <div className="add-stage">
-          <input placeholder="Título da etapa" aria-label="Título da etapa" value={nf.title} onChange={(e) => setNf({ ...nf, title: e.target.value })} />
-          <div className="add-row">
-            
-            
-          </div>
-          <div className="add-row">
-            <label className="inline-lab">Início<input type="date" value={nf.start} onChange={(e) => setNf({ ...nf, start: e.target.value })} /></label>
-            <label className="inline-lab">Previsão de fim<input type="date" value={nf.end} onChange={(e) => setNf({ ...nf, end: e.target.value })} /></label>
-          </div>
-          {nf.category === 'Reunião' && (
-            <div className="meet-fields">
-              <label className="inline-lab"><Clock size={13} /> Horário<input type="time" value={nf.time} onChange={(e) => setNf({ ...nf, time: e.target.value })} /></label>
-              <div className="seg-toggle">
-                <button type="button" className={'seg-opt' + (!nf.presencial ? ' on' : '')} onClick={() => setNf({ ...nf, presencial: false })}><Video size={13} /> Online</button>
-                <button type="button" className={'seg-opt' + (nf.presencial ? ' on' : '')} onClick={() => setNf({ ...nf, presencial: true })}><MapPin size={13} /> Presencial</button>
-              </div>
-              {!nf.presencial && <input placeholder="Link da reunião (ex.: https://meet.google.com/...)" aria-label="Link da reunião" value={nf.link} onChange={(e) => setNf({ ...nf, link: e.target.value })} />}
-            </div>
-          )}
-          <input placeholder="Descrição (opcional)" aria-label="Descrição da etapa" value={nf.desc} onChange={(e) => setNf({ ...nf, desc: e.target.value })} />
+          <EtapaCampos v={nf} set={setNf} />
           <div className="nf-subs">
-            <div className="subs-head">Sub-etapas{nf.subs.length > 0 ? ' · ' + nf.subs.length : ''}</div>
+            <div className="subs-head">
+              <ListChecks size={13} /> Sub-etapas{nf.subs.length > 0 ? ' · ' + nf.subs.length : ''}
+            </div>
             {nf.subs.map((b, i) => (
               <div key={i} className="nf-sub-row">
                 <span className="nf-sub-title">{b.title}</span>
-                <span className="micro">
-                  {[
-                    b.kind !== 'tarefa' ? SUB_KINDS[b.kind] : null,
-                    b.due ? (b.kind === 'reuniao' ? fmt(b.due) + (b.time ? ' às ' + b.time : '') : 'até ' + fmt(b.due)) : null,
-                    b.kind === 'reuniao' ? (b.format === 'presencial' ? 'presencial' : 'online') : null,
-                    SUB_RESP[b.responsible],
-                  ]
-                    .filter(Boolean)
-                    .join(' · ')}
-                </span>
-                <button type="button" className="icon-x" onClick={() => setNf({ ...nf, subs: nf.subs.filter((_, j) => j !== i) })} aria-label="remover"><X size={12} /></button>
+                <SubResumo b={b} />
+                <button
+                  type="button"
+                  className="icon-x"
+                  onClick={() => setNf({ ...nf, subs: nf.subs.filter((_, j) => j !== i) })}
+                  aria-label={'Remover a sub-etapa ' + b.title}
+                >
+                  <X size={12} />
+                </button>
               </div>
             ))}
-            <div className="nf-sub-grid">
-              <input placeholder="Título da sub-etapa" aria-label="Título da sub-etapa" value={sd.title} onChange={(e) => setSd({ ...sd, title: e.target.value })} />
-              <label className="inline-lab">Tipo
-                <select value={sd.kind} onChange={(e) => setSd({ ...sd, kind: e.target.value })}>
-                  <option value="tarefa">Tarefa</option>
-                  <option value="reuniao">Reunião</option>
-                  <option value="entrega">Entrega</option>
-                </select>
-              </label>
-              <label className="inline-lab">Responsável
-                <select value={sd.responsible} onChange={(e) => setSd({ ...sd, responsible: e.target.value })}>
-                  <option value="studio">Studio</option>
-                  <option value="cliente">Cliente</option>
-                  <option value="fornecedor">Fornecedor</option>
-                </select>
-              </label>
-              <label className="inline-lab">{sd.kind === 'reuniao' ? 'Data' : 'Prazo'}<input type="date" value={sd.due} onChange={(e) => setSd({ ...sd, due: e.target.value })} /></label>
-              {sd.kind === 'reuniao' && (
-                <>
-                  <label className="inline-lab">Horário<input type="time" value={sd.time} onChange={(e) => setSd({ ...sd, time: e.target.value })} /></label>
-                  <div className="seg">
-                    <button type="button" className={'seg-opt' + (sd.format !== 'presencial' ? ' on' : '')} onClick={() => setSd({ ...sd, format: 'online' })}><Video size={13} /> Online</button>
-                    <button type="button" className={'seg-opt' + (sd.format === 'presencial' ? ' on' : '')} onClick={() => setSd({ ...sd, format: 'presencial' })}><MapPin size={13} /> Presencial</button>
-                  </div>
-                  {sd.format !== 'presencial' && <input placeholder="Link da reunião" aria-label="Link da reunião" value={sd.link} onChange={(e) => setSd({ ...sd, link: e.target.value })} />}
-                </>
-              )}
-            </div>
-            <button type="button" className="btn btn-ghost btn-sm" disabled={!sd.title.trim()} onClick={() => { setNf({ ...nf, subs: [...nf.subs, { ...sd, title: sd.title.trim() }] }); setSd({ title: '', kind: 'tarefa', responsible: 'studio', due: '', time: '', format: 'online', link: '' }); }}><Plus size={13} /> Adicionar sub-etapa</button>
+            <SubForm
+              rotuloSalvar="Adicionar sub-etapa"
+              limparAoSalvar
+              onSalvar={(sub) => setNf({ ...nf, subs: [...nf.subs, sub] })}
+            />
           </div>
-          {nf.category === 'Reunião' && nf.start && <p className="micro"><CalendarIcon size={11} /> Reunião entra no calendário em {fmt(nf.start)}{nf.time ? ' às ' + nf.time : ''}.</p>}
+          {nf.category === 'Reunião' && nf.start && (
+            <p className="micro">
+              <CalendarIcon size={11} /> Reunião entra no calendário em {fmt(nf.start)}
+              {nf.time ? ' às ' + nf.time : ''}.
+            </p>
+          )}
           <div className="row">
             <button
               className="btn btn-primary btn-sm"
@@ -171,37 +194,331 @@ export function Timeline({ db, project, isStudio }) {
                 setSalvandoEtapa(true);
                 try {
                   await db.addStage(project.id, nf);
-                  resetNf();
+                  setNf(etapaNova());
                   setAdding(false);
                 } finally {
                   setSalvandoEtapa(false);
                 }
               }}
             >
-              {salvandoEtapa ? 'Adicionando…' : 'Adicionar'}
+              {salvandoEtapa ? 'Adicionando…' : 'Adicionar etapa'}
             </button>
-            <button className="btn btn-ghost btn-sm" onClick={() => { resetNf(); setAdding(false); }}>Cancelar</button>
+            <button
+              className="btn btn-ghost btn-sm"
+              onClick={() => {
+                setNf(etapaNova());
+                setAdding(false);
+              }}
+            >
+              Cancelar
+            </button>
           </div>
         </div>
       )}
 
-      {stages.length === 0 ? <Empty text="Nenhuma etapa ainda. Use um template ou adicione manualmente." />
-        : shown.length === 0 ? <Empty text="Nenhuma etapa neste filtro." />
-        : <ol className="timeline" key={filter}>{shown.map((s) => <StageItem key={s.id} db={db} s={s} isStudio={isStudio} />)}</ol>}
+      {stages.length === 0 ? (
+        <Empty text="Nenhuma etapa ainda. Use um template ou adicione manualmente." />
+      ) : shown.length === 0 ? (
+        <Empty text="Nenhuma etapa neste filtro." />
+      ) : (
+        <ol className="timeline" key={filter}>
+          {shown.map((s) => (
+            <StageItem key={s.id} db={db} s={s} n={stages.indexOf(s) + 1} isStudio={isStudio} />
+          ))}
+        </ol>
+      )}
     </section>
   );
 }
 
-function StageItem({ db, s, isStudio }) {
+/* Campos da etapa (macro), iguais em "Nova etapa" e "Editar". */
+function EtapaCampos({ v, set }) {
+  return (
+    <>
+      <input placeholder="Título da etapa (ex.: Briefing)" aria-label="Título da etapa" value={v.title} onChange={(e) => set({ ...v, title: e.target.value })} />
+      <div className="add-row">
+        <label className="inline-lab">
+          Tipo
+          <select value={v.category} onChange={(e) => set({ ...v, category: e.target.value })}>
+            {!STAGE_CATEGORIES.includes(v.category) && v.category && <option>{v.category}</option>}
+            {STAGE_CATEGORIES.map((c) => (
+              <option key={c}>{c}</option>
+            ))}
+          </select>
+        </label>
+        <label className="inline-lab">
+          Responsável
+          <select value={v.owner} onChange={(e) => set({ ...v, owner: e.target.value })}>
+            <option value="studio">Studio</option>
+            <option value="client">Cliente</option>
+          </select>
+        </label>
+      </div>
+      <div className="add-row">
+        <label className="inline-lab">
+          Início
+          <input type="date" value={v.start || ''} onChange={(e) => set({ ...v, start: e.target.value })} />
+        </label>
+        <label className="inline-lab">
+          Previsão de fim
+          <input type="date" value={v.end || ''} onChange={(e) => set({ ...v, end: e.target.value })} />
+        </label>
+      </div>
+      {v.category === 'Reunião' && (
+        <div className="meet-fields">
+          <label className="inline-lab">
+            <Clock size={13} /> Horário
+            <input type="time" value={v.time || ''} onChange={(e) => set({ ...v, time: e.target.value })} />
+          </label>
+          <div className="seg-toggle">
+            <button type="button" className={'seg-opt' + (!v.presencial ? ' on' : '')} onClick={() => set({ ...v, presencial: false })}>
+              <Video size={13} /> Online
+            </button>
+            <button type="button" className={'seg-opt' + (v.presencial ? ' on' : '')} onClick={() => set({ ...v, presencial: true })}>
+              <MapPin size={13} /> Presencial
+            </button>
+          </div>
+          {!v.presencial && (
+            <input placeholder="Link da reunião (ex.: https://meet.google.com/...)" aria-label="Link da reunião" value={v.link || ''} onChange={(e) => set({ ...v, link: e.target.value })} />
+          )}
+        </div>
+      )}
+      <input placeholder="Descrição (opcional)" aria-label="Descrição da etapa" value={v.desc || ''} onChange={(e) => set({ ...v, desc: e.target.value })} />
+    </>
+  );
+}
+
+/* Formulário de uma sub-etapa: o mesmo para criar e para editar. */
+function SubForm({ inicial, onSalvar, onCancelar, rotuloSalvar = 'Salvar', limparAoSalvar = false }) {
+  const [sd, setSd] = useState(() => ({ ...subCompletaVazia(), ...(inicial || {}) }));
+  const comHorario = SUB_COM_HORARIO.includes(sd.kind);
+  const pronto = sd.title.trim() && (sd.kind !== 'outro' || (sd.kindLabel || '').trim());
+  const salvar = () => {
+    if (!pronto) return;
+    onSalvar({ ...sd, title: sd.title.trim(), kindLabel: sd.kind === 'outro' ? sd.kindLabel.trim() : '' });
+    if (limparAoSalvar) setSd(subCompletaVazia());
+  };
+  return (
+    <div className="sub-form">
+      <input
+        className="sub-form-titulo"
+        placeholder="Título da sub-etapa"
+        aria-label="Título da sub-etapa"
+        value={sd.title}
+        onChange={(e) => setSd({ ...sd, title: e.target.value })}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') salvar();
+        }}
+      />
+      <div className="sub-form-grade">
+        <label className="inline-lab">
+          Tipo
+          <select value={sd.kind} onChange={(e) => setSd({ ...sd, kind: e.target.value })}>
+            {SUB_TIPOS.map(([v, r]) => (
+              <option key={v} value={v}>
+                {r}
+              </option>
+            ))}
+          </select>
+        </label>
+        {sd.kind === 'outro' && (
+          <label className="inline-lab">
+            Nome do tipo
+            <input maxLength={40} placeholder="ex.: Aprovação de condomínio" value={sd.kindLabel || ''} onChange={(e) => setSd({ ...sd, kindLabel: e.target.value })} />
+          </label>
+        )}
+        <label className="inline-lab">
+          Responsável
+          <select value={sd.responsible} onChange={(e) => setSd({ ...sd, responsible: e.target.value })}>
+            {SUB_RESPONSAVEIS.map(([v, r]) => (
+              <option key={v} value={v}>
+                {r}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="inline-lab">
+          {comHorario ? 'Data' : 'Prazo'}
+          <input type="date" value={sd.due || ''} onChange={(e) => setSd({ ...sd, due: e.target.value })} />
+        </label>
+        {comHorario && (
+          <label className="inline-lab">
+            Horário
+            <input type="time" value={sd.time || ''} onChange={(e) => setSd({ ...sd, time: e.target.value })} />
+          </label>
+        )}
+      </div>
+      {sd.kind === 'reuniao' && (
+        <div className="sub-form-reuniao">
+          <div className="seg">
+            <button type="button" className={'seg-opt' + (sd.format !== 'presencial' ? ' on' : '')} onClick={() => setSd({ ...sd, format: 'online' })}>
+              <Video size={13} /> Online
+            </button>
+            <button type="button" className={'seg-opt' + (sd.format === 'presencial' ? ' on' : '')} onClick={() => setSd({ ...sd, format: 'presencial' })}>
+              <MapPin size={13} /> Presencial
+            </button>
+          </div>
+          {sd.format !== 'presencial' && (
+            <input placeholder="Link da reunião" aria-label="Link da reunião" value={sd.link || ''} onChange={(e) => setSd({ ...sd, link: e.target.value })} />
+          )}
+        </div>
+      )}
+      <div className="row">
+        <button type="button" className="btn btn-primary btn-sm" disabled={!pronto} onClick={salvar}>
+          {limparAoSalvar ? <Plus size={13} /> : null} {rotuloSalvar}
+        </button>
+        {onCancelar && (
+          <button type="button" className="btn btn-ghost btn-sm" onClick={onCancelar}>
+            Cancelar
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* Tipo, responsável e prazo de uma sub-etapa, sempre visíveis e com nome. */
+function SubResumo({ b }) {
+  const pz = prazoSub(b);
+  return (
+    <span className="sub-chips">
+      <span className="sub-chip">{rotuloTipoSub(b)}</span>
+      <span className={'sub-chip sub-resp sub-resp-' + (b.responsible || 'studio')}>
+        <User size={10} /> {ROTULO_RESP[b.responsible] || 'Studio'}
+      </span>
+      <span className={'sub-chip sub-prazo sub-prazo-' + pz.estado}>
+        {pz.estado === 'atrasado' ? <AlertTriangle size={10} /> : <CalendarDays size={10} />} {pz.texto}
+      </span>
+    </span>
+  );
+}
+
+function SubItem({ db, s, b, i, total, isStudio }) {
+  const [editando, setEditando] = useState(false);
+  if (editando)
+    return (
+      <li className="sub sub-editando">
+        <SubForm
+          inicial={b}
+          rotuloSalvar="Salvar sub-etapa"
+          onCancelar={() => setEditando(false)}
+          onSalvar={async (d) => {
+            setEditando(false);
+            await db.updateSub(s.id, b.id, d);
+          }}
+        />
+      </li>
+    );
+  return (
+    <li className={'sub' + (b.done ? ' done' : '')}>
+      {isStudio ? (
+        <button className={'sub-box' + (b.done ? ' on' : '')} onClick={() => db.toggleSub(s.id, b.id)} aria-label={(b.done ? 'Desmarcar ' : 'Concluir ') + b.title}>
+          {b.done && <Check size={11} />}
+        </button>
+      ) : (
+        <span className={'sub-box' + (b.done ? ' on' : '')}>{b.done && <Check size={11} />}</span>
+      )}
+      <div className="sub-corpo">
+        <span className="sub-title">{b.title}</span>
+        <SubResumo b={b} />
+        <span className="sub-extra">
+          {b.kind === 'reuniao' && b.format !== 'presencial' && b.link && (
+            <a className="link sm" href={b.link} target="_blank" rel="noreferrer">
+              <Link2 size={11} /> Entrar na reunião
+            </a>
+          )}
+          {b.storagePath ? (
+            <button
+              type="button"
+              className="link sm"
+              onClick={async () => {
+                const url = await db.fileUrl(b.storagePath);
+                if (url) window.open(url, '_blank');
+              }}
+            >
+              <Paperclip size={11} /> {b.fileName || 'arquivo'}
+            </button>
+          ) : b.fileName ? (
+            <span className="micro">
+              <Paperclip size={11} /> {b.fileName}
+            </span>
+          ) : null}
+          {!isStudio && b.responsible === 'cliente' && !b.done && (
+            <label className="link sm sub-upload">
+              <Upload size={11} /> {b.storagePath || b.fileName ? 'Trocar arquivo' : 'Enviar arquivo'}
+              <input
+                type="file"
+                hidden
+                onChange={(e) => {
+                  const f = e.target.files && e.target.files[0];
+                  if (f) db.attachSubFile(s.projectId, s.id, b.id, f);
+                  e.target.value = '';
+                }}
+              />
+            </label>
+          )}
+        </span>
+      </div>
+      {isStudio && (
+        <span className="sub-acoes">
+          <button className="icon-x" disabled={i === 0} onClick={() => db.moveSub(s.id, b.id, -1)} aria-label={'Subir ' + b.title}>
+            <ArrowUp size={12} />
+          </button>
+          <button className="icon-x" disabled={i === total - 1} onClick={() => db.moveSub(s.id, b.id, 1)} aria-label={'Descer ' + b.title}>
+            <ArrowDown size={12} />
+          </button>
+          <button className="icon-x" onClick={() => setEditando(true)} aria-label={'Editar ' + b.title}>
+            <PenLine size={12} />
+          </button>
+          <button
+            className="icon-x"
+            onClick={() => {
+              if (window.confirm('Excluir a sub-etapa "' + b.title + '"?')) db.deleteSub(s.id, b.id);
+            }}
+            aria-label={'Excluir ' + b.title}
+          >
+            <X size={12} />
+          </button>
+        </span>
+      )}
+    </li>
+  );
+}
+
+// "Início 03/02/2026 · Previsão de fim 10/02/2026", dito por extenso
+function datasEtapa(s) {
+  const partes = [];
+  if (s.start) partes.push((s.category === 'Reunião' ? '' : 'Início ') + fmt(s.start) + (s.time ? ' às ' + s.time : ''));
+  if (s.end && s.end !== s.start) partes.push('Previsão de fim ' + fmt(s.end));
+  return partes.length ? partes.join(' · ') : 'Sem datas definidas';
+}
+
+function StageItem({ db, s, n, isStudio }) {
   const [editing, setEditing] = useState(false);
   const [ef, setEf] = useState(s);
   const [addingSub, setAddingSub] = useState(false);
-  const [subText, setSubText] = useState('');
   const [newEnd, setNewEnd] = useState(s.end || '');
   const late = stageOverdue(s);
   const ss = subStats(s);
-  const startEdit = () => { setEf({ ...s }); setEditing(true); };
-  const saveEdit = () => { db.updateStage(s.id, { title: ef.title, category: ef.category, owner: ef.owner, start: ef.start, end: ef.end, time: ef.time, link: ef.link, presencial: ef.presencial, desc: ef.desc }); setEditing(false); };
+  const startEdit = () => {
+    setEf({ ...s });
+    setEditing(true);
+  };
+  const saveEdit = () => {
+    db.updateStage(s.id, {
+      title: ef.title,
+      category: ef.category,
+      owner: ef.owner,
+      start: ef.start,
+      end: ef.end,
+      time: ef.time,
+      link: ef.link,
+      presencial: ef.presencial,
+      desc: ef.desc,
+    });
+    setEditing(false);
+  };
+  const ordinal = 'Nº ' + String(n).padStart(2, '0');
 
   if (editing) {
     return (
@@ -210,29 +527,14 @@ function StageItem({ db, s, isStudio }) {
         <span className="tl-node" aria-hidden />
         <div className="tl-body">
           <div className="add-stage">
-            <input placeholder="Título da etapa" aria-label="Título da etapa" value={ef.title} onChange={(e) => setEf({ ...ef, title: e.target.value })} />
-            <div className="add-row">
-              <select value={ef.category} onChange={(e) => setEf({ ...ef, category: e.target.value })}>{STAGE_CATEGORIES.map((c) => <option key={c}>{c}</option>)}</select>
-              <select value={ef.owner} onChange={(e) => setEf({ ...ef, owner: e.target.value })}><option value="studio">Responsável: Studio</option><option value="client">Responsável: Cliente</option></select>
-            </div>
-            <div className="add-row">
-              <label className="inline-lab">Início<input type="date" value={ef.start || ''} onChange={(e) => setEf({ ...ef, start: e.target.value })} /></label>
-              <label className="inline-lab">Previsão de fim<input type="date" value={ef.end || ''} onChange={(e) => setEf({ ...ef, end: e.target.value })} /></label>
-            </div>
-            {ef.category === 'Reunião' && (
-              <div className="meet-fields">
-                <label className="inline-lab"><Clock size={13} /> Horário<input type="time" value={ef.time || ''} onChange={(e) => setEf({ ...ef, time: e.target.value })} /></label>
-                <div className="seg-toggle">
-                  <button type="button" className={'seg-opt' + (!ef.presencial ? ' on' : '')} onClick={() => setEf({ ...ef, presencial: false })}><Video size={13} /> Online</button>
-                  <button type="button" className={'seg-opt' + (ef.presencial ? ' on' : '')} onClick={() => setEf({ ...ef, presencial: true })}><MapPin size={13} /> Presencial</button>
-                </div>
-                {!ef.presencial && <input placeholder="Link da reunião" aria-label="Link da reunião" value={ef.link || ''} onChange={(e) => setEf({ ...ef, link: e.target.value })} />}
-              </div>
-            )}
-            <input placeholder="Descrição (opcional)" aria-label="Descrição da etapa" value={ef.desc || ''} onChange={(e) => setEf({ ...ef, desc: e.target.value })} />
+            <EtapaCampos v={ef} set={setEf} />
             <div className="row">
-              <button className="btn btn-primary btn-sm" disabled={!ef.title.trim()} onClick={saveEdit}>Salvar</button>
-              <button className="btn btn-ghost btn-sm" onClick={() => setEditing(false)}>Cancelar</button>
+              <button className="btn btn-primary btn-sm" disabled={!ef.title.trim()} onClick={saveEdit}>
+                Salvar
+              </button>
+              <button className="btn btn-ghost btn-sm" onClick={() => setEditing(false)}>
+                Cancelar
+              </button>
             </div>
           </div>
         </div>
@@ -243,31 +545,69 @@ function StageItem({ db, s, isStudio }) {
   return (
     <li className={'tl-item tl-' + s.status + (late ? ' tl-late' : '')}>
       <span className="tl-rail" aria-hidden />
-      <span className="tl-node" aria-hidden>{s.status === 'concluida' ? <Check size={13} /> : s.status === 'em_andamento' ? <span className="tl-dot" /> : null}</span>
+      <span className="tl-node" aria-hidden>
+        {s.status === 'concluida' ? <Check size={13} /> : s.status === 'em_andamento' ? <span className="tl-dot" /> : null}
+      </span>
       <div className="tl-body">
+        <span className="tl-ordinal">{ordinal}</span>
         <div className="tl-top">
           <h3>{s.title}</h3>
-          <span className="tl-date"><CalendarDays size={12} /> {fmt(s.start)}{!late && s.end && s.end !== s.start ? ' → ' + fmt(s.end) : ''}{s.time ? ' · ' + s.time : ''}</span>
+          <span className="tl-date">
+            <CalendarDays size={12} /> {datasEtapa(s)}
+          </span>
         </div>
         <div className="tl-meta">
           <span className="tag">{s.category}</span>
-          {s.category === 'Reunião' && !s.presencial && <span className="tag tag-loc"><Video size={11} /> Online</span>}
-          {s.owner === 'client' && <span className="tag tag-owner owner-client"><User size={11} /> Responsabilidade: Cliente</span>}
-          {s.rescheduledFrom && <span className="tag tag-resched"><CalendarClock size={11} /> Reagendada de {fmt(s.rescheduledFrom)}</span>}
-          {late ? <span className="pill pill-late"><AlertTriangle size={12} /> Em atraso</span> : <StatusPill status={s.status} />}
+          {s.category === 'Reunião' && (
+            <span className="tag tag-loc">
+              {s.presencial ? <MapPin size={11} /> : <Video size={11} />} {s.presencial ? 'Presencial' : 'Online'}
+            </span>
+          )}
+          <span className={'tag tag-owner owner-' + (s.owner === 'client' ? 'client' : 'studio')}>
+            <User size={11} /> Responsável: {s.owner === 'client' ? 'Cliente' : 'Studio'}
+          </span>
+          {s.rescheduledFrom && (
+            <span className="tag tag-resched">
+              <CalendarClock size={11} /> Reagendada de {fmt(s.rescheduledFrom)}
+            </span>
+          )}
+          {late ? (
+            <span className="pill pill-late">
+              <AlertTriangle size={12} /> Em atraso
+            </span>
+          ) : (
+            <StatusPill status={s.status} />
+          )}
         </div>
 
         {s.category === 'Reunião' && !s.presencial && s.link && (
-          <a className="meet-link" href={s.link} target="_blank" rel="noreferrer"><Link2 size={13} /> Entrar na reunião</a>
+          <a className="meet-link" href={s.link} target="_blank" rel="noreferrer">
+            <Link2 size={13} /> Entrar na reunião
+          </a>
         )}
 
         {late && (
           <div className="late-box">
-            <div className="late-msg"><AlertTriangle size={15} /> <span>Prazo venceu em {fmt(s.end)}. {isStudio ? 'Defina a nova data de entrega abaixo.' : s.owner === 'client' ? 'Anexe as documentações em Documentos. Depois disso, o studio define uma nova data de entrega.' : 'Uma nova análise de prazo será feita pelo studio.'}</span></div>
+            <div className="late-msg">
+              <AlertTriangle size={15} />{' '}
+              <span>
+                Prazo venceu em {fmt(s.end)}.{' '}
+                {isStudio
+                  ? 'Defina a nova data de entrega abaixo.'
+                  : s.owner === 'client'
+                    ? 'Anexe as documentações em Documentos. Depois disso, o studio define uma nova data de entrega.'
+                    : 'Uma nova análise de prazo será feita pelo studio.'}
+              </span>
+            </div>
             {isStudio && (
               <div className="reschedule">
-                <label className="inline-lab"><CalendarClock size={13} /> Nova data de entrega<input type="date" value={newEnd} onChange={(e) => setNewEnd(e.target.value)} /></label>
-                <button className="btn btn-primary btn-sm" disabled={!newEnd} onClick={() => db.rescheduleStage(s.id, newEnd)}>Reagendar</button>
+                <label className="inline-lab">
+                  <CalendarClock size={13} /> Nova data de entrega
+                  <input type="date" value={newEnd} onChange={(e) => setNewEnd(e.target.value)} />
+                </label>
+                <button className="btn btn-primary btn-sm" disabled={!newEnd} onClick={() => db.rescheduleStage(s.id, newEnd)}>
+                  Reagendar
+                </button>
               </div>
             )}
           </div>
@@ -275,69 +615,31 @@ function StageItem({ db, s, isStudio }) {
 
         {(ss.total > 0 || isStudio) && (
           <div className="subs">
-            <div className="subs-head"><ListChecks size={13} /> Sub-etapas{ss.total > 0 ? ' · ' + ss.done + '/' + ss.total : ''}</div>
+            <div className="subs-head">
+              <ListChecks size={13} /> Sub-etapas{ss.total > 0 ? ' · ' + ss.done + ' de ' + ss.total + ' concluídas' : ''}
+            </div>
             {ss.total > 0 && (
               <ul className="sub-list">
-                {(s.subs || []).map((b) => (
-                  <li key={b.id} className={'sub' + (b.done ? ' done' : '')}>
-                    {isStudio
-                      ? <button className={'sub-box' + (b.done ? ' on' : '')} onClick={isStudio ? () => db.toggleSub(s.id, b.id) : undefined} disabled={!isStudio} aria-label="alternar">{b.done && <Check size={11} />}</button>
-                      : <span className={'sub-box' + (b.done ? ' on' : '')}>{b.done && <Check size={11} />}</span>}
-                    <span className="sub-title">{b.title}</span>
-                    {(b.kind && b.kind !== 'tarefa') || b.due || (b.responsible && b.responsible !== 'studio') ? (
-                      <span className="micro sub-meta">
-                        {[
-                          b.kind === 'entrega' ? 'Entrega' : null,
-                          b.due ? (b.kind === 'reuniao' ? fmt(b.due) + (b.time ? ' às ' + b.time : '') : 'até ' + fmt(b.due)) : null,
-                          b.kind === 'reuniao' ? (b.format === 'presencial' ? 'presencial' : 'online') : null,
-                          b.responsible && b.responsible !== 'studio' ? SUB_RESP[b.responsible] : null,
-                        ]
-                          .filter(Boolean)
-                          .join(' · ')}
-                      </span>
-                    ) : null}
-                    {b.storagePath ? (
-                      <button
-                        type="button"
-                        className="link sm"
-                        onClick={async () => {
-                          const url = await db.fileUrl(b.storagePath);
-                          if (url) window.open(url, '_blank');
-                        }}
-                      >
-                        <Paperclip size={11} /> {b.fileName || 'arquivo'}
-                      </button>
-                    ) : b.fileName ? (
-                      <span className="micro">
-                        <Paperclip size={11} /> {b.fileName}
-                      </span>
-                    ) : null}
-                    {!isStudio && b.responsible === 'cliente' && !b.done && (
-                      <label className="link sm sub-upload">
-                        <Upload size={11} /> {b.storagePath || b.fileName ? 'Trocar' : 'Enviar arquivo'}
-                        <input
-                          type="file"
-                          hidden
-                          onChange={(e) => {
-                            const f = e.target.files && e.target.files[0];
-                            if (f) db.attachSubFile(s.projectId, s.id, b.id, f);
-                            e.target.value = '';
-                          }}
-                        />
-                      </label>
-                    )}
-                    {isStudio && <button className="icon-x" onClick={() => db.deleteSub(s.id, b.id)} aria-label="remover"><X size={12} /></button>}
-                  </li>
+                {(s.subs || []).map((b, i) => (
+                  <SubItem key={b.id} db={db} s={s} b={b} i={i} total={s.subs.length} isStudio={isStudio} />
                 ))}
               </ul>
             )}
-            {isStudio && (addingSub ? (
-              <div className="sub-add">
-                <input placeholder="Nova sub-etapa" value={subText} onChange={(e) => setSubText(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && subText.trim()) { db.addSub(s.id, subText.trim()); setSubText(''); } }} />
-                <button className="btn btn-primary btn-sm" disabled={!subText.trim()} onClick={() => { db.addSub(s.id, subText.trim()); setSubText(''); }}>Add</button>
-                <button className="btn btn-ghost btn-sm" onClick={() => { setAddingSub(false); setSubText(''); }}>Fechar</button>
-              </div>
-            ) : <button className="link sm" onClick={() => setAddingSub(true)}><Plus size={12} /> Adicionar sub-etapa</button>)}
+            {isStudio &&
+              (addingSub ? (
+                <div className="sub-add">
+                  <SubForm
+                    rotuloSalvar="Adicionar"
+                    limparAoSalvar
+                    onCancelar={() => setAddingSub(false)}
+                    onSalvar={(d) => db.addSub(s.id, d)}
+                  />
+                </div>
+              ) : (
+                <button className="link sm" onClick={() => setAddingSub(true)}>
+                  <Plus size={12} /> Adicionar sub-etapa
+                </button>
+              ))}
           </div>
         )}
 
@@ -346,10 +648,22 @@ function StageItem({ db, s, isStudio }) {
         {isStudio && (
           <div className="status-set">
             {STAGE_STATUS.map((st) => (
-              <button key={st.id} className={'chip' + (s.status === st.id ? ' chip-on' : '')} onClick={() => db.setStageStatus(s.id, st.id)}>{st.label}</button>
+              <button key={st.id} className={'chip' + (s.status === st.id ? ' chip-on' : '')} onClick={() => db.setStageStatus(s.id, st.id)}>
+                {st.label}
+              </button>
             ))}
-            <button className="chip" onClick={startEdit}><PenLine size={12} /> Editar</button>
-            <button className="chip chip-del" title="Excluir etapa" onClick={() => { if (window.confirm('Excluir a etapa "' + s.title + '"?')) db.deleteStage(s.id); }}><Trash2 size={12} /> Excluir</button>
+            <button className="chip" onClick={startEdit}>
+              <PenLine size={12} /> Editar etapa
+            </button>
+            <button
+              className="chip chip-del"
+              title="Excluir etapa"
+              onClick={() => {
+                if (window.confirm('Excluir a etapa "' + s.title + '"?')) db.deleteStage(s.id);
+              }}
+            >
+              <Trash2 size={12} /> Excluir
+            </button>
           </div>
         )}
       </div>

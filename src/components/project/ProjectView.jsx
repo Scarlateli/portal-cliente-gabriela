@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { TopBar, Loading, ErrorBox, ErrorBanner } from '../atoms.jsx';
 import { fmt, todayISO } from '../../lib/helpers.js';
+import { enderecoCurto, vocativo } from '../../lib/endereco.js';
 import { qk, IS_SUPABASE } from '../../lib/data.js';
 import { useResolvedDb, specsFor } from '../../lib/useResolvedDb.js';
 import { Timeline } from './Timeline.jsx';
@@ -37,7 +38,7 @@ const TABS = [
   { id: 'timeline', label: 'Linha do tempo', I: GitCommitVertical },
   { id: 'calendar', label: 'Calendário', I: CalendarDays },
   { id: 'docs', label: 'Documentos', I: FileText },
-  { id: 'contract', label: 'Contratos', I: PenLine },
+  { id: 'contract', label: 'Contratos e termos', I: PenLine },
   { id: 'payments', label: 'Pagamentos', I: Wallet },
   { id: 'quotes', label: 'Orçamentos', I: ClipboardList },
   { id: 'suppliers', label: 'Fornecedores', I: Handshake },
@@ -151,6 +152,7 @@ function ProjectInner({
   const heroStages = db.stages(project.id);
   const heroPend = heroStages.filter((st) => st.status !== 'concluida' && st.end).map((st) => st.end).sort();
   const [resent, setResent] = useState(null);
+  const saudacao = vocativo(project.greeting, user && user.name);
   const [resending, setResending] = useState(false);
 
   return (
@@ -181,18 +183,22 @@ function ProjectInner({
               <Hash size={11} /> {project.code}
             </span>
           </div>
+          {!isStudio && saudacao && <p className="hero-ola">Olá, {saudacao}</p>}
           <h1 className="hero-name">{project.name}</h1>
           <div className="hero-rows">
-            <span>
-              <Building2 size={14} /> {project.address}
-            </span>
+            {enderecoCurto(project) && (
+              <span>
+                <Building2 size={14} /> {enderecoCurto(project)}
+              </span>
+            )}
             <span>
               <CalendarDays size={14} /> Início {fmt(project.start)} · Entrega prevista{' '}
               {fmt(project.due)}
             </span>
             {isStudio && (
               <span>
-                <User size={14} /> {db.clientName(project.id)}
+                <User size={14} /> Cliente: {db.clientName(project.id)}
+                {project.greeting ? ' · o portal cumprimenta “' + project.greeting + '”' : ''}
               </span>
             )}
           </div>
@@ -302,45 +308,53 @@ function ProjectInner({
           </>
         )}
 
-        {isStudio && project.status !== 'concluido' && (
-          <div className="row">
-            {IS_SUPABASE && !expired && (
-              <button
-                className="btn btn-ghost btn-sm"
-                disabled={resending}
-                onClick={async () => {
-                  if (
-                    !window.confirm(
-                      'Gerar nova senha provisória para o cliente? A senha atual dele deixa de valer.',
-                    )
-                  )
-                    return;
-                  setResending(true);
-                  try {
-                    const r = await db.resendClientAccess(project.id);
-                    if (r) setResent(r);
-                  } finally {
-                    setResending(false);
-                  }
-                }}
-              >
-                <KeyRound size={15} /> {resending ? 'Gerando…' : 'Reenviar acesso'}
-              </button>
-            )}
-            <button
-              className="btn btn-ghost finish-btn"
-              onClick={() => {
-                if (
-                  window.confirm('Finalizar o projeto? O acesso do cliente passa a expirar em 1 mês.')
-                )
-                  db.completeProject(project.id);
-              }}
-            >
-              <CircleCheck size={15} /> Finalizar projeto
-            </button>
-          </div>
+        {isStudio && (
+          <GerenciarProjeto
+            db={db}
+            project={project}
+            onExcluido={onBack}
+            acoes={
+              project.status !== 'concluido' && (
+                <>
+                  {IS_SUPABASE && !expired && (
+                    <button
+                      className="btn btn-ghost btn-sm"
+                      disabled={resending}
+                      onClick={async () => {
+                        if (
+                          !window.confirm(
+                            'Gerar nova senha provisória para o cliente? A senha atual dele deixa de valer.',
+                          )
+                        )
+                          return;
+                        setResending(true);
+                        try {
+                          const r = await db.resendClientAccess(project.id);
+                          if (r) setResent(r);
+                        } finally {
+                          setResending(false);
+                        }
+                      }}
+                    >
+                      <KeyRound size={14} /> {resending ? 'Gerando…' : 'Reenviar acesso'}
+                    </button>
+                  )}
+                  <button
+                    className="btn btn-ghost btn-sm"
+                    onClick={() => {
+                      if (
+                        window.confirm('Finalizar o projeto? O acesso do cliente passa a expirar em 1 mês.')
+                      )
+                        db.completeProject(project.id);
+                    }}
+                  >
+                    <CircleCheck size={14} /> Finalizar projeto
+                  </button>
+                </>
+              )
+            }
+          />
         )}
-        {isStudio && <GerenciarProjeto db={db} project={project} onExcluido={onBack} />}
         {!isStudio && (
           <footer className="client-foot">
             <div>

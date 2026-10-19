@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { loadSupabase } from '../lib/supabase/client.js';
 import { Mail, Lock } from 'lucide-react';
 
-import { STUDIO } from '../lib/constants.js';
+import { STUDIO, CAPA_LOGIN } from '../lib/constants.js';
 import { loginSchema, validate } from '../lib/validation.js';
 import { IS_SUPABASE } from '../lib/data.js';
 
@@ -68,13 +68,16 @@ export function Login({ db, onLogin }) {
   };
 
   return (
-    <div className="login login-split">
+    <div
+      className={'login login-split' + (CAPA_LOGIN ? ' com-capa' : '')}
+      style={CAPA_LOGIN ? { '--capa': 'url(' + CAPA_LOGIN + ')' } : undefined}
+    >
       <aside className="login-brand">
         <img className="lb-lockup" src="/brand/lockup.png" alt="Gabriela Lendecker — arquitetura e interiores" />
       </aside>
       <div className="login-panel">
       <div className="login-card">
-        <h1 className="login-title">{recuperando ? 'Recuperar senha' : 'Portal do projeto'}</h1>
+        <h1 className="login-title">{recuperando ? 'Recuperar senha' : 'Portal do Projeto'}</h1>
         <p className="login-sub">
           {recuperando
             ? 'Enviamos um link para você criar uma senha nova.'

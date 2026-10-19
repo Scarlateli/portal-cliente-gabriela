@@ -116,3 +116,39 @@ navegar como cliente. Vale prestar atenção em:
 
 Também vale abrir o portal **no celular** — a maioria dos clientes vai
 acessar por lá.
+
+---
+
+## Rodada 3 (depois da revisão de 19/10)
+
+Antes de começar: no computador, saia e entre de novo uma vez. A partir de
+agora, sair num aparelho não derruba mais o outro.
+
+### 17. Criar projeto
+Em **Novo projeto**, preencha o endereço completo (rua e número,
+complemento, bairro, CEP, cidade, estado) e, se quiser, **Como o portal
+cumprimenta** (ex.: "Marília e Vitor"). Use um e-mail que ainda não tem
+acesso: o convite chega por e-mail com a senha provisória. Se usar um
+e-mail que já tem acesso, o portal avisa e não muda a senha dele.
+
+### 18. Entrar como cliente
+Numa janela anônima, entre com esse e-mail e a senha provisória. O topo do
+projeto deve dizer "Olá, …" com o vocativo.
+
+### 19. Templates
+A lista aparece recolhida; clique no nome para abrir. **Editar** abre ali
+mesmo. Nas sub-etapas, confira os tipos novos, o "Outro (escrever)" e as
+setas para mudar a ordem.
+
+### 20. Linha do tempo
+Cada sub-etapa mostra tipo, responsável e prazo. Use o lápis para editar
+uma sub-etapa (por exemplo, dar um prazo) e as setas para mudar a ordem.
+Com um prazo no passado, ela deve aparecer como **Atrasada**.
+
+### 21. Contratos e termos (lado do cliente)
+Com o acesso de cliente funcionando, refaça os passos 12 e 13: dar OK num
+documento, assinar, aprovar e recusar um termo.
+
+### 22. No computador e no iPad
+Confira que o nome do projeto não fica azul no iPad, que as abas não têm
+mais setinhas no computador e que o painel do topo ficou menor.

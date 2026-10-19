@@ -96,7 +96,7 @@ function AppInner() {
   const logout = async () => {
     if (IS_SUPABASE) {
       const supabase = getSupabase();
-      if (supabase) await supabase.auth.signOut();
+      if (supabase) await supabase.auth.signOut({ scope: 'local' }); // só este aparelho
     }
     setUser(null);
     setStudioPid(null);

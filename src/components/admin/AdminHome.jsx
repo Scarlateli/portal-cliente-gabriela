@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { EtapasEditor } from './EtapasEditor.jsx';
 import { Fornecedores } from './Fornecedores.jsx';
-import { etapaVazia, copiarItens } from '../../lib/etapas.js';
+import { etapaVazia, copiarItens, rotuloTipoSub, ROTULO_RESP } from '../../lib/etapas.js';
+import { CamposEndereco } from '../project/CamposEndereco.jsx';
+import { enderecoCurto, ENDERECO_VAZIO } from '../../lib/endereco.js';
 import {
   FolderKanban,
   FilePlus2,
@@ -17,6 +19,7 @@ import {
   Trash2,
   Pencil,
   Handshake,
+  Plus,
 } from 'lucide-react';
 import { TopBar, Empty, Loading, ErrorBox, ErrorBanner } from '../atoms.jsx';
 import { stageOverdue, fmt, todayISO } from '../../lib/helpers.js';
@@ -156,11 +159,13 @@ function AdminProjectCard({ baseDb, p, onOpen }) {
       </div>
       <h3>{p.name}</h3>
       <p className="proj-client">
-        <User size={12} /> {clientName}
+        <User size={12} /> Cliente: {clientName}
       </p>
-      <p className="proj-addr">
-        <MapPin size={12} /> {p.address}
-      </p>
+      {enderecoCurto(p) && (
+        <p className="proj-addr">
+          <MapPin size={12} /> {enderecoCurto(p)}
+        </p>
+      )}
       <div className="proj-foot">
         <span>
           {stages.length ? done + '/' + stages.length + ' etapas' : 'Sem etapas'}
@@ -221,7 +226,8 @@ function NewProject({ db, onDone }) {
   const [f, setF] = useState({
     code: '',
     name: '',
-    address: '',
+    ...ENDERECO_VAZIO,
+    greeting: '',
     start: todayISO(),
     due: '',
     clientName: '',
@@ -257,6 +263,8 @@ function NewProject({ db, onDone }) {
           sent: !!created.inviteEmailSent,
           email: f.clientEmail.trim().toLowerCase(),
         });
+      else if (created && created.jaTinhaAcesso)
+        setInvite({ existente: true, email: f.clientEmail.trim().toLowerCase() });
       else onDone();
     } catch {
       /* erro exibido pelo ErrorBanner do contêiner */
@@ -281,14 +289,9 @@ function NewProject({ db, onDone }) {
           <input value={f.name} onChange={set('name')} placeholder="ex.: Residência Oliveira" aria-label="Nome do projeto" />
           {errors.name && <span className="error">{errors.name}</span>}
         </label>
-        <label className="lab full">
-          Endereço
-          <input
-            value={f.address}
-            onChange={set('address')}
-            placeholder="Rua, número — bairro, cidade" aria-label="Endereço do projeto"
-          />
-        </label>
+        <h4 className="form-sec">Endereço da obra</h4>
+        <CamposEndereco f={f} setF={setF} />
+        <h4 className="form-sec">Prazos</h4>
         <label className="lab">
           Início
           <input type="date" value={f.start} onChange={set('start')} />
@@ -313,6 +316,19 @@ function NewProject({ db, onDone }) {
           />
           {errors.clientEmail && <span className="error">{errors.clientEmail}</span>}
         </label>
+        <label className="lab full">
+          Como o portal cumprimenta (opcional)
+          <input
+            value={f.greeting}
+            onChange={set('greeting')}
+            placeholder="ex.: Marília e Vitor · Família Silva"
+            aria-label="Como o portal cumprimenta o cliente"
+            maxLength={60}
+          />
+          <span className="hint lab-hint">
+            Aparece no “Olá, …” do portal. O contrato continua no nome do cliente. Em branco, usa o primeiro nome dele.
+          </span>
+        </label>
         {!IS_SUPABASE && (
           <label className="lab">
             Senha inicial
@@ -321,7 +337,7 @@ function NewProject({ db, onDone }) {
           </label>
         )}
       </div>
-      <h4 className="form-sec">Etapas do projeto</h4>
+      <h4 className="form-sec form-sec-bloco">Etapas do projeto</h4>
       <label className="lab">
         Começar a partir de um template
         <select value={tplId} onChange={(e) => escolherTemplate(e.target.value)}>
@@ -348,7 +364,20 @@ function NewProject({ db, onDone }) {
           {saving ? 'Criando…' : 'Criar projeto'}
         </button>
       </div>
-      {invite && (
+      {invite && invite.existente && (
+        <div className="invite-box">
+          <strong>Projeto criado! Esse cliente já tinha acesso ao portal.</strong>
+          <p className="hint">
+            O projeto novo já aparece para {invite.email}, com a senha que ele usa hoje. Nada mudou no acesso dele.
+          </p>
+          <div className="row">
+            <button className="btn btn-primary btn-sm" onClick={onDone}>
+              Concluir
+            </button>
+          </div>
+        </div>
+      )}
+      {invite && !invite.existente && (
         <div className="invite-box">
           <strong>
             {invite.sent
@@ -394,10 +423,12 @@ function NewProject({ db, onDone }) {
 
 function Templates({ db }) {
   const templates = db.templates();
-  const [editando, setEditando] = useState(null); // id do template em edição, ou null para novo
+  const [aberto, setAberto] = useState(null); // template expandido (só leitura)
+  const [editando, setEditando] = useState(null); // 'novo' | id do template | null
   const [name, setName] = useState('');
   const [items, setItems] = useState([etapaVazia()]);
   const [salvando, setSalvando] = useState(false);
+  const formNovoAberto = editando === 'novo' || (templates.length === 0 && editando === null);
 
   const limpar = () => {
     setEditando(null);
@@ -406,15 +437,22 @@ function Templates({ db }) {
   };
   const editar = (t) => {
     setEditando(t.id);
+    setAberto(null);
     setName(t.name);
     setItems(copiarItens(t.items).length ? copiarItens(t.items) : [etapaVazia()]);
+  };
+  const novo = () => {
+    setEditando('novo');
+    setAberto(null);
+    setName('');
+    setItems([etapaVazia()]);
   };
   const save = async () => {
     const clean = items.filter((i) => i.title.trim());
     if (!name.trim() || !clean.length || salvando) return;
     setSalvando(true);
     try {
-      if (editando) await db.updateTemplate(editando, name.trim(), clean);
+      if (editando && editando !== 'novo') await db.updateTemplate(editando, name.trim(), clean);
       else await db.addTemplate(name.trim(), clean);
       limpar();
     } catch {
@@ -423,69 +461,103 @@ function Templates({ db }) {
       setSalvando(false);
     }
   };
-  return (
-    <section className="panel">
-      <header className="panel-head">
-        <h2>Templates de etapas</h2>
-      </header>
-      <div className="tpl-list">
-        {templates.map((t) => (
-          <div key={t.id} className={'tpl-card' + (editando === t.id ? ' tpl-card-ativo' : '')}>
-            <div className="row tpl-head">
-              <strong>{t.name}</strong>
-              <span className="tpl-acoes">
-                <button type="button" className="link sm" onClick={() => editar(t)}>
-                  <Pencil size={12} /> Editar
-                </button>
-                <button
-                  type="button"
-                  className="link sm danger"
-                  onClick={() => {
-                    if (window.confirm('Excluir o template "' + t.name + '"?')) {
-                      if (editando === t.id) limpar();
-                      db.deleteTemplate(t.id);
-                    }
-                  }}
-                >
-                  <Trash2 size={12} /> Excluir
-                </button>
-              </span>
-            </div>
-            <ol className="tpl-items">
-              {t.items.map((it, i) => (
-                <li key={i}>
-                  {it.title} <em>· {it.category}</em>
-                  {(it.subs || []).length > 0 && (
-                    <ul className="tpl-subs">
-                      {it.subs.map((b, k) => (
-                        <li key={k}>{b.title}</li>
-                      ))}
-                    </ul>
-                  )}
-                </li>
-              ))}
-            </ol>
-          </div>
-        ))}
-      </div>
-      <h4 className="form-sec">{editando ? 'Editando template' : 'Novo template'}</h4>
+  const formulario = (titulo) => (
+    <div className="tpl-form">
+      <h4 className="form-sec">{titulo}</h4>
       <input
         className="tpl-name"
-        placeholder="Nome do template" aria-label="Nome do template"
+        placeholder="Nome do template (ex.: Projeto de interiores)"
+        aria-label="Nome do template"
         value={name}
         onChange={(e) => setName(e.target.value)}
       />
       <EtapasEditor itens={items} onChange={setItems} />
       <div className="row">
         <button className="btn btn-primary btn-sm" onClick={save} disabled={salvando}>
-          {salvando ? 'Salvando…' : editando ? 'Salvar alterações' : 'Salvar template'}
+          {salvando ? 'Salvando…' : editando && editando !== 'novo' ? 'Salvar alterações' : 'Salvar template'}
         </button>
-        {editando && (
+        {(editando || templates.length > 0) && (
           <button type="button" className="btn btn-ghost btn-sm" onClick={limpar}>
-            Cancelar edição
+            Cancelar
           </button>
         )}
       </div>
+    </div>
+  );
+  return (
+    <section className="panel">
+      <header className="panel-head">
+        <h2>Templates de etapas</h2>
+        {templates.length > 0 && !formNovoAberto && (
+          <button type="button" className="btn btn-ghost btn-sm" onClick={novo}>
+            <Plus size={14} /> Novo template
+          </button>
+        )}
+      </header>
+      <div className="tpl-list">
+        {templates.map((t) => {
+          const nSubs = t.items.reduce((n, it) => n + (it.subs || []).length, 0);
+          const exp = aberto === t.id;
+          if (editando === t.id)
+            return (
+              <div key={t.id} className="tpl-card tpl-card-ativo">
+                {formulario('Editando "' + t.name + '"')}
+              </div>
+            );
+          return (
+            <div key={t.id} className={'tpl-card' + (exp ? ' tpl-card-aberto' : '')}>
+              <div className="tpl-head">
+                <button
+                  type="button"
+                  className="tpl-toggle"
+                  aria-expanded={exp}
+                  onClick={() => setAberto(exp ? null : t.id)}
+                >
+                  <ChevronRight size={15} className="tpl-seta" />
+                  <strong>{t.name}</strong>
+                  <span className="tpl-resumo">
+                    {t.items.length} {t.items.length === 1 ? 'etapa' : 'etapas'}
+                    {nSubs ? ' · ' + nSubs + (nSubs === 1 ? ' sub-etapa' : ' sub-etapas') : ''}
+                  </span>
+                </button>
+                <span className="tpl-acoes">
+                  <button type="button" className="link sm" onClick={() => editar(t)}>
+                    <Pencil size={12} /> Editar
+                  </button>
+                  <button
+                    type="button"
+                    className="link sm danger"
+                    onClick={() => {
+                      if (window.confirm('Excluir o template "' + t.name + '"?')) db.deleteTemplate(t.id);
+                    }}
+                  >
+                    <Trash2 size={12} /> Excluir
+                  </button>
+                </span>
+              </div>
+              {exp && (
+                <ol className="tpl-items">
+                  {t.items.map((it, i) => (
+                    <li key={i}>
+                      {it.title} <em>· {it.category}</em>
+                      {(it.subs || []).length > 0 && (
+                        <ul className="tpl-subs">
+                          {it.subs.map((b, k) => (
+                            <li key={k}>
+                              {b.title} <em>· {rotuloTipoSub(b)} · {ROTULO_RESP[b.responsible] || 'Studio'}</em>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </li>
+                  ))}
+                </ol>
+              )}
+            </div>
+          );
+        })}
+      </div>
+      {formNovoAberto && formulario('Novo template')}
     </section>
   );
 }

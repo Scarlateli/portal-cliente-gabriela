@@ -3,6 +3,7 @@ import { Printer, ArrowLeft } from 'lucide-react';
 import { Loading, ErrorBox } from './atoms.jsx';
 import { DOC_TYPES, STAGE_STATUS, STUDIO } from '../lib/constants.js';
 import { fmt, todayISO, money } from '../lib/helpers.js';
+import { enderecoCompleto } from '../lib/endereco.js';
 import { qk } from '../lib/data.js';
 import { useResolvedDb, specsFor } from '../lib/useResolvedDb.js';
 
@@ -98,7 +99,7 @@ export function PrintView({ db: baseDb, pid, onClose }) {
             </tr>
             <tr>
               <th>Endereço</th>
-              <td>{project.address}</td>
+              <td>{enderecoCompleto(project)}</td>
             </tr>
             <tr>
               <th>Período</th>

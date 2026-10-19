@@ -799,3 +799,34 @@ drop policy if exists storage_studio_all on storage.objects;
 create policy storage_studio_all on storage.objects as permissive for all to public
   using (((bucket_id = 'documentos'::text) and is_studio()))
   with check (((bucket_id = 'documentos'::text) and is_studio()));
+
+-- ============================================================
+-- Rodada 3 (19/10/2026): endereço completo, vocativo, tipos e ordem das sub-etapas
+-- (mesmo conteúdo de supabase/sql/2026-10-19-rodada3-endereco-vocativo-subetapas.sql)
+-- ============================================================
+alter table public.projects
+  add column if not exists address_complement text,
+  add column if not exists neighborhood text,
+  add column if not exists city text,
+  add column if not exists state text,
+  add column if not exists cep text,
+  add column if not exists greeting text;
+
+-- Sub-etapas com os mesmos tipos das etapas, mais "outro" com nome livre
+-- (kind_label), e uma ordem própria para poder subir e descer.
+alter table public.stage_subs drop constraint if exists stage_subs_kind_check;
+alter table public.stage_subs add constraint stage_subs_kind_check
+  check (kind in ('tarefa', 'reuniao', 'entrega', 'visita', 'documentacao', 'producao', 'outro'));
+alter table public.stage_subs
+  add column if not exists kind_label text,
+  add column if not exists ord integer not null default 0;
+alter table public.stage_subs drop constraint if exists stage_subs_kind_label_check;
+alter table public.stage_subs add constraint stage_subs_kind_label_check
+  check (kind_label is null or char_length(kind_label) <= 40);
+
+-- Ordem inicial das sub-etapas que já existem: a ordem em que foram gravadas.
+update public.stage_subs b
+   set ord = x.n
+  from (select id, row_number() over (partition by stage_id order by ctid) as n
+          from public.stage_subs) x
+ where x.id = b.id and b.ord = 0;
