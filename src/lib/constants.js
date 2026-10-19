@@ -61,8 +61,7 @@ export const CONTRACT_STATUS = [
 
 export const WEEK = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 
-// Foto de capa da tela de entrada (arquivo em public/brand/). Vazio = fundo
-// liso na cor bege. Ao receber a foto da Gabriela: salvar em
-// public/brand/capa-login.jpg (paisagem, ~2400 px de largura, até ~400 KB)
-// e preencher abaixo com '/brand/capa-login.jpg'.
-export const CAPA_LOGIN = '';
+// Foto de capa da tela de entrada (arquivo em public/brand/), mostrada clara,
+// com névoa por cima. Vazio = fundo liso na cor bege. Para trocar a foto:
+// substituir public/brand/capa-login.jpg (paisagem, até ~400 KB).
+export const CAPA_LOGIN = '/brand/capa-login.jpg';

@@ -373,5 +373,9 @@ Feedback em anotações sobre prints (iPad e computador) e na ata da reunião.
 `supabase/sql/2026-10-19-rodada3-endereco-vocativo-subetapas.sql` — também
 no fim do `schema.sql`.
 
-**Pendente da Gabriela:** a foto de capa do login (paisagem, ~2400 px) e
-testar o lado do cliente (roteiro, passos 17 a 22).
+**Capa do login** ✅ (19/10): foto enviada pela Gabriela em
+`public/brand/capa-login.jpg` (1600 × 893, 185 KB; veio pelo WhatsApp).
+Com a névoa por cima, a resolução basta; se ela mandar o original em alta,
+é só trocar o arquivo com o mesmo nome.
+
+**Pendente da Gabriela:** testar o lado do cliente (roteiro, passos 17 a 22).
