@@ -12,7 +12,7 @@ const novaSub = (b) => ({
   id: uid('sb'), title: String(b.title).trim(), done: false, kind: b.kind || 'tarefa',
   kindLabel: b.kind === 'outro' ? String(b.kindLabel || '').trim().slice(0, 40) : '',
   responsible: b.responsible || 'studio', due: b.due || '', time: b.time || '', format: b.format || '', link: b.link || '',
-  pedeArquivos: !!b.pedeArquivos, instructions: b.pedeArquivos ? String(b.instructions || '').trim() : '', clientNote: '',
+  pedeArquivos: !!b.pedeArquivos, instructions: String(b.instructions || '').trim().slice(0, 600), clientNote: '', entregueEm: null,
 });
 const camposProjeto = (d) => ({
   address: d.address || '', addressComplement: d.addressComplement || '', neighborhood: d.neighborhood || '',
@@ -129,7 +129,7 @@ export function makeDb(state, set) {
       [subs[i], subs[j]] = [subs[j], subs[i]];
       return { ...x, subs };
     }) })),
-    toggleSub: (sid, bid) => set((s) => ({ ...s, stages: s.stages.map((x) => x.id === sid ? { ...x, subs: (x.subs || []).map((b) => b.id === bid ? { ...b, done: !b.done } : b) } : x) })),
+    toggleSub: (sid, bid) => set((s) => ({ ...s, stages: s.stages.map((x) => x.id === sid ? { ...x, subs: (x.subs || []).map((b) => b.id === bid ? (b.done ? { ...b, done: false, entregueEm: null } : { ...b, done: true }) : b) } : x) })),
     deleteSub: (sid, bid) => set((s) => ({ ...s, stages: s.stages.map((x) => x.id === sid ? { ...x, subs: (x.subs || []).filter((b) => b.id !== bid) } : x) })),
     attachSubFile: (pid, sid, bid, file) => set((s) => ({ ...s, stages: s.stages.map((x) => x.id === sid ? { ...x, subs: (x.subs || []).map((b) => b.id === bid ? { ...b, fileName: file && file.name ? file.name : 'arquivo' } : b) } : x) })),
     setStageStatus: (sid, status) => set((s) => ({ ...s, stages: s.stages.map((x) => x.id === sid ? { ...x, status } : x) })),
@@ -164,11 +164,20 @@ export function makeDb(state, set) {
     },
     enviarArquivos: (pid, bid, files, sentBy) => {
       const sub = state.stages.flatMap((x) => x.subs || []).find((b) => b.id === bid);
-      if (!sub || (sentBy !== 'studio' && (sub.responsible !== 'cliente' || sub.done))) throw new Error('Este pedido não está aberto para envio.');
+      if (!sub || (sentBy !== 'studio' && (sub.responsible !== 'cliente' || sub.done || sub.entregueEm))) throw new Error('Este pedido não está aberto para envio.');
       const novos = Array.from(files).map((f) => ({ id: uid('ar'), subId: bid, projectId: pid, name: f.name, storagePath: null, size: (f.size / 1048576).toFixed(1).replace('.', ',') + ' MB', sentBy: sentBy === 'studio' ? 'studio' : 'client', createdAt: new Date().toISOString() }));
       set((s) => ({ ...s, subArquivos: [...(s.subArquivos || []), ...novos] }));
     },
     removerArquivo: (pid, aid) => set((s) => ({ ...s, subArquivos: (s.subArquivos || []).filter((a) => a.id !== aid) })),
+    // espelha concluir_entrega do banco
+    concluirEntrega: (sid, bid) => {
+      const sub = state.stages.flatMap((x) => x.subs || []).find((b) => b.id === bid);
+      if (!sub || !sub.pedeArquivos || sub.responsible !== 'cliente') throw new Error('Este item não é um pedido de arquivos seu.');
+      if (sub.done || sub.entregueEm) throw new Error('Este pedido já foi entregue.');
+      if (!(state.subArquivos || []).some((a) => a.subId === bid)) throw new Error('Envie pelo menos um arquivo antes de concluir a entrega.');
+      set((s) => ({ ...s, stages: s.stages.map((x) => x.id === sid ? { ...x, subs: (x.subs || []).map((b) => b.id === bid ? { ...b, entregueEm: new Date().toISOString() } : b) } : x) }));
+    },
+    reabrirPedido: (sid, bid) => set((s) => ({ ...s, stages: s.stages.map((x) => x.id === sid ? { ...x, subs: (x.subs || []).map((b) => b.id === bid ? { ...b, done: false, entregueEm: null } : b) } : x) })),
     setNotaPedido: (sid, bid, nota) => set((s) => ({ ...s, stages: s.stages.map((x) => x.id === sid ? { ...x, subs: (x.subs || []).map((b) => b.id === bid ? { ...b, clientNote: String(nota || '').trim().slice(0, 1000) } : b) } : x) })),
     // no modo demonstração não há e-mail: só confirma que "enviaria"
     avisarCliente: () => ({ emailSent: false, demo: true }),

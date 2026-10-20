@@ -8,7 +8,9 @@ import { IS_SUPABASE } from '../../lib/data.js';
 /* Envios do cliente (rodada 4): o studio cria pedidos de arquivo (são
    sub-etapas com "pedir arquivos" marcado) e o cliente manda quantos
    arquivos precisar em cada um, de uma vez, com um recado opcional.
-   O studio confere e marca o pedido como concluído. */
+   Rodada 6: quando mandou tudo, o cliente clica em "Concluir entrega" e o
+   pedido trava para ele (o banco garante); o studio confere e conclui, ou
+   devolve ao cliente. */
 export function EnviosCliente({ db, project, isStudio, abrir = () => {} }) {
   const stages = db.stages(project.id);
   const arquivos = (db.subArquivos && db.subArquivos(project.id)) || [];
@@ -29,8 +31,8 @@ export function EnviosCliente({ db, project, isStudio, abrir = () => {} }) {
       </header>
       <p className="hint envios-intro">
         {isStudio
-          ? 'Peça aqui os arquivos que o cliente precisa mandar (plantas, fotos, referências). Ele envia vários de uma vez em cada pedido.'
-          : 'Aqui ficam os arquivos que o studio pediu. Em cada pedido, você pode mandar vários arquivos de uma vez.'}
+          ? 'Peça aqui os arquivos que o cliente precisa mandar (plantas, fotos, referências). Ele envia vários de uma vez e, no fim, conclui a entrega.'
+          : 'Aqui ficam os arquivos que o studio pediu. Em cada pedido, mande quantos arquivos precisar e, quando terminar, clique em "Concluir entrega".'}
       </p>
       {isStudio && criando && <NovoPedido db={db} project={project} stages={stages} onFechar={() => setCriando(false)} />}
       {isStudio && !stages.length && <p className="hint">Crie as etapas do projeto antes de pedir arquivos.</p>}
@@ -139,9 +141,26 @@ function Pedido({ db, projectId, b, s, isStudio, arquivos, abrir }) {
   const [aviso, setAviso] = useState('');
   const [nota, setNota] = useState(b.clientNote || '');
   const [editandoNota, setEditandoNota] = useState(false);
-  const pz = prazoSub(b);
+  const [confirmando, setConfirmando] = useState(false);
+  const [concluindo, setConcluindo] = useState(false);
   const aberto = !b.done;
-  const podeEnviar = aberto && (isStudio || b.responsible === 'cliente');
+  const entregue = aberto && !!b.entregueEm;
+  // entregue, o prazo já não pesa: mostra só a data, sem "atrasada"
+  const pz = prazoSub(entregue ? { ...b, done: true } : b);
+  // depois de concluir a entrega, o cliente não mexe mais no pedido
+  const clienteMexe = !isStudio && aberto && !entregue && b.responsible === 'cliente';
+  const podeEnviar = aberto && (isStudio || clienteMexe);
+  const concluir = async () => {
+    setConcluindo(true);
+    try {
+      await db.concluirEntrega(s.id, b.id);
+      setConfirmando(false);
+    } catch (e) {
+      setAviso((e && e.message) || 'Não foi possível concluir a entrega. Tente de novo.');
+    } finally {
+      setConcluindo(false);
+    }
+  };
 
   const escolher = async (e) => {
     const lista = Array.from(e.target.files || []);
@@ -179,10 +198,12 @@ function Pedido({ db, projectId, b, s, isStudio, arquivos, abrir }) {
           <span className={'sub-chip sub-prazo sub-prazo-' + pz.estado}>
             {pz.estado === 'atrasado' ? <AlertTriangle size={10} /> : <CalendarDays size={10} />} {pz.texto}
           </span>
-          <span className={'pill ' + (!aberto ? 'pill-done' : arquivos.length ? 'pill-now' : 'pill-todo')}>
+          <span className={'pill ' + (!aberto || entregue ? 'pill-done' : arquivos.length ? 'pill-now' : 'pill-todo')}>
             {!aberto
               ? 'Concluído'
-              : arquivos.length
+              : entregue
+                ? 'Entrega concluída'
+                : arquivos.length
                 ? arquivos.length + (arquivos.length === 1 ? ' arquivo enviado' : ' arquivos enviados')
                 : 'Aguardando arquivos'}
           </span>
@@ -202,7 +223,7 @@ function Pedido({ db, projectId, b, s, isStudio, arquivos, abrir }) {
                 {a.createdAt ? fmt(String(a.createdAt).slice(0, 10)) : ''}
                 {a.sentBy === 'studio' ? ' · enviado pelo studio' : ''}
               </span>
-              {(isStudio || (aberto && a.sentBy === 'client')) && (
+              {(isStudio || (clienteMexe && a.sentBy === 'client')) && (
                 <button
                   type="button"
                   className="icon-x"
@@ -219,7 +240,7 @@ function Pedido({ db, projectId, b, s, isStudio, arquivos, abrir }) {
         </ul>
       )}
 
-      {(b.clientNote || (!isStudio && aberto)) && (
+      {(b.clientNote || clienteMexe) && (
         <div className="envio-nota">
           {editandoNota ? (
             <>
@@ -243,7 +264,7 @@ function Pedido({ db, projectId, b, s, isStudio, arquivos, abrir }) {
           ) : b.clientNote ? (
             <p>
               <strong>Recado do cliente:</strong> {b.clientNote}{' '}
-              {!isStudio && aberto && (
+              {clienteMexe && (
                 <button type="button" className="link sm" onClick={() => setEditandoNota(true)}>
                   Editar
                 </button>
@@ -257,6 +278,15 @@ function Pedido({ db, projectId, b, s, isStudio, arquivos, abrir }) {
         </div>
       )}
 
+      {entregue && (
+        <p className="envio-entregue">
+          <Check size={14} />{' '}
+          {isStudio
+            ? 'O cliente concluiu a entrega' + (b.entregueEm ? ' em ' + fmt(String(b.entregueEm).slice(0, 10)) : '') + '. Confira os arquivos.'
+            : 'Entrega concluída' + (b.entregueEm ? ' em ' + fmt(String(b.entregueEm).slice(0, 10)) : '') + '. O studio vai conferir os arquivos.'}
+        </p>
+      )}
+
       <div className="row envio-acoes">
         {podeEnviar && (
           <>
@@ -268,16 +298,50 @@ function Pedido({ db, projectId, b, s, isStudio, arquivos, abrir }) {
         )}
         {isStudio &&
           (aberto ? (
-            <button type="button" className="btn btn-ghost btn-sm" onClick={() => db.toggleSub(s.id, b.id)}>
-              <Check size={13} /> Conferido, concluir pedido
-            </button>
+            <>
+              <button type="button" className="btn btn-ghost btn-sm" onClick={() => db.toggleSub(s.id, b.id)}>
+                <Check size={13} /> Conferido, concluir pedido
+              </button>
+              {entregue && (
+                <button type="button" className="btn btn-ghost btn-sm" onClick={() => db.reabrirPedido(s.id, b.id)}>
+                  <RotateCcw size={13} /> Devolver ao cliente
+                </button>
+              )}
+            </>
           ) : (
-            <button type="button" className="btn btn-ghost btn-sm" onClick={() => db.toggleSub(s.id, b.id)}>
+            <button type="button" className="btn btn-ghost btn-sm" onClick={() => db.reabrirPedido(s.id, b.id)}>
               <RotateCcw size={13} /> Reabrir pedido
             </button>
           ))}
         {!isStudio && !aberto && <span className="micro">O studio já conferiu este pedido.</span>}
       </div>
+      {clienteMexe && arquivos.length > 0 && (
+        <div className="envio-concluir">
+          {confirmando ? (
+            <>
+              <p>Depois de concluir, você não poderá mais trocar os arquivos nem o recado deste pedido. Se precisar, peça ao studio para reabrir.</p>
+              <div className="row">
+                <button type="button" className="btn btn-primary btn-sm" disabled={concluindo} onClick={concluir}>
+                  <Check size={13} /> {concluindo ? 'Concluindo…' : 'Sim, concluir entrega'}
+                </button>
+                <button type="button" className="btn btn-ghost btn-sm" onClick={() => setConfirmando(false)}>
+                  Voltar
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              <p>Já mandou tudo o que precisava? Conclua a entrega para o studio saber que pode conferir.</p>
+              <div className="row">
+                <button type="button" className="btn btn-ghost btn-sm" onClick={() => setConfirmando(true)}>
+                  <Check size={13} /> Concluir entrega
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+
       {aviso && <p className="micro aviso-upload">{aviso}</p>}
     </li>
   );

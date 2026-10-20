@@ -13,7 +13,7 @@ import { getSupabase } from './client.js';
 import { addMonthsISO, todayISO, fmt, stageOverdue } from '../helpers.js';
 
 const STAGE_COLS =
-  'id, projectId:project_id, ord, title, category, status, owner, start, "end", "time", link, presencial, "desc", rescheduledFrom:rescheduled_from, approval, approvalRequestedAt:approval_requested_at, approvalAt:approval_at, approvalName:approval_name, approvalNote:approval_note, subs:stage_subs(id, ord, title, done, kind, kindLabel:kind_label, responsible, due, time, format, link, pedeArquivos:pede_arquivos, instructions, clientNote:client_note, storagePath:storage_path, fileName:file_name)';
+  'id, projectId:project_id, ord, title, category, status, owner, start, "end", "time", link, presencial, "desc", rescheduledFrom:rescheduled_from, approval, approvalRequestedAt:approval_requested_at, approvalAt:approval_at, approvalName:approval_name, approvalNote:approval_note, subs:stage_subs(id, ord, title, done, kind, kindLabel:kind_label, responsible, due, time, format, link, pedeArquivos:pede_arquivos, instructions, clientNote:client_note, entregueEm:entregue_em, storagePath:storage_path, fileName:file_name)';
 const PROJECT_COLS =
   'id, code, name, clientId:client_id, status, address, addressComplement:address_complement, neighborhood, city, state, cep, greeting, start, due, completedAt:completed_at, accessUntil:access_until';
 const QUOTE_COLS =
@@ -58,7 +58,8 @@ export function makeSupabaseDb() {
     format: b.format || null,
     link: b.link || null,
     pede_arquivos: !!b.pedeArquivos,
-    instructions: b.pedeArquivos ? String(b.instructions || '').trim() || null : null,
+    // descrição curta da sub-etapa; num pedido de arquivos, o que mandar
+    instructions: String(b.instructions || '').trim().slice(0, 600) || null,
   });
   // nome de arquivo seguro para o Storage (sem acentos nem símbolos)
   const nomeSeguro = (n) =>
@@ -168,7 +169,7 @@ export function makeSupabaseDb() {
             kindLabel: b.kind === 'outro' ? String(b.kindLabel || '').trim().slice(0, 40) : '',
             responsible: b.responsible || 'studio',
             pedeArquivos: !!b.pedeArquivos,
-            instructions: b.pedeArquivos ? String(b.instructions || '').trim() : '',
+            instructions: String(b.instructions || '').trim(),
           })),
       }));
 
@@ -681,7 +682,11 @@ export function makeSupabaseDb() {
         .eq('id', bid)
         .single();
       must(e1);
-      const { error } = await supabase.from('stage_subs').update({ done: !cur.done }).eq('id', bid);
+      // reabrir também devolve a entrega ao cliente
+      const { error } = await supabase
+        .from('stage_subs')
+        .update(cur.done ? { done: false, entregue_em: null } : { done: true })
+        .eq('id', bid);
       must(error);
     },
     deleteSub: async (sid, bid) => {
@@ -885,6 +890,16 @@ export function makeSupabaseDb() {
       // o studio apaga o arquivo do Storage; o cliente não tem essa permissão
       // (o arquivo fica guardado e some junto com o projeto)
       if (a && a.storage_path) await supabase.storage.from('documentos').remove([a.storage_path]);
+    },
+    // o cliente avisa que mandou tudo; depois disso não mexe mais no pedido
+    concluirEntrega: async (sid, bid) => {
+      const { error } = await supabase.rpc('concluir_entrega', { p_sub: bid });
+      must(error);
+    },
+    // o studio devolve o pedido ao cliente (aberto de novo para envio)
+    reabrirPedido: async (sid, bid) => {
+      const { error } = await supabase.from('stage_subs').update({ done: false, entregue_em: null }).eq('id', bid);
+      must(error);
     },
     setNotaPedido: async (sid, bid, nota) => {
       const { error } = await supabase

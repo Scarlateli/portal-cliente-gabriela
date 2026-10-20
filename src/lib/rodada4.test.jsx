@@ -28,23 +28,26 @@ describe('pendências da rodada 4', () => {
   ];
   const arquivos = [{ subId: 'b2' }];
 
-  it('cliente: aprovar etapa sempre; pedido de arquivo só com prazo perto e sem arquivo ainda', () => {
+  it('cliente: aprovar etapa sempre; pedido de arquivo só com prazo perto; com arquivo, pede para concluir', () => {
     const r = calcularPendencias({ role: 'client', projects: P, stages, arquivos }, HOJE);
     expect(r.map((x) => [x.aba, x.alvo, x.texto])).toEqual([
       ['timeline', 'etapa-s1', 'Aprovar a etapa: Briefing'],
       ['docs', 'pedido-b1', 'Enviar arquivos: Plantas · até 24/10'],
+      ['docs', 'pedido-b2', 'Concluir entrega: Fotos · até 23/10'],
     ]);
   });
 
-  it('studio: ajustes pedidos na etapa e arquivos do cliente para conferir', () => {
+  it('studio: ajustes pedidos na etapa e entrega concluída pelo cliente para conferir', () => {
+    // rodada 6: só avisa o studio quando o cliente conclui a entrega
+    const comEntrega = stages.map((s) => ({ ...s, subs: s.subs.map((b) => (b.id === 'b2' ? { ...b, entregueEm: '2026-10-20T10:00:00Z' } : b)) }));
     const r = calcularPendencias(
-      { role: 'studio', projects: P, stages, arquivos, documents: [{ id: 'd1', projectId: 'p1', name: 'Ata 1', response: 'ajustes' }] },
+      { role: 'studio', projects: P, stages: comEntrega, arquivos, documents: [{ id: 'd1', projectId: 'p1', name: 'Ata 1', response: 'ajustes' }] },
       HOJE,
     );
     expect(r.map((x) => x.texto)).toEqual([
       'Ajustes pedidos na etapa: Estudo',
       'Ajustes pedidos no documento: Ata 1',
-      'Arquivos do cliente para conferir: Fotos',
+      'Entrega do cliente para conferir: Fotos',
     ]);
   });
 

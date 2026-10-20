@@ -11,9 +11,12 @@
    (até PRAZO_PROXIMO_DIAS) ou vencidos. Pedidos explícitos (aprovar etapa,
    confirmar documento, assinar, decidir orçamento) entram sempre. */
 
+import { todayISO } from './helpers.js';
+
 export const PRAZO_PROXIMO_DIAS = 7;
 
-const hojeISO = () => new Date().toISOString().slice(0, 10);
+// data local (no Brasil, depois das 21h o UTC já é o dia seguinte)
+const hojeISO = todayISO;
 const somarDias = (iso, n) => {
   const d = new Date(iso + 'T12:00:00Z');
   d.setUTCDate(d.getUTCDate() + n);
@@ -52,8 +55,10 @@ export function calcularPendencias(
       .forEach((q) => add('q-' + q.id, q.projectId, 'quotes', 'orc-' + q.id, 'Pedido de negociação: ' + q.supplier));
     stages.forEach((s) =>
       (s.subs || [])
-        .filter((b) => b.pedeArquivos && !b.done && comArquivo.has(b.id))
-        .forEach((b) => add('a-' + b.id, s.projectId, 'docs', 'pedido-' + b.id, 'Arquivos do cliente para conferir: ' + b.title)),
+        // rodada 6: só quando o cliente conclui a entrega (antes, qualquer
+        // arquivo já avisava, mesmo com o cliente ainda mandando)
+        .filter((b) => b.pedeArquivos && !b.done && b.entregueEm)
+        .forEach((b) => add('a-' + b.id, s.projectId, 'docs', 'pedido-' + b.id, 'Entrega do cliente para conferir: ' + b.title)),
     );
     stages
       .filter((s) => s.owner === 'client' && s.status !== 'concluida' && s.end && s.end < hoje)
@@ -94,8 +99,14 @@ export function calcularPendencias(
         .filter((b) => b.responsible === 'cliente' && !b.done && perto(b.due))
         .forEach((b) => {
           if (b.pedeArquivos) {
-            if (!comArquivo.has(b.id))
-              add('b-' + b.id, s.projectId, 'docs', 'pedido-' + b.id, 'Enviar arquivos: ' + b.title + quando(b.due));
+            if (!b.entregueEm)
+              add(
+                'b-' + b.id,
+                s.projectId,
+                'docs',
+                'pedido-' + b.id,
+                (comArquivo.has(b.id) ? 'Concluir entrega: ' : 'Enviar arquivos: ') + b.title + quando(b.due),
+              );
           } else add('b-' + b.id, s.projectId, 'timeline', 'sub-' + b.id, 'Tarefa: ' + b.title + quando(b.due));
         });
       if (s.owner === 'client' && perto(s.end))

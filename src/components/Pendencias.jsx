@@ -153,8 +153,8 @@ function JanelaPendencias({ lista, studio, onIr, onFechar }) {
                 ? 'Há 1 pendência esperando você'
                 : 'Há ' + n + ' pendências esperando você'
               : n === 1
-                ? 'Você tem 1 pendência no projeto'
-                : 'Você tem ' + n + ' pendências no projeto'}
+                ? 'Você tem 1 pendência'
+                : 'Você tem ' + n + ' pendências'}
           </h2>
           <button
             type="button"

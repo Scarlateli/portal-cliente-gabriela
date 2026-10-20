@@ -489,3 +489,47 @@ Etapas do Projeto, Envios do Cliente, Novo Projeto etc.
 **Banco** (aplicado em 20/10, antes do código):
 `supabase/sql/2026-10-20-rodada5-nome-do-cliente-e-categorias.sql`, também
 no fim do `schema.sql`.
+
+## Rodada 6 — visão do cliente (revisão de 20/10/2026, à noite)
+
+**Janela de pendências**: o título agora é só "Você tem N pendências".
+
+**Lista de sub-etapas no desenho da Gabriela** (vale para cliente e studio)
+- Cada sub-etapa tem uma bolinha numa linha pontilhada. A primeira ainda
+  aberta fica destacada; as concluídas ficam preenchidas.
+- O cliente não tem mais caixinha para marcar. O studio conclui clicando na
+  bolinha.
+- O nome fica em destaque. Embaixo vêm o tipo (em caixa) e uma descrição
+  curta, que agora toda sub-etapa pode ter (campo "Descrição curta" no
+  formulário; num pedido de arquivos, é o que o cliente deve mandar).
+- Tarefa do cliente: "Essa é uma tarefa sua" em vermelho (no studio,
+  "Tarefa do cliente").
+- À direita ficam a data ("Hoje", "Amanhã", "Até 30/10", "Venceu 10/06") e,
+  em reunião, o horário. Embaixo vem a ação: "Fazer upload" / "Concluir
+  entrega" para o cliente, ou "Entrar na reunião". No celular, isso desce
+  para baixo da descrição.
+- As datas da etapa ficam em duas linhas: "Data de Início – …" e "Previsão
+  de Entrega – …".
+
+**Concluir entrega (Envios do Cliente)**
+- Depois de mandar os arquivos, o cliente clica em "Concluir entrega" e
+  confirma. A partir daí não manda, não tira arquivos e não muda o recado.
+- O studio recebe a pendência "Entrega do cliente para conferir". Antes ela
+  aparecia a qualquer arquivo enviado. O studio pode **concluir o pedido**
+  ou **devolver ao cliente** (que reabre o envio).
+- Pendência do cliente: "Enviar arquivos" sem nenhum arquivo, ou "Concluir
+  entrega" quando já mandou algo e ainda não concluiu (com prazo perto, como
+  antes).
+
+**Segurança**: o cliente podia, pela API, mudar qualquer campo das
+sub-etapas dele (marcar como feita, trocar prazo). Agora um gatilho no banco
+só deixa o cliente mudar o recado, e só enquanto o pedido está aberto. A
+entrega concluída é gravada por uma função do banco (`concluir_entrega`), e
+duas políticas restritivas bloqueiam arquivos depois da entrega.
+
+**Datas**: "hoje" passa a ser a data local. Antes, depois das 21h, o portal
+já contava o dia seguinte.
+
+**Banco** (aplicado em 20/10, antes do código):
+`supabase/sql/2026-10-20-rodada6-concluir-entrega.sql`, também no fim do
+`schema.sql`. Foram testados 15 cenários num banco local.

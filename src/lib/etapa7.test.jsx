@@ -87,7 +87,7 @@ describe('sino e janela', () => {
 
   it('cliente vê a janela ao entrar e vai direto ao item da pendência', async () => {
     const irPara = montar({ id: 'u1', role: 'client', name: 'Vanessa' });
-    expect(screen.getByRole('dialog', { name: /pendências no projeto/i })).toBeTruthy();
+    expect(screen.getByRole('dialog', { name: /^Você tem \d+ pendências?$/i })).toBeTruthy();
     await userEvent.click(screen.getByText(/Assinar: Planta/));
     // aba e item: o portal rola até o documento e o destaca
     expect(irPara).toHaveBeenCalledWith('p1', 'docs', 'doc-d3');
@@ -108,7 +108,7 @@ describe('sino e janela', () => {
     // remonta (outra tela ou outro acesso): a janela não volta, porque não há novidade
     cleanup();
     montar({ id: 'u1', role: 'client', name: 'Vanessa' });
-    expect(screen.queryByRole('dialog', { name: /pendências no projeto/i })).toBeNull();
+    expect(screen.queryByRole('dialog', { name: /^Você tem \d+ pendências?$/i })).toBeNull();
   });
 
   it('cliente de outro projeto não vê pendências que não são dele', () => {

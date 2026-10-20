@@ -31,6 +31,7 @@ import {
   ROTULO_RESP,
   rotuloTipoSub,
   prazoSub,
+  quandoSub,
   subCompletaVazia,
 } from '../../lib/etapas.js';
 
@@ -378,19 +379,23 @@ function SubForm({ inicial, onSalvar, onCancelar, rotuloSalvar = 'Salvar', limpa
             setSd({ ...sd, pedeArquivos: e.target.checked, responsible: e.target.checked ? 'cliente' : sd.responsible })
           }
         />{' '}
-        Pedir arquivos ao cliente (ele envia pela aba Documentos → Envios do cliente)
+        Pedir arquivos ao cliente (ele envia pela aba Documentos → Envios do Cliente)
       </label>
-      {sd.pedeArquivos && (
-        <textarea
-          className="sub-form-instrucoes"
-          rows={2}
-          maxLength={600}
-          placeholder="O que o cliente deve mandar (ex.: plantas do apartamento, fotos de cada ambiente)"
-          aria-label="Instruções do pedido de arquivos"
-          value={sd.instructions || ''}
-          onChange={(e) => setSd({ ...sd, instructions: e.target.value })}
-        />
-      )}
+      {/* rodada 6: toda sub-etapa pode ter uma descrição curta, que aparece
+          embaixo do nome; num pedido de arquivos, diz o que mandar */}
+      <textarea
+        className="sub-form-instrucoes"
+        rows={2}
+        maxLength={600}
+        placeholder={
+          sd.pedeArquivos
+            ? 'O que o cliente deve mandar (ex.: plantas do apartamento, fotos de cada ambiente)'
+            : 'Descrição curta (opcional)'
+        }
+        aria-label={sd.pedeArquivos ? 'Instruções do pedido de arquivos' : 'Descrição da sub-etapa'}
+        value={sd.instructions || ''}
+        onChange={(e) => setSd({ ...sd, instructions: e.target.value })}
+      />
       {sd.kind === 'reuniao' && (
         <div className="sub-form-reuniao">
           <div className="seg">
@@ -451,7 +456,11 @@ function SubPrazo({ b }) {
   );
 }
 
-function SubItem({ db, s, b, i, total, isStudio, arquivos = [], abrir }) {
+/* Uma sub-etapa na lista (rodada 6, desenho da Gabriela): bolinha numa
+   linha pontilhada, nome em destaque, tipo + descrição curta embaixo e, à
+   direita, a data e a ação (fazer upload, entrar na reunião). O cliente não
+   tem caixinha para marcar; o studio conclui clicando na bolinha. */
+function SubItem({ db, s, b, i, total, isStudio, atual = false, arquivos = [], abrir }) {
   const [editando, setEditando] = useState(false);
   if (editando)
     return (
@@ -468,37 +477,70 @@ function SubItem({ db, s, b, i, total, isStudio, arquivos = [], abrir }) {
       </li>
     );
   const enviados = arquivos.filter((a) => a.subId === b.id).length;
+  const doCliente = b.responsible === 'cliente';
+  const entregue = !!b.entregueEm || b.done;
+  const q = quandoSub(b);
+  const irEnvio = () => abrir('docs', 'pedido-' + b.id);
+  let acao = null;
+  if (b.pedeArquivos && !isStudio)
+    acao = entregue ? (
+      <span className="sub-entregue">
+        <Check size={11} /> Entregue
+      </span>
+    ) : (
+      <button type="button" className="btn-mini" onClick={irEnvio}>
+        <FolderUp size={12} /> {enviados ? 'Concluir entrega' : 'Fazer upload'}
+      </button>
+    );
+  else if (b.pedeArquivos && isStudio && b.entregueEm && !b.done)
+    acao = (
+      <button type="button" className="btn-mini" onClick={irEnvio}>
+        <FolderUp size={12} /> Conferir entrega
+      </button>
+    );
+  else if (b.kind === 'reuniao' && b.format !== 'presencial' && b.link && !b.done)
+    acao = (
+      <a className="btn-mini" href={b.link} target="_blank" rel="noreferrer">
+        <Video size={12} /> Entrar na reunião
+      </a>
+    );
+  const classe = 'sub' + (b.done ? ' done' : '') + (atual ? ' sub-atual' : '') + (doCliente && !b.done ? ' sub-do-cliente' : '');
   return (
-    <li className={'sub' + (b.done ? ' done' : '')} id={'alvo-sub-' + b.id}>
+    <li className={classe} id={'alvo-sub-' + b.id}>
       {isStudio ? (
-        <button className={'sub-box' + (b.done ? ' on' : '')} onClick={() => db.toggleSub(s.id, b.id)} aria-label={(b.done ? 'Desmarcar ' : 'Concluir ') + b.title}>
-          {b.done && <Check size={11} />}
+        <button className="sub-no" onClick={() => db.toggleSub(s.id, b.id)} aria-label={(b.done ? 'Desmarcar ' : 'Concluir ') + b.title}>
+          <Check size={11} />
         </button>
       ) : (
-        <span className={'sub-box' + (b.done ? ' on' : '')}>{b.done && <Check size={11} />}</span>
+        <span className="sub-no" aria-hidden>
+          {b.done && <Check size={11} />}
+        </span>
       )}
       <div className="sub-corpo">
-        <span className="sub-title">{b.title}</span>
-        <SubResumo b={b} comPrazo={false} />
-        <span className="sub-extra">
-          {b.pedeArquivos && (
-            <button type="button" className="link sm" onClick={() => abrir('docs', 'pedido-' + b.id)}>
+        <div className="sub-linha1">
+          <span className="sub-title">{b.title}</span>
+          {doCliente && !b.done && <span className="sub-sua">{isStudio ? 'Tarefa do cliente' : 'Essa é uma tarefa sua'}</span>}
+          {b.responsible === 'fornecedor' && <span className="sub-forn">Fornecedor</span>}
+        </div>
+        <div className="sub-linha2">
+          <span className="sub-tipo-tag">{rotuloTipoSub(b)}</span>
+          {b.kind === 'reuniao' && b.format === 'presencial' && <span className="sub-desc">Presencial ·</span>}
+          {b.instructions && <span className="sub-desc">{b.instructions}</span>}
+          {isStudio && b.pedeArquivos && (
+            <button type="button" className="link sm" onClick={irEnvio}>
               <FolderUp size={11} />{' '}
-              {enviados
-                ? enviados + (enviados === 1 ? ' arquivo enviado' : ' arquivos enviados')
-                : !isStudio && !b.done
-                  ? 'Enviar arquivos'
-                  : 'Nenhum arquivo ainda'}
+              {enviados ? enviados + (enviados === 1 ? ' arquivo enviado' : ' arquivos enviados') : 'Nenhum arquivo ainda'}
             </button>
           )}
-          {b.kind === 'reuniao' && b.format !== 'presencial' && b.link && (
-            <a className="link sm" href={b.link} target="_blank" rel="noreferrer">
-              <Link2 size={11} /> Entrar na reunião
-            </a>
-          )}
-        </span>
+        </div>
       </div>
-      {b.due && <SubPrazo b={b} />}
+      {(q || acao) && (
+        <div className="sub-quando">
+          {q && <span className={'sub-data sub-data-' + q.estado}>{q.data}</span>}
+          {q && q.hora && <span className="sub-hora">{q.hora}</span>}
+          {acao}
+        </div>
+      )}
       {isStudio && (
         <span className="sub-acoes">
           <button className="icon-x" disabled={i === 0} onClick={() => db.moveSub(s.id, b.id, -1)} aria-label={'Subir ' + b.title}>
@@ -525,12 +567,20 @@ function SubItem({ db, s, b, i, total, isStudio, arquivos = [], abrir }) {
   );
 }
 
-// "Início 03/02/2026 · Previsão de fim 10/02/2026", dito por extenso
-function datasEtapa(s) {
-  const partes = [];
-  if (s.start) partes.push((s.category === 'Reunião' ? '' : 'Início ') + fmt(s.start) + (s.time ? ' às ' + s.time : ''));
-  if (s.end && s.end !== s.start) partes.push('Previsão de fim ' + fmt(s.end));
-  return partes.length ? partes.join(' · ') : 'Sem datas definidas';
+/* Datas da etapa, uma por linha, à direita (desenho da Gabriela) */
+function DatasEtapa({ s }) {
+  const reuniao = s.category === 'Reunião';
+  const linhas = [];
+  if (s.start) linhas.push((reuniao ? 'Data – ' : 'Data de Início – ') + fmt(s.start) + (s.time ? ' às ' + s.time : ''));
+  if (s.end && s.end !== s.start) linhas.push('Previsão de Entrega – ' + fmt(s.end));
+  if (!linhas.length) linhas.push('Sem datas definidas');
+  return (
+    <span className="tl-datas">
+      {linhas.map((l) => (
+        <span key={l}>{l}</span>
+      ))}
+    </span>
+  );
 }
 
 function StageItem({ db, s, isStudio, arquivos, abrir, projectId }) {
@@ -540,6 +590,8 @@ function StageItem({ db, s, isStudio, arquivos, abrir, projectId }) {
   const [newEnd, setNewEnd] = useState(s.end || '');
   const late = stageOverdue(s);
   const ss = subStats(s);
+  // a primeira sub-etapa ainda aberta ganha o destaque da bolinha
+  const primeiraAberta = ((s.subs || []).find((b) => !b.done) || {}).id;
   const startEdit = () => {
     setEf({ ...s });
     setEditing(true);
@@ -590,9 +642,7 @@ function StageItem({ db, s, isStudio, arquivos, abrir, projectId }) {
       <div className="tl-body">
         <div className="tl-top">
           <h3>{s.title}</h3>
-          <span className="tl-date">
-            <CalendarDays size={12} /> {datasEtapa(s)}
-          </span>
+          <DatasEtapa s={s} />
         </div>
         <div className="tl-meta">
           {/* rodada 5: na etapa macro não se repete "Etapa" nem o studio
@@ -661,6 +711,7 @@ function StageItem({ db, s, isStudio, arquivos, abrir, projectId }) {
               <ul className="sub-list">
                 {(s.subs || []).map((b, i) => (
                   <SubItem
+                    atual={s.status === 'em_andamento' && b.id === primeiraAberta}
                     key={b.id}
                     db={db}
                     s={s}

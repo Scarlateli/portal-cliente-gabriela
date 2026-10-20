@@ -87,6 +87,8 @@ const ALL_MUTATIONS = [
   'enviarArquivos',
   'removerArquivo',
   'setNotaPedido',
+  'concluirEntrega',
+  'reabrirPedido',
   'avisarCliente',
 ];
 

@@ -208,3 +208,27 @@ aprovação do cliente" (e "Notificar cliente via e-mail").
 ### 32. Contratos e Termos
 Use **Editar** num termo. Crie um projeto novo e confira que ele não vem
 mais com um contrato pronto.
+
+---
+
+## Rodada 6 — visão do cliente (20/10)
+
+### 33. Lista de sub-etapas
+Entre como cliente e confira, na etapa em andamento:
+- as bolinhas com a linha pontilhada;
+- "Essa é uma tarefa sua";
+- a data à direita;
+- "Fazer upload" e "Entrar na reunião".
+
+No studio, conclua uma sub-etapa clicando na bolinha. Edite uma sub-etapa e
+escreva uma "Descrição curta".
+
+### 34. Concluir entrega
+Como cliente, em Documentos → Envios do Cliente:
+- mande um arquivo;
+- clique em "Concluir entrega" e confirme;
+- confira que não dá mais para enviar nem tirar arquivos.
+
+Como studio:
+- veja a pendência "Entrega do cliente para conferir";
+- teste "Devolver ao cliente" e "Conferido, concluir pedido".

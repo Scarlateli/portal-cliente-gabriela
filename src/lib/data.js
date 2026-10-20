@@ -64,6 +64,8 @@ export function invalidationsFor(method, pid) {
     enviarArquivos: [qk.subArquivos(pid), qk.stages(pid)],
     removerArquivo: [qk.subArquivos(pid)],
     setNotaPedido: [qk.stages(pid)],
+    concluirEntrega: [qk.stages(pid)],
+    reabrirPedido: [qk.stages(pid)],
     avisarCliente: [],
     applyTemplate: [qk.stages(pid), qk.calendar(pid)],
     addTemplate: [qk.templates()],
@@ -144,7 +146,7 @@ const OPTIMISTIC = {
       old
         ? old.map((s) =>
             s.id === sid
-              ? { ...s, subs: (s.subs || []).map((b) => (b.id === bid ? { ...b, done: !b.done } : b)) }
+              ? { ...s, subs: (s.subs || []).map((b) => (b.id === bid ? { ...b, done: !b.done, ...(b.done ? { entregueEm: null } : {}) } : b)) }
               : s,
           )
         : old,

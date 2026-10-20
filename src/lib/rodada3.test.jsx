@@ -143,12 +143,13 @@ describe('linha do tempo', () => {
   it('mostra só o que acrescenta: cliente como responsável e o prazo quando existe', () => {
     render(<Timeline db={fakeDb()} project={projeto} isStudio />);
     const [l1, l2] = screen.getAllByRole('listitem').filter((li) => li.classList.contains('sub'));
-    // rodada 5: "Studio" e "Sem prazo" são o padrão e não aparecem
+    // rodada 5: "Studio" e "Sem prazo" são o padrão e não aparecem;
+    // rodada 6: tarefa do cliente em destaque e a data à direita
     expect(within(l1).queryByText('Studio')).toBeNull();
     expect(within(l1).queryByText('Sem prazo')).toBeNull();
     expect(within(l1).getByText('Entrega')).toBeTruthy();
-    expect(within(l2).getByText('Cliente')).toBeTruthy();
-    expect(within(l2).getByText(/Atrasada · venceu 10\/01\/2026/)).toBeTruthy();
+    expect(within(l2).getByText('Tarefa do cliente')).toBeTruthy();
+    expect(within(l2).getByText(/^Venceu 10\/01/)).toBeTruthy();
   });
 
   it('edita uma sub-etapa existente (não cria outra)', async () => {
