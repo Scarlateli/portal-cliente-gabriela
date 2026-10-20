@@ -43,7 +43,7 @@ export function Documents({ db, project, isStudio, alvo = null, abrir = () => {}
           className={'filter' + (parte === 'envios' ? ' on' : '')}
           onClick={() => setParte('envios')}
         >
-          Envios do cliente{pedidos ? ' · ' + pedidos + (pedidos === 1 ? ' aberto' : ' abertos') : ''}
+          Envios do Cliente{pedidos ? ' · ' + pedidos + (pedidos === 1 ? ' aberto' : ' abertos') : ''}
         </button>
       </div>
       {parte === 'docs' ? (
@@ -55,13 +55,15 @@ export function Documents({ db, project, isStudio, alvo = null, abrir = () => {}
   );
 }
 
+// rodada 5: só "sem pedido" ou "pedir aprovação" (a assinatura saiu; um
+// documento antigo que já pedia assinatura continua mostrando a opção)
 const PEDIDOS = [
   ['nenhuma', 'Sem pedido ao cliente'],
-  ['ok', 'Pedir confirmação do cliente'],
-  ['assinatura', 'Pedir assinatura'],
+  ['ok', 'Pedir aprovação do cliente'],
 ];
+const pedidosPara = (d) => (d && d.approval === 'assinatura' ? [...PEDIDOS, ['assinatura', 'Pedir assinatura']] : PEDIDOS);
 const textoAviso = (d, approval) =>
-  (approval === 'assinatura' ? 'Assinar o documento "' : 'Confirmar o documento "') + d.name + '"';
+  (approval === 'assinatura' ? 'Assinar o documento "' : 'Aprovar o documento "') + d.name + '"';
 
 function DocumentosStudio({ db, project, isStudio }) {
   const docs = db.documents(project.id);
@@ -74,6 +76,13 @@ function DocumentosStudio({ db, project, isStudio }) {
   const [enviando, setEnviando] = useState(false);
   const [aviso, setAviso] = useState('');
   const [editando, setEditando] = useState(null);
+  const [novo, setNovo] = useState(false);
+  const [arquivo, setArquivo] = useState(null);
+  const fecharNovo = () => {
+    setNovo(false);
+    setArquivo(null);
+    setPedido('nenhuma');
+  };
 
   const avisarCliente = async (texto) => {
     if (!avisar || !IS_SUPABASE) return;
@@ -84,16 +93,17 @@ function DocumentosStudio({ db, project, isStudio }) {
       setAviso('O e-mail ao cliente não foi enviado.');
     }
   };
-  const onPick = async (e) => {
+  const onPick = (e) => {
     const f = e.target.files && e.target.files[0];
     e.target.value = '';
     if (!f) return;
     const problema = validarArquivo(f);
-    if (problema) {
-      setAviso(problema);
-      return;
-    }
-    setAviso('');
+    setAviso(problema || '');
+    setArquivo(problema ? null : f);
+  };
+  const enviar = async () => {
+    const f = arquivo;
+    if (!f || enviando) return;
     setEnviando(true);
     try {
       await db.addDocument(
@@ -102,6 +112,7 @@ function DocumentosStudio({ db, project, isStudio }) {
         f,
       );
       if (pedido !== 'nenhuma') await avisarCliente(textoAviso({ name: f.name }, pedido));
+      fecharNovo();
     } finally {
       setEnviando(false);
     }
@@ -116,41 +127,63 @@ function DocumentosStudio({ db, project, isStudio }) {
     }
   };
   const shown = !filter ? docs : docs.filter((d) => d.type === filter);
-  const typeLabel = (id) => (DOC_TYPES.find((t) => t.id === id) || { label: 'Geral' }).label;
+  const typeLabel = (id) => (DOC_TYPES.find((t) => t.id === id) || { label: 'Documentos Gerais' }).label;
   return (
     <section className="panel">
       <header className="panel-head">
         <h2>Documentos</h2>
-        {isStudio && (
-          <div className="head-actions">
-            <select className="mini-select" aria-label="Categoria do documento" value={type} onChange={(e) => setType(e.target.value)}>
-              {DOC_TYPES.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.label}
-                </option>
-              ))}
-            </select>
-            <select className="mini-select" value={pedido} onChange={(e) => setPedido(e.target.value)} aria-label="O que pedir ao cliente">
-              {PEDIDOS.map(([v, r]) => (
-                <option key={v} value={v}>
-                  {r}
-                </option>
-              ))}
-            </select>
-            <button disabled={enviando} className="btn btn-ghost btn-sm" onClick={() => fileRef.current && fileRef.current.click()}>
-              <Upload size={14} /> {enviando ? 'Enviando…' : 'Enviar arquivo'}
-            </button>
-            <input ref={fileRef} type="file" accept="application/pdf,image/*,.doc,.docx,.xls,.xlsx" hidden onChange={onPick} />
-            {IS_SUPABASE && (
-              <label className="micro doc-avisar">
-                <input type="checkbox" checked={avisar} onChange={(e) => setAvisar(e.target.checked)} /> Avisar o cliente por
-                e-mail quando houver pedido
-              </label>
-            )}
-            {aviso && <p className="micro aviso-upload">{aviso}</p>}
-          </div>
+        {isStudio && !novo && (
+          <button className="btn btn-ghost btn-sm" onClick={() => setNovo(true)}>
+            <Upload size={14} /> Enviar Documento
+          </button>
         )}
       </header>
+      {isStudio && novo && (
+        <div className="add-stage doc-novo">
+          <div className="doc-novo-grade">
+            <label className="lab">
+              Arquivo
+              <span className="doc-arquivo">
+                <button type="button" className="btn btn-ghost btn-sm" onClick={() => fileRef.current && fileRef.current.click()}>
+                  <Upload size={13} /> {arquivo ? 'Trocar arquivo' : 'Escolher arquivo'}
+                </button>
+                <span className="micro">{arquivo ? arquivo.name : 'PDF, imagem ou documento do Office, até 20 MB'}</span>
+              </span>
+              <input ref={fileRef} type="file" accept="application/pdf,image/*,.doc,.docx,.xls,.xlsx" hidden onChange={onPick} />
+            </label>
+            <label className="lab">
+              Categoria
+              <select aria-label="Categoria do documento" value={type} onChange={(e) => setType(e.target.value)}>
+                {DOC_TYPES.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+          <label className="doc-opcao">
+            <input type="checkbox" checked={pedido === 'ok'} onChange={(e) => setPedido(e.target.checked ? 'ok' : 'nenhuma')} /> Pedir
+            aprovação do cliente
+          </label>
+          {IS_SUPABASE && (
+            <label className={'doc-opcao' + (pedido === 'nenhuma' ? ' doc-opcao-off' : '')}>
+              <input type="checkbox" disabled={pedido === 'nenhuma'} checked={avisar && pedido !== 'nenhuma'} onChange={(e) => setAvisar(e.target.checked)} />{' '}
+              Notificar cliente via e-mail
+            </label>
+          )}
+          {aviso && <p className="micro aviso-upload">{aviso}</p>}
+          <div className="row">
+            <button type="button" className="btn btn-primary btn-sm" disabled={!arquivo || enviando} onClick={enviar}>
+              {enviando ? 'Enviando…' : 'Enviar'}
+            </button>
+            <button type="button" className="btn btn-ghost btn-sm" onClick={fecharNovo}>
+              Cancelar
+            </button>
+          </div>
+        </div>
+      )}
+      {isStudio && !novo && aviso && <p className="micro aviso-upload">{aviso}</p>}
       <div className="filter-row">
         {DOC_TYPES.map((t) => (
           <button key={t.id} className={'filter' + (filter === t.id ? ' on' : '')} onClick={() => setFilter(filter === t.id ? '' : t.id)}>
@@ -192,7 +225,7 @@ function DocumentosStudio({ db, project, isStudio }) {
                       if (novo !== 'nenhuma') await avisarCliente(textoAviso(d, novo));
                     }}
                   >
-                    {PEDIDOS.map(([v, r]) => (
+                    {pedidosPara(d).map(([v, r]) => (
                       <option key={v} value={v}>
                         {r}
                       </option>
@@ -279,6 +312,7 @@ function EditarDocumento({ db, d, projectId, onFechar }) {
         <label className="lab">
           Categoria
           <select value={tipo} onChange={(e) => setTipo(e.target.value)} aria-label="Categoria">
+            {!DOC_TYPES.some((t) => t.id === tipo) && <option value={tipo}>Documentos Gerais</option>}
             {DOC_TYPES.map((t) => (
               <option key={t.id} value={t.id}>
                 {t.label}
@@ -317,7 +351,7 @@ function SituacaoDoc({ d }) {
   if (d.response === 'aprovado')
     return (
       <span className="doc-sit ok">
-        Confirmado por {d.respondedName || 'cliente'} em {dataCurta(d.respondedAt)}
+        Aprovado por {d.respondedName || 'cliente'} em {dataCurta(d.respondedAt)}
       </span>
     );
   if (d.response === 'ajustes')
@@ -328,7 +362,7 @@ function SituacaoDoc({ d }) {
     );
   return (
     <span className="doc-sit pendente">
-      {d.approval === 'assinatura' ? 'Aguardando assinatura do cliente' : 'Aguardando confirmação do cliente'}
+      {d.approval === 'assinatura' ? 'Aguardando assinatura do cliente' : 'Aguardando aprovação do cliente'}
     </span>
   );
 }
@@ -397,7 +431,7 @@ function RespostaCliente({ db, d }) {
       <p className="doc-confirmar-texto">
         {d.approval === 'assinatura'
           ? 'O studio pede a sua assinatura neste documento.'
-          : 'O studio pede que você confirme que está de acordo com este documento.'}
+          : 'O studio pede a sua aprovação deste documento.'}
       </p>
       <div className="row">
         {d.approval === 'assinatura' ? (
@@ -411,7 +445,7 @@ function RespostaCliente({ db, d }) {
             disabled={enviando}
             onClick={() => enviar(() => db.responderDocumento(d.id))}
           >
-            <Check size={13} /> {enviando ? 'Enviando…' : 'Confirmo'}
+            <Check size={13} /> {enviando ? 'Enviando…' : 'Aprovo'}
           </button>
         )}
         <button type="button" className="btn btn-ghost btn-sm" onClick={() => setModo('ajustes')}>

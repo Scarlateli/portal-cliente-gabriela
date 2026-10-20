@@ -91,7 +91,7 @@ function AdminInner({ db, baseDb, user, onLogout, onOpen, mutationError, clearEr
             className={'tab' + (tab === 'novo' ? ' active' : '')}
             onClick={() => setTab('novo')}
           >
-            <FilePlus2 size={15} /> Novo projeto
+            <FilePlus2 size={15} /> Novo Projeto
           </button>
           <button
             className={'tab' + (tab === 'templates' ? ' active' : '')}
@@ -275,18 +275,18 @@ function NewProject({ db, onDone }) {
   return (
     <section className="panel">
       <header className="panel-head">
-        <h2>Cadastrar novo projeto</h2>
+        <h2>Cadastrar Novo Projeto</h2>
       </header>
       <div className="form-grid">
         <h4 className="form-sec">Dados do projeto</h4>
         <label className="lab">
           Código do projeto
-          <input value={f.code} onChange={set('code')} placeholder="ex.: FRV-003" aria-label="Código do projeto" />
+          <input value={f.code} onChange={set('code')} placeholder="Código do projeto" aria-label="Código do projeto" />
           {errors.code && <span className="error">{errors.code}</span>}
         </label>
         <label className="lab">
           Nome do projeto
-          <input value={f.name} onChange={set('name')} placeholder="ex.: Residência Oliveira" aria-label="Nome do projeto" />
+          <input value={f.name} onChange={set('name')} placeholder="Nome do projeto" aria-label="Nome do projeto" />
           {errors.name && <span className="error">{errors.name}</span>}
         </label>
         <h4 className="form-sec">Endereço da obra</h4>
@@ -303,7 +303,7 @@ function NewProject({ db, onDone }) {
         <h4 className="form-sec">Dados do cliente</h4>
         <label className="lab">
           Nome do cliente
-          <input value={f.clientName} onChange={set('clientName')} placeholder="Nome completo" aria-label="Nome do cliente" />
+          <input value={f.clientName} onChange={set('clientName')} placeholder="Nome do cliente" aria-label="Nome do cliente" />
           {errors.clientName && <span className="error">{errors.clientName}</span>}
         </label>
         <label className="lab">
@@ -321,7 +321,7 @@ function NewProject({ db, onDone }) {
           <input
             value={f.greeting}
             onChange={set('greeting')}
-            placeholder="ex.: Marília e Vitor · Família Silva"
+            placeholder="ex.: Família Silva"
             aria-label="Como o portal cumprimenta o cliente"
             maxLength={60}
           />
@@ -466,7 +466,7 @@ function Templates({ db }) {
       <h4 className="form-sec">{titulo}</h4>
       <input
         className="tpl-name"
-        placeholder="Nome do template (ex.: Projeto de interiores)"
+        placeholder="Nome do template"
         aria-label="Nome do template"
         value={name}
         onChange={(e) => setName(e.target.value)}
@@ -487,7 +487,7 @@ function Templates({ db }) {
   return (
     <section className="panel">
       <header className="panel-head">
-        <h2>Templates de etapas</h2>
+        <h2>Templates de Etapas</h2>
         {templates.length > 0 && !formNovoAberto && (
           <button type="button" className="btn btn-ghost btn-sm" onClick={novo}>
             <Plus size={14} /> Novo template

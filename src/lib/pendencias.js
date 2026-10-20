@@ -68,7 +68,7 @@ export function calcularPendencias(
   documents
     .filter((d) => d.approval && d.approval !== 'nenhuma' && !d.response)
     .forEach((d) =>
-      add('d-' + d.id, d.projectId, 'docs', 'doc-' + d.id, (d.approval === 'assinatura' ? 'Assinar: ' : 'Confirmar: ') + d.name),
+      add('d-' + d.id, d.projectId, 'docs', 'doc-' + d.id, (d.approval === 'assinatura' ? 'Assinar: ' : 'Aprovar: ') + d.name),
     );
   contracts
     .filter((c) => c.sigStatus === 'enviado')
@@ -120,4 +120,18 @@ export function proximoPrazo(stages = [], hoje = hojeISO()) {
   // tudo vencido: mostra o mais antigo, marcado como atrasado
   const vencido = prazos.sort((a, b) => (a.data < b.data ? -1 : 1))[0];
   return { ...vencido, atrasado: true };
+}
+
+/* Topo do projeto (rodada 5): a etapa macro com o próximo prazo, para
+   mostrar o nome da fase e "Prazo – data". Só etapas, sem sub-etapas.
+   { titulo, data, atrasado } ou null. Sem prazo marcado, devolve a etapa
+   em andamento com data null. */
+export function proximaEtapa(stages = [], hoje = hojeISO()) {
+  const abertas = stages.filter((s) => s.status !== 'concluida');
+  const comPrazo = abertas.filter((s) => s.end).sort((a, b) => (a.end < b.end ? -1 : 1));
+  const futura = comPrazo.find((s) => s.end >= hoje);
+  if (futura) return { titulo: futura.title, data: futura.end, atrasado: false };
+  if (comPrazo.length) return { titulo: comPrazo[0].title, data: comPrazo[0].end, atrasado: true };
+  const atual = abertas.find((s) => s.status === 'em_andamento');
+  return atual ? { titulo: atual.title, data: null, atrasado: false } : null;
 }

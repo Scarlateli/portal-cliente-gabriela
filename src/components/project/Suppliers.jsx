@@ -13,7 +13,7 @@ export function Suppliers({ db, project, isStudio }) {
   const total = shownList.reduce((s, q) => s + q.amount, 0);
   return (
     <section className="panel">
-      <header className="panel-head"><h2>Fornecedores contratados</h2></header>
+      <header className="panel-head"><h2>Fornecedores Contratados</h2></header>
       {approved.length === 0 ? <Empty text="Nenhum fornecedor contratado ainda. Orçamentos aprovados aparecem aqui." /> : (
         <>
           <div className="sup-total"><Handshake size={16} /> {shownList.length} contratados · {money(total)}</div>

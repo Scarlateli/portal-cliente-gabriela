@@ -1005,3 +1005,16 @@ select b.id, s.project_id, coalesce(b.file_name, 'arquivo'), b.storage_path, 'cl
    and not exists (select 1 from public.sub_arquivos a where a.sub_id = b.id and a.storage_path = b.storage_path);
 update public.stage_subs set pede_arquivos = true
  where storage_path is not null and pede_arquivos = false;
+
+-- ============================================================
+-- Rodada 5 (20/10/2026): nome do cliente por projeto e categorias de documento
+-- ============================================================
+alter table public.projects add column if not exists client_name text;
+update public.projects p
+   set client_name = pr.name
+  from public.profiles pr
+ where pr.id = p.client_id and p.client_name is null;
+
+-- Categorias de documento: saem "Briefing" e "Contrato" (contratos ficam
+-- na aba Contratos e Termos). O que estava nelas vai para Documentos Gerais.
+update public.documents set type = 'geral' where type in ('briefing', 'contrato');

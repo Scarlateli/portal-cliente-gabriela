@@ -46,7 +46,7 @@ export function EtapasEditor({ itens, onChange }) {
         <div className="ee-etapa" key={i}>
           <div className="ee-linha">
             <input
-              placeholder={'Etapa ' + (i + 1) + ' (ex.: Briefing)'}
+              placeholder={'Nome da etapa ' + (i + 1)}
               aria-label={'Título da etapa ' + (i + 1)}
               value={it.title}
               onChange={(e) => mudarEtapa(i, 'title', e.target.value)}
@@ -77,7 +77,7 @@ export function EtapasEditor({ itens, onChange }) {
                 <li className="ee-sub" key={k}>
                   <input
                     className="ee-sub-titulo"
-                    placeholder="Sub-etapa (ex.: Reunião de briefing)"
+                    placeholder="Nome da sub-etapa"
                     aria-label={'Título da sub-etapa ' + (k + 1) + ' da etapa ' + (i + 1)}
                     value={b.title}
                     onChange={(e) => mudarSub(i, k, 'title', e.target.value)}
@@ -111,7 +111,7 @@ export function EtapasEditor({ itens, onChange }) {
                   {b.kind === 'outro' && (
                     <input
                       className="ee-sub-tipo-livre"
-                      placeholder="Nome do tipo (ex.: Aprovação de condomínio)"
+                      placeholder="Nome do tipo"
                       aria-label="Nome do tipo da sub-etapa"
                       maxLength={40}
                       value={b.kindLabel || ''}

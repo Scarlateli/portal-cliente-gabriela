@@ -186,3 +186,25 @@ ou três arquivos de uma vez e deixe um recado. Como studio, confira e use
 
 ### 28. Calendário
 Numa reunião, o atalho agora se chama **Salvar na minha agenda**.
+
+---
+
+## Rodada 5 — visão do studio (20/10)
+
+### 29. Topo do projeto
+No CASA TESTE, abra "Editar dados do projeto" e corrija o **Nome do
+cliente**. Confira a ordem (endereço, cliente, datas) e, à direita, o nome
+da fase com "Prazo – data".
+
+### 30. Linha do Tempo
+Ela abre em "Em andamento". Confira que não aparecem mais "Nº", "Etapa",
+"Responsável: Studio", "Tarefa" nem "Sem prazo". No computador, as setas e
+o lápis aparecem ao passar o mouse sobre a sub-etapa.
+
+### 31. Documentos
+**Enviar Documento** → escolha o arquivo, a categoria e marque "Pedir
+aprovação do cliente" (e "Notificar cliente via e-mail").
+
+### 32. Contratos e Termos
+Use **Editar** num termo. Crie um projeto novo e confira que ele não vem
+mais com um contrato pronto.

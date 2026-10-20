@@ -18,6 +18,7 @@ const camposProjeto = (d) => ({
   address: d.address || '', addressComplement: d.addressComplement || '', neighborhood: d.neighborhood || '',
   city: d.city || '', state: d.state || '', cep: d.cep || '', greeting: (d.greeting || '').trim(),
   start: d.start || '', due: d.due || '',
+  ...(d.clientName !== undefined ? { clientName: String(d.clientName || '').trim() } : {}),
 });
 
 /* Etapas a partir de itens de template (com sub-etapas), no fim da linha do
@@ -49,7 +50,7 @@ export function makeDb(state, set) {
     clientName: (pid) => {
       const p = state.projects.find((x) => x.id === pid);
       const u = p && state.users.find((x) => x.id === p.clientId);
-      return u ? u.name : '—';
+      return (p && p.clientName) || (u ? u.name : '—');
     },
     templates: () => state.templates,
     stages: (pid) => byP('stages', pid).sort((a, b) => a.ord - b.ord),
@@ -107,7 +108,6 @@ export function makeDb(state, set) {
           id: pid, code: data.code, name: data.name, clientId: cid, status: 'em_andamento',
           ...camposProjeto(data), completedAt: null, accessUntil: null,
         }],
-        contracts: [...s.contracts, { id: uid('c'), projectId: pid, kind: 'contrato', name: 'Contrato de prestação de serviços', sigStatus: 'rascunho', provider: null, signer: null, signedAt: null }],
         stages: [...s.stages, ...etapasDeItens(s, pid, data.etapas)],
       };
     }),
@@ -205,6 +205,7 @@ export function makeDb(state, set) {
       set((s) => ({ ...s, contracts: s.contracts.map((x) => x.id === cid ? { ...x, ...patch, respondedAt: new Date().toISOString() } : x) }));
     },
     setContract: (cid, patch) => set((s) => ({ ...s, contracts: s.contracts.map((c) => c.id === cid ? { ...c, ...patch } : c) })),
+    updateContractDoc: (pid, cid, d) => set((s) => ({ ...s, contracts: s.contracts.map((c) => c.id === cid ? { ...c, name: String(d.name || '').trim(), body: String(d.body || '').trim() } : c) })),
     addContractDoc: (pid, d) => set((s) => ({ ...s, contracts: [...s.contracts, { id: uid('c'), projectId: pid, kind: d.kind || 'termo', name: d.name, sigStatus: 'rascunho', provider: null, signer: null, signedAt: null, method: d.method || ((d.kind || 'termo') === 'termo' ? 'aceite' : 'autentique'), body: d.body || '', responseNote: null, respondedAt: null }] })),
     deleteContractDoc: (pid, cid) => set((s) => ({ ...s, contracts: s.contracts.filter((c) => c.id !== cid) })),
     sendToAutentique: () => null, // assinatura real só no modo Supabase

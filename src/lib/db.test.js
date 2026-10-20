@@ -11,7 +11,7 @@ function makeHarness() {
 }
 
 describe('makeDb (mock)', () => {
-  it('addProject cria cliente, projeto e contrato', () => {
+  it('addProject cria cliente e projeto, sem contrato automático (rodada 5)', () => {
     const { db } = makeHarness();
     const before = db().projects().length;
     db().addProject({ code: 'X-1', name: 'Casa Teste', address: 'Rua A', start: '2026-01-01', due: '', clientName: 'Fulano', clientEmail: 'F@Email.com', pass: '1234' });
@@ -20,7 +20,7 @@ describe('makeDb (mock)', () => {
     const p = projects[projects.length - 1];
     expect(p.code).toBe('X-1');
     expect(db().clientName(p.id)).toBe('Fulano');
-    expect(db().contracts(p.id).length).toBe(1);
+    expect(db().contracts(p.id).length).toBe(0);
   });
 
   it('applyTemplate adiciona as etapas do template', () => {

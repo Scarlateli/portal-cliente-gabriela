@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { IS_SUPABASE } from '../../lib/data.js';
-import { ShieldCheck, PenLine, Plus, FileText, Trash2, Send, Check, X, RotateCcw } from 'lucide-react';
+import { ShieldCheck, PenLine, Plus, FileText, Trash2, Send, Check, X, RotateCcw, Pencil } from 'lucide-react';
 import { Empty } from '../atoms.jsx';
 import { SIG_PROVIDERS } from '../../lib/constants.js';
 import { fmt, todayISO, validarArquivo } from '../../lib/helpers.js';
@@ -53,7 +53,7 @@ export function Contract({ db, project, isStudio }) {
   return (
     <section className="panel">
       <header className="panel-head">
-        <h2>Contratos e termos</h2>
+        <h2>Contratos e Termos</h2>
         {isStudio && (
           <button className="btn btn-ghost btn-sm" onClick={() => setAdding(!adding)}>
             <Plus size={14} /> Novo documento
@@ -65,7 +65,7 @@ export function Contract({ db, project, isStudio }) {
         <div className="add-stage">
           <div className="add-row">
             <input
-              placeholder="Nome do documento (ex.: Termo de autorização de imagens)"
+              placeholder="Nome do documento"
               aria-label="Nome do documento"
               value={nf.name}
               onChange={(e) => setNf({ ...nf, name: e.target.value })}
@@ -193,8 +193,10 @@ function ContractDoc({ db, c, isStudio, clientName }) {
   const [motivo, setMotivo] = useState('');
   const [ocupado, setOcupado] = useState(false);
   const [erro, setErro] = useState('');
+  const [editando, setEditando] = useState(false);
   const signed = c.sigStatus === 'assinado';
   const recusado = c.sigStatus === 'recusado';
+  if (editando) return <EditarContrato db={db} c={c} onFechar={() => setEditando(false)} />;
 
   const responder = async (acao, nome, mot) => {
     setErro('');
@@ -211,7 +213,10 @@ function ContractDoc({ db, c, isStudio, clientName }) {
   };
 
   return (
-    <div className="contract-block">
+    <div
+      className={'contract-block contract-' + (signed ? 'signed' : recusado ? 'recusado' : 'pending')}
+      id={'alvo-contrato-' + c.id}
+    >
       <div className={'contract ' + (signed ? 'signed' : recusado ? 'recusado' : 'pending')}>
         <span className="contract-ic">{signed ? <ShieldCheck size={20} /> : <PenLine size={20} />}</span>
         <div className="contract-meta">
@@ -291,6 +296,11 @@ function ContractDoc({ db, c, isStudio, clientName }) {
               onClick={() => db.setContract(c.id, { sigStatus: 'enviado', responseNote: null, respondedAt: null })}
             >
               <RotateCcw size={12} /> Liberar novamente
+            </button>
+          )}
+          {isStudio && !signed && (
+            <button type="button" className="link sm" onClick={() => setEditando(true)}>
+              <Pencil size={12} /> Editar
             </button>
           )}
           {isStudio && (
@@ -438,6 +448,66 @@ function ContractDoc({ db, c, isStudio, clientName }) {
       {!isStudio && c.sigStatus === 'rascunho' && (
         <p className="hint">Este documento ainda não foi liberado pelo studio.</p>
       )}
+    </div>
+  );
+}
+
+/* Editar termo ou contrato (studio): nome, texto e o PDF. Não vale para
+   documento já assinado ou aprovado. */
+function EditarContrato({ db, c, onFechar }) {
+  const [nome, setNome] = useState(c.name || '');
+  const [texto, setTexto] = useState(c.body || '');
+  const [arquivo, setArquivo] = useState(null);
+  const [aviso, setAviso] = useState('');
+  const [salvando, setSalvando] = useState(false);
+  const comTexto = metodoDe(c) !== 'autentique' || !!c.body;
+  const salvar = async () => {
+    if (!nome.trim() || salvando) return;
+    setSalvando(true);
+    try {
+      await db.updateContractDoc(c.projectId, c.id, { name: nome.trim(), body: texto }, arquivo);
+      onFechar();
+    } catch {
+      setSalvando(false);
+    }
+  };
+  return (
+    <div className="contract-block contract-editando" id={'alvo-contrato-' + c.id}>
+      <label className="lab">
+        Nome do documento
+        <input value={nome} onChange={(e) => setNome(e.target.value)} aria-label="Nome do documento" />
+      </label>
+      {comTexto && (
+        <label className="lab">
+          Texto
+          <textarea rows={5} value={texto} onChange={(e) => setTexto(e.target.value)} aria-label="Texto do documento" />
+        </label>
+      )}
+      <label className="lab">
+        {c.storagePath ? 'Trocar o PDF (opcional)' : 'Anexar PDF (opcional)'}
+        <input
+          type="file"
+          accept="application/pdf"
+          onChange={(e) => {
+            const f = e.target.files && e.target.files[0];
+            const problema = f ? validarArquivo(f, { somentePdf: true }) : null;
+            setAviso(problema || '');
+            setArquivo(problema ? null : f || null);
+          }}
+        />
+      </label>
+      {aviso && <p className="micro aviso-upload">{aviso}</p>}
+      {c.sigStatus === 'enviado' && (
+        <p className="hint">Este documento já está com o cliente. Ele passa a ver a versão editada.</p>
+      )}
+      <div className="row">
+        <button type="button" className="btn btn-primary btn-sm" disabled={!nome.trim() || salvando} onClick={salvar}>
+          {salvando ? 'Salvando…' : 'Salvar'}
+        </button>
+        <button type="button" className="btn btn-ghost btn-sm" onClick={onFechar}>
+          Cancelar
+        </button>
+      </div>
     </div>
   );
 }

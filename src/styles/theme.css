@@ -859,3 +859,38 @@ button{color:inherit}
 .cp .envio-acoes{margin-top:10px;align-items:center}
 .cp .doc-editando{padding:12px 14px}
 .cp .doc-pedido{max-width:230px}
+
+/* ===== Rodada 5 (visão do studio, 20/10 à tarde) ===== */
+/* topo: a fase com o próximo prazo */
+.cp .hstat-fase strong{font-family:var(--font-display);font-weight:400;font-size:20px;text-transform:none}
+
+/* linha do tempo mais limpa: tipo em texto discreto; ações aparecem ao
+   passar o mouse no computador (no iPad continuam visíveis, mais leves) */
+.cp .sub-tipo{font-size:11.5px;color:var(--muted)}
+.cp .sub-tipo + .sub-chip{margin-left:2px}
+.cp .sub-acoes{opacity:.55;transition:opacity .15s ease}
+.cp .sub:hover .sub-acoes,.cp .sub:focus-within .sub-acoes{opacity:1}
+@media (hover:hover){.cp .sub-acoes{opacity:0}.cp .sub:hover .sub-acoes,.cp .sub:focus-within .sub-acoes{opacity:1}}
+.cp .subs{border-top:0;padding-top:4px}
+
+/* documentos: formulário de envio */
+.cp .doc-novo{gap:10px}
+.cp .doc-novo-grade{display:grid;grid-template-columns:1.4fr 1fr;gap:12px}
+@media (max-width:640px){.cp .doc-novo-grade{grid-template-columns:1fr}}
+.cp .doc-arquivo{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.cp .doc-arquivo .micro{color:var(--ink)}
+.cp .doc-opcao{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink)}
+.cp .doc-opcao-off{color:var(--muted)}
+
+/* contratos e termos: mesmo cartão das outras partes (envios, etapas) */
+.cp .contract-block{border:1px solid var(--gl-hairline-2);border-radius:6px;background:var(--card);padding:14px 16px;margin-bottom:12px}
+.cp .contract-block .contract{border:0;background:transparent;padding:0;margin-bottom:8px}
+.cp .contract-block .contract-ic{width:36px;height:36px;background:var(--gl-surface-2);border:1px solid var(--gl-hairline)}
+.cp .contract-block .contract-body{margin:8px 0 10px}
+.cp .contract-block .contract-actions{margin-top:4px}
+.cp .contract-signed{border-color:rgba(63,111,74,.35);background:var(--gl-surface-2)}
+.cp .contract-recusado{border-color:var(--gl-vermelho)}
+.cp .contract-editando{display:flex;flex-direction:column;gap:10px}
+.cp .contract-editando textarea{width:100%;border:1px solid var(--line);border-radius:4px;padding:8px 11px;font:inherit;font-size:13px}
+.cp .add-stage .doc-opcao{flex-direction:row;justify-content:flex-start}
+.cp .add-stage .doc-opcao input{width:auto;flex:none;margin:0;padding:0;min-height:0}

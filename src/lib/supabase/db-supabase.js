@@ -78,6 +78,8 @@ export function makeSupabaseDb() {
     greeting: (d.greeting || '').trim() || null,
     start: d.start || null,
     due: d.due || null,
+    // nome do cliente como digitado neste projeto (só grava quando veio)
+    ...(d.clientName !== undefined ? { client_name: String(d.clientName || '').trim() || null } : {}),
   });
 
   // Chama uma Edge Function e devolve o corpo da resposta. Se a função
@@ -223,14 +225,15 @@ export function makeSupabaseDb() {
       must(error);
       return data;
     },
+    // nome do cliente deste projeto; projetos antigos caem no nome do perfil
     clientName: async (pid) => {
       const { data, error } = await supabase
         .from('projects')
-        .select('client:profiles!projects_client_id_fkey(name)')
+        .select('client_name, client:profiles!projects_client_id_fkey(name)')
         .eq('id', pid)
         .single();
-      if (error || !data || !data.client) return '—';
-      return data.client.name || '—';
+      if (error || !data) return '—';
+      return data.client_name || (data.client && data.client.name) || '—';
     },
     templates: async () => {
       const { data, error } = await supabase
@@ -522,15 +525,9 @@ export function makeSupabaseDb() {
         .select('id')
         .single();
       must(pErr);
-      // 3) contrato em rascunho
-      const { error: cErr } = await supabase.from('contracts').insert({
-        project_id: proj.id,
-        kind: 'contrato',
-        name: 'Contrato de prestação de serviços',
-        sig_status: 'rascunho',
-      });
-      must(cErr);
-      // 4) etapas escolhidas no cadastro (template ajustado antes do envio)
+      // (rodada 5: o projeto não nasce mais com um contrato em rascunho; a
+      // Gabriela sobe o contrato assinado quando o cliente fecha)
+      // 3) etapas escolhidas no cadastro (template ajustado antes do envio)
       if (data.etapas && data.etapas.length) await inserirEtapas(proj.id, data.etapas);
       // devolve a senha provisória do cliente e se o e-mail foi enviado
       return {
@@ -777,6 +774,7 @@ export function makeSupabaseDb() {
         signedAt: 'signed_at',
         method: 'method',
         body: 'body',
+        name: 'name',
         responseNote: 'response_note',
         respondedAt: 'responded_at',
       };
@@ -905,6 +903,22 @@ export function makeSupabaseDb() {
         p_motivo: motivo || null,
       });
       must(error);
+    },
+    // editar termo/contrato: nome, texto e, se vier, um PDF novo no lugar
+    updateContractDoc: async (pid, cid, d, file) => {
+      const payload = { name: String(d.name || '').trim(), body: String(d.body || '').trim() || null };
+      let antigo = null;
+      if (file) {
+        const { data: c } = await supabase.from('contracts').select('storage_path').eq('id', cid).maybeSingle();
+        antigo = c && c.storage_path;
+        const path = pid + '/contratos/' + Date.now() + '-' + nomeSeguro(file.name);
+        const { error: upErr } = await supabase.storage.from('documentos').upload(path, file);
+        if (upErr) throw upErr;
+        payload.storage_path = path;
+      }
+      const { error } = await supabase.from('contracts').update(payload).eq('id', cid);
+      must(error);
+      if (antigo) await supabase.storage.from('documentos').remove([antigo]);
     },
     addContractDoc: async (pid, d, file) => {
       let storage_path = null;

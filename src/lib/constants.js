@@ -29,12 +29,12 @@ export const STAGE_CATEGORIES = [
   'Outro',
 ];
 
+// Categorias de documento (rodada 5: saem Briefing e Contrato; contratos
+// ficam em Contratos e Termos). Tipos antigos aparecem como Documentos Gerais.
 export const DOC_TYPES = [
-  { id: 'ata', label: 'Ata de reunião' },
-  { id: 'briefing', label: 'Briefing' },
-  { id: 'contrato', label: 'Contrato' },
-  { id: 'planta', label: 'Plantas e projetos' },
-  { id: 'geral', label: 'Documentos gerais' },
+  { id: 'ata', label: 'Atas de Reunião' },
+  { id: 'planta', label: 'Entregas de Projeto' },
+  { id: 'geral', label: 'Documentos Gerais' },
 ];
 
 export const SEGMENTS = [

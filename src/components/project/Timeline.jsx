@@ -62,11 +62,9 @@ export function Timeline({ db, project, isStudio, alvo = null, abrir = () => {} 
   const [salvandoEtapa, setSalvandoEtapa] = useState(false);
   const [nf, setNf] = useState(etapaNova);
   const [tplSel, setTplSel] = useState('');
-  // Cliente abre em "Em andamento" (o que importa agora); se não houver nada
-  // em andamento, cai em "Todas" para a tela não começar vazia.
-  const [filter, setFilter] = useState(() =>
-    !isStudio && stages.some((st) => st.status === 'em_andamento') ? 'em_andamento' : 'todas',
-  );
+  // Sempre abre em "Em andamento" (pedido da Gabriela, rodada 5), para o
+  // studio e para o cliente. Vindo do sino, o filtro se ajusta ao item.
+  const [filter, setFilter] = useState('em_andamento');
   const templates = db.templates();
   const tplPreview = templates.find((t) => t.id === tplSel);
   const shown = filter === 'todas' ? stages : stages.filter((s) => s.status === filter);
@@ -102,7 +100,7 @@ export function Timeline({ db, project, isStudio, alvo = null, abrir = () => {} 
   return (
     <section className="panel">
       <header className="panel-head">
-        <h2>Etapas do projeto</h2>
+        <h2>Etapas do Projeto</h2>
         {isStudio && (
           <div className="head-actions">
             <select className="mini-select" aria-label="Usar template" value={tplSel} onChange={(e) => setTplSel(e.target.value)}>
@@ -229,7 +227,13 @@ export function Timeline({ db, project, isStudio, alvo = null, abrir = () => {} 
       {stages.length === 0 ? (
         <Empty text="Nenhuma etapa ainda. Use um template ou adicione manualmente." />
       ) : shown.length === 0 ? (
-        <Empty text="Nenhuma etapa neste filtro." />
+        <Empty
+          text={
+            filter === 'em_andamento'
+              ? 'Nenhuma etapa em andamento agora. Veja as Futuras ou Todas.'
+              : 'Nenhuma etapa neste filtro.'
+          }
+        />
       ) : (
         <ol className="timeline" key={filter}>
           {shown.map((s) => (
@@ -237,7 +241,6 @@ export function Timeline({ db, project, isStudio, alvo = null, abrir = () => {} 
               key={s.id}
               db={db}
               s={s}
-              n={stages.indexOf(s) + 1}
               isStudio={isStudio}
               arquivos={arquivos}
               abrir={abrir}
@@ -254,7 +257,7 @@ export function Timeline({ db, project, isStudio, alvo = null, abrir = () => {} 
 function EtapaCampos({ v, set }) {
   return (
     <>
-      <input placeholder="Título da etapa (ex.: Briefing)" aria-label="Título da etapa" value={v.title} onChange={(e) => set({ ...v, title: e.target.value })} />
+      <input placeholder="Nome da etapa" aria-label="Título da etapa" value={v.title} onChange={(e) => set({ ...v, title: e.target.value })} />
       <div className="add-row">
         <label className="inline-lab">
           Tipo
@@ -321,7 +324,7 @@ function SubForm({ inicial, onSalvar, onCancelar, rotuloSalvar = 'Salvar', limpa
     <div className="sub-form">
       <input
         className="sub-form-titulo"
-        placeholder="Título da sub-etapa"
+        placeholder="Nome da sub-etapa"
         aria-label="Título da sub-etapa"
         value={sd.title}
         onChange={(e) => setSd({ ...sd, title: e.target.value })}
@@ -343,7 +346,7 @@ function SubForm({ inicial, onSalvar, onCancelar, rotuloSalvar = 'Salvar', limpa
         {sd.kind === 'outro' && (
           <label className="inline-lab">
             Nome do tipo
-            <input maxLength={40} placeholder="ex.: Aprovação de condomínio" value={sd.kindLabel || ''} onChange={(e) => setSd({ ...sd, kindLabel: e.target.value })} />
+            <input maxLength={40} placeholder="Nome do tipo" value={sd.kindLabel || ''} onChange={(e) => setSd({ ...sd, kindLabel: e.target.value })} />
           </label>
         )}
         <label className="inline-lab">
@@ -418,14 +421,21 @@ function SubForm({ inicial, onSalvar, onCancelar, rotuloSalvar = 'Salvar', limpa
 }
 
 /* Tipo, responsável e prazo de uma sub-etapa, sempre visíveis e com nome. */
+/* Tipo e responsável, só quando dizem algo: "Tarefa" e "Studio" são o
+   padrão e não aparecem (rodada 5, para a lista ficar mais limpa). */
 function SubResumo({ b, comPrazo = true }) {
+  const tipo = b.kind && b.kind !== 'tarefa' ? rotuloTipoSub(b) : null;
+  const resp = b.responsible && b.responsible !== 'studio' ? b.responsible : null;
+  if (!tipo && !resp && !(comPrazo && b.due)) return null;
   return (
     <span className="sub-chips">
-      <span className="sub-chip">{rotuloTipoSub(b)}</span>
-      <span className={'sub-chip sub-resp sub-resp-' + (b.responsible || 'studio')}>
-        <User size={10} /> {ROTULO_RESP[b.responsible] || 'Studio'}
-      </span>
-      {comPrazo && <SubPrazo b={b} />}
+      {tipo && <span className="sub-tipo">{tipo}</span>}
+      {resp && (
+        <span className={'sub-chip sub-resp sub-resp-' + resp}>
+          <User size={10} /> {ROTULO_RESP[resp]}
+        </span>
+      )}
+      {comPrazo && b.due && <SubPrazo b={b} />}
     </span>
   );
 }
@@ -488,7 +498,7 @@ function SubItem({ db, s, b, i, total, isStudio, arquivos = [], abrir }) {
           )}
         </span>
       </div>
-      <SubPrazo b={b} />
+      {b.due && <SubPrazo b={b} />}
       {isStudio && (
         <span className="sub-acoes">
           <button className="icon-x" disabled={i === 0} onClick={() => db.moveSub(s.id, b.id, -1)} aria-label={'Subir ' + b.title}>
@@ -523,7 +533,7 @@ function datasEtapa(s) {
   return partes.length ? partes.join(' · ') : 'Sem datas definidas';
 }
 
-function StageItem({ db, s, n, isStudio, arquivos, abrir, projectId }) {
+function StageItem({ db, s, isStudio, arquivos, abrir, projectId }) {
   const [editing, setEditing] = useState(false);
   const [ef, setEf] = useState(s);
   const [addingSub, setAddingSub] = useState(false);
@@ -548,7 +558,6 @@ function StageItem({ db, s, n, isStudio, arquivos, abrir, projectId }) {
     });
     setEditing(false);
   };
-  const ordinal = 'Nº ' + String(n).padStart(2, '0');
 
   if (editing) {
     return (
@@ -579,7 +588,6 @@ function StageItem({ db, s, n, isStudio, arquivos, abrir, projectId }) {
         {s.status === 'concluida' ? <Check size={13} /> : s.status === 'em_andamento' ? <span className="tl-dot" /> : null}
       </span>
       <div className="tl-body">
-        <span className="tl-ordinal">{ordinal}</span>
         <div className="tl-top">
           <h3>{s.title}</h3>
           <span className="tl-date">
@@ -587,15 +595,19 @@ function StageItem({ db, s, n, isStudio, arquivos, abrir, projectId }) {
           </span>
         </div>
         <div className="tl-meta">
-          <span className="tag">{s.category}</span>
+          {/* rodada 5: na etapa macro não se repete "Etapa" nem o studio
+              como responsável; aparece só o que acrescenta */}
+          {s.category && s.category !== 'Etapa' && <span className="tag">{s.category}</span>}
           {s.category === 'Reunião' && (
             <span className="tag tag-loc">
               {s.presencial ? <MapPin size={11} /> : <Video size={11} />} {s.presencial ? 'Presencial' : 'Online'}
             </span>
           )}
-          <span className={'tag tag-owner owner-' + (s.owner === 'client' ? 'client' : 'studio')}>
-            <User size={11} /> Responsável: {s.owner === 'client' ? 'Cliente' : 'Studio'}
-          </span>
+          {s.owner === 'client' && (
+            <span className="tag tag-owner owner-client">
+              <User size={11} /> Responsável: Cliente
+            </span>
+          )}
           {s.rescheduledFrom && (
             <span className="tag tag-resched">
               <CalendarClock size={11} /> Reagendada de {fmt(s.rescheduledFrom)}
@@ -645,9 +657,6 @@ function StageItem({ db, s, n, isStudio, arquivos, abrir, projectId }) {
 
         {(ss.total > 0 || isStudio) && (
           <div className="subs">
-            <div className="subs-head">
-              <ListChecks size={13} /> Sub-etapas{ss.total > 0 ? ' · ' + ss.done + ' de ' + ss.total + ' concluídas' : ''}
-            </div>
             {ss.total > 0 && (
               <ul className="sub-list">
                 {(s.subs || []).map((b, i) => (

@@ -20,7 +20,7 @@ export function EnviosCliente({ db, project, isStudio, abrir = () => {} }) {
   return (
     <section className="panel">
       <header className="panel-head">
-        <h2>Envios do cliente</h2>
+        <h2>Envios do Cliente</h2>
         {isStudio && !criando && (
           <button type="button" className="btn btn-ghost btn-sm" onClick={() => setCriando(true)} disabled={!stages.length}>
             <Plus size={14} /> Novo pedido de arquivos

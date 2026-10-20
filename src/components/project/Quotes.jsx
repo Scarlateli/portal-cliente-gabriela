@@ -69,7 +69,7 @@ export function Quotes({ db, project, isStudio }) {
   return (
     <section className="panel">
       <header className="panel-head">
-        <h2>Orçamentos de fornecedores</h2>
+        <h2>Orçamentos de Fornecedores</h2>
         {isStudio && (
           <button className="btn btn-ghost btn-sm" onClick={() => setAdding(!adding)}>
             <Plus size={14} /> Novo orçamento

@@ -8,6 +8,7 @@ import { CamposEndereco } from './CamposEndereco.jsx';
    `acoes`: outros botões do studio (reenviar acesso, finalizar), que entram
    na mesma linha e no mesmo tamanho. */
 export function GerenciarProjeto({ db, project, onExcluido, acoes = null }) {
+  const nomeCliente = db.clientName ? db.clientName(project.id) : '';
   const [aberto, setAberto] = useState(null); // 'editar' | 'excluir' | null
   const [f, setF] = useState(null);
   const [salvando, setSalvando] = useState(false);
@@ -24,6 +25,7 @@ export function GerenciarProjeto({ db, project, onExcluido, acoes = null }) {
       city: project.city || '',
       state: project.state || '',
       greeting: project.greeting || '',
+      clientName: nomeCliente && nomeCliente !== '—' ? nomeCliente : '',
       start: project.start || '',
       due: project.due || '',
     });
@@ -98,12 +100,16 @@ export function GerenciarProjeto({ db, project, onExcluido, acoes = null }) {
               Entrega prevista
               <input type="date" value={f.due} onChange={campo('due')} />
             </label>
-            <label className="lab full">
+            <label className="lab">
+              Nome do cliente
+              <input value={f.clientName} onChange={campo('clientName')} placeholder="Nome do cliente" aria-label="Nome do cliente" />
+            </label>
+            <label className="lab">
               Como o portal cumprimenta (opcional)
               <input
                 value={f.greeting}
                 onChange={campo('greeting')}
-                placeholder="ex.: Marília e Vitor · Família Silva"
+                placeholder="ex.: Família Silva"
                 aria-label="Como o portal cumprimenta o cliente"
                 maxLength={60}
               />

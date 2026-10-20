@@ -439,3 +439,53 @@ algo (`drop function`, `drop policy`) e, sem resposta, devolve "cancelled".
 Foi o que travou a Etapa 8 e a 1ª tentativa desta rodada. Por isso a função
 nova se chama `confirmar_documento` e a antiga, `responder_documento`, ficou
 no banco (sem uso pelo código novo; pode ser apagada à mão depois).
+
+## Rodada 5 — visão do studio (revisão de 20/10/2026, à tarde)
+
+A visão do cliente vem numa rodada separada, depois desta.
+
+**Topo do projeto**
+- Nome do cliente agora é o digitado **neste** projeto (`projects.client_name`).
+  Antes vinha do perfil, que guarda o nome do primeiro cadastro daquele
+  e-mail; por isso o CASA TESTE mostrava "Lusinalva". Projetos existentes
+  receberam o nome do perfil; corrija em "Editar dados do projeto", que
+  agora tem o campo "Nome do cliente".
+- Ordem: endereço, cliente, datas ("Data de Início" e "Previsão de
+  Entrega"). O vocativo não aparece mais no topo do studio.
+- O quadro da direita mostra a **fase** (etapa macro) com o próximo prazo e
+  "Prazo – data" embaixo; sub-etapas não entram mais nessa conta.
+- Textos de exemplo dos formulários ficaram genéricos ("Nome do cliente",
+  "Rua e número"…), sem nomes reais.
+
+**Linha do Tempo**
+- Sempre abre em "Em andamento" (studio e cliente).
+- Saíram o "Nº 01", a linha "Sub-etapas · 0 de 6 concluídas", a etiqueta
+  "Etapa" e "Responsável: Studio" das etapas macro.
+- Nas sub-etapas, "Tarefa", "Studio" e "Sem prazo" não aparecem (são o
+  padrão); o tipo virou texto discreto; as setas, o lápis e o X aparecem ao
+  passar o mouse no computador (no iPad continuam visíveis, mais leves).
+- A Gabriela ainda acha a lista poluída e vai pensar num formato melhor.
+
+**Documentos**
+- Categorias: Atas de Reunião, Entregas de Projeto e Documentos Gerais.
+  Briefing e Contrato saíram; o que estava nelas passou para Documentos
+  Gerais.
+- "Enviar Documento" abre um formulário claro: arquivo, categoria, "Pedir
+  aprovação do cliente" e "Notificar cliente via e-mail".
+- Pedido ao cliente: só "Sem pedido" ou "Pedir aprovação do cliente"
+  (documento antigo que pedia assinatura continua com a opção).
+
+**Contratos e Termos**
+- O cartão segue o mesmo padrão das outras partes, com o texto, o motivo
+  de recusa e as ações dentro dele. Botão **Editar** (nome, texto, PDF),
+  exceto em documento já assinado ou aprovado.
+- Projeto novo **não** cria mais o contrato em rascunho; a Gabriela sobe o
+  contrato quando o cliente fecha. Os rascunhos que já existem podem ser
+  excluídos pela própria tela.
+
+**Títulos** com iniciais maiúsculas: Linha do Tempo, Contratos e Termos,
+Etapas do Projeto, Envios do Cliente, Novo Projeto etc.
+
+**Banco** (aplicado em 20/10, antes do código):
+`supabase/sql/2026-10-20-rodada5-nome-do-cliente-e-categorias.sql`, também
+no fim do `schema.sql`.

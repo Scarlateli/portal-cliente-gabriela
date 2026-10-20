@@ -64,7 +64,7 @@ export function PrintView({ db: baseDb, pid, onClose }) {
   const pay = db.payment(pid);
   const quotes = db.quotes(pid);
   const suppliers = db.suppliers(pid);
-  const typeLabel = (id) => (DOC_TYPES.find((t) => t.id === id) || { label: 'Geral' }).label;
+  const typeLabel = (id) => (DOC_TYPES.find((t) => t.id === id) || { label: 'Documentos Gerais' }).label;
   const stLabel = (id) => (STAGE_STATUS.find((s) => s.id === id) || { label: id }).label;
   return (
     <div className="printwrap">

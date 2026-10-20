@@ -48,12 +48,12 @@ describe('pendências da rodada 4', () => {
     ]);
   });
 
-  it('documento pedindo confirmação aparece como "Confirmar"', () => {
+  it('documento pedindo aprovação aparece como "Aprovar"', () => {
     const r = calcularPendencias(
       { role: 'client', projects: P, documents: [{ id: 'd1', projectId: 'p1', name: 'Ata 1', approval: 'ok' }] },
       HOJE,
     );
-    expect(r[0]).toMatchObject({ texto: 'Confirmar: Ata 1', alvo: 'doc-d1' });
+    expect(r[0]).toMatchObject({ texto: 'Aprovar: Ata 1', alvo: 'doc-d1' });
   });
 });
 
@@ -129,7 +129,7 @@ describe('telas', () => {
       responderDocumento: vi.fn(async () => {}),
     };
     render(<Documents db={db} project={{ id: 'p1' }} isStudio={false} />);
-    expect(screen.getByText(/confirme que está de acordo/)).toBeTruthy();
+    expect(screen.getByText(/pede a sua aprovação/)).toBeTruthy();
     await userEvent.click(screen.getByText('Pedir ajustes'));
     await userEvent.type(screen.getByLabelText('O que precisa ser ajustado'), 'Data errada');
     await userEvent.click(screen.getByText('Enviar pedido de ajustes'));

@@ -1,5 +1,5 @@
 import { consumirPedido, destacarAlvo } from '../../lib/pendenciasContexto.js';
-import { proximoPrazo } from '../../lib/pendencias.js';
+import { proximaEtapa } from '../../lib/pendencias.js';
 import { useState, useEffect } from 'react';
 import { GerenciarProjeto } from './GerenciarProjeto.jsx';
 import {
@@ -36,10 +36,10 @@ import { Suppliers } from './Suppliers.jsx';
 const STUDIO_WHATSAPP = 'https://wa.me/5511936209087';
 
 const TABS = [
-  { id: 'timeline', label: 'Linha do tempo', I: GitCommitVertical },
+  { id: 'timeline', label: 'Linha do Tempo', I: GitCommitVertical },
   { id: 'calendar', label: 'Calendário', I: CalendarDays },
   { id: 'docs', label: 'Documentos', I: FileText },
-  { id: 'contract', label: 'Contratos e termos', I: PenLine },
+  { id: 'contract', label: 'Contratos e Termos', I: PenLine },
   { id: 'payments', label: 'Pagamentos', I: Wallet },
   { id: 'quotes', label: 'Orçamentos', I: ClipboardList },
   { id: 'suppliers', label: 'Fornecedores', I: Handshake },
@@ -163,7 +163,7 @@ function ProjectInner({
   }, [project.id]);
   const expired = project.accessUntil && todayISO() > project.accessUntil;
   const heroStages = db.stages(project.id);
-  const prazo = proximoPrazo(heroStages, todayISO());
+  const prazo = proximaEtapa(heroStages, todayISO());
   const [resent, setResent] = useState(null);
   const saudacao = vocativo(project.greeting, user && user.name);
   const [resending, setResending] = useState(false);
@@ -204,16 +204,14 @@ function ProjectInner({
                 <Building2 size={14} /> {enderecoCurto(project)}
               </span>
             )}
-            <span>
-              <CalendarDays size={14} /> Início {fmt(project.start)} · Entrega prevista{' '}
-              {fmt(project.due)}
-            </span>
             {isStudio && (
               <span>
                 <User size={14} /> Cliente: {db.clientName(project.id)}
-                {project.greeting ? ' · o portal cumprimenta “' + project.greeting + '”' : ''}
               </span>
             )}
+            <span>
+              <CalendarDays size={14} /> Data de Início: {fmt(project.start)} · Previsão de Entrega: {fmt(project.due)}
+            </span>
           </div>
           <div className="hero-stats">
             <div className="hstat">
@@ -223,9 +221,16 @@ function ProjectInner({
               </strong>
               <em>etapas concluídas</em>
             </div>
-            <div className={'hstat' + (prazo && prazo.atrasado ? ' hstat-atrasado' : '')}>
-              <strong>{prazo ? fmt(prazo.data) : '—'}</strong>
-              <em>{prazo ? (prazo.atrasado ? 'prazo vencido · ' : 'próximo prazo · ') + prazo.titulo : 'próximo prazo'}</em>
+            {/* a fase com o próximo prazo e a data dela (só etapas macro) */}
+            <div className={'hstat hstat-fase' + (prazo && prazo.atrasado ? ' hstat-atrasado' : '')}>
+              <strong>{prazo ? prazo.titulo : '—'}</strong>
+              <em>
+                {!prazo
+                  ? 'Próxima etapa'
+                  : prazo.data
+                    ? (prazo.atrasado ? 'Prazo vencido – ' : 'Prazo – ') + fmt(prazo.data)
+                    : 'Sem prazo definido'}
+              </em>
             </div>
           </div>
         </div>
@@ -288,7 +293,7 @@ function ProjectInner({
         {!isStudio && expired ? (
           <section className="panel">
             <header className="panel-head">
-              <h2>Acesso encerrado</h2>
+              <h2>Acesso Encerrado</h2>
             </header>
             <p className="hint">
               Seu acesso a este projeto foi encerrado em {fmt(project.accessUntil)}, um mês após a

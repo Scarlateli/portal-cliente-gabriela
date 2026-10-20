@@ -8,15 +8,15 @@ export function CamposEndereco({ f, setF }) {
     <>
       <label className="lab">
         Rua e número
-        <input value={f.address || ''} onChange={campo('address')} placeholder="ex.: Rua Francisca Júlia, 215" aria-label="Rua e número" autoComplete="off" />
+        <input value={f.address || ''} onChange={campo('address')} placeholder="Rua e número" aria-label="Rua e número" autoComplete="off" />
       </label>
       <label className="lab">
         Complemento
-        <input value={f.addressComplement || ''} onChange={campo('addressComplement')} placeholder="ex.: Apto 72, bloco B" aria-label="Complemento" autoComplete="off" />
+        <input value={f.addressComplement || ''} onChange={campo('addressComplement')} placeholder="Apto, bloco, casa" aria-label="Complemento" autoComplete="off" />
       </label>
       <label className="lab">
         Bairro
-        <input value={f.neighborhood || ''} onChange={campo('neighborhood')} placeholder="ex.: Santana" aria-label="Bairro" autoComplete="off" />
+        <input value={f.neighborhood || ''} onChange={campo('neighborhood')} placeholder="Bairro" aria-label="Bairro" autoComplete="off" />
       </label>
       <label className="lab">
         CEP
@@ -24,14 +24,14 @@ export function CamposEndereco({ f, setF }) {
       </label>
       <label className="lab">
         Cidade
-        <input value={f.city || ''} onChange={campo('city')} placeholder="ex.: São Paulo" aria-label="Cidade" autoComplete="off" />
+        <input value={f.city || ''} onChange={campo('city')} placeholder="Cidade" aria-label="Cidade" autoComplete="off" />
       </label>
       <label className="lab lab-uf">
         Estado
         <input
           value={f.state || ''}
           onChange={campo('state', (v) => v.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 2))}
-          placeholder="SP"
+          placeholder="UF"
           aria-label="Estado (sigla)"
           autoComplete="off"
         />

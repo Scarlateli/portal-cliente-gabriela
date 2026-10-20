@@ -125,7 +125,7 @@ describe('editor de templates', () => {
 describe('linha do tempo', () => {
   const projeto = { id: 'p1' };
   const etapa = {
-    id: 's9', projectId: 'p1', ord: 1, title: 'Briefing', category: 'Etapa', status: 'a_fazer', owner: 'studio', start: '', end: '',
+    id: 's9', projectId: 'p1', ord: 1, title: 'Briefing', category: 'Etapa', status: 'em_andamento', owner: 'studio', start: '', end: '',
     subs: [
       { id: 'b1', title: 'Escopo de projeto', kind: 'entrega', responsible: 'studio', due: '', done: false },
       { id: 'b2', title: 'Referências dos clientes', kind: 'entrega', responsible: 'cliente', due: '2026-01-10', done: false },
@@ -140,11 +140,13 @@ describe('linha do tempo', () => {
     deleteSub: vi.fn(),
   });
 
-  it('mostra responsável e prazo de cada sub-etapa com nome', () => {
+  it('mostra só o que acrescenta: cliente como responsável e o prazo quando existe', () => {
     render(<Timeline db={fakeDb()} project={projeto} isStudio />);
     const [l1, l2] = screen.getAllByRole('listitem').filter((li) => li.classList.contains('sub'));
-    expect(within(l1).getByText('Studio')).toBeTruthy();
-    expect(within(l1).getByText('Sem prazo')).toBeTruthy();
+    // rodada 5: "Studio" e "Sem prazo" são o padrão e não aparecem
+    expect(within(l1).queryByText('Studio')).toBeNull();
+    expect(within(l1).queryByText('Sem prazo')).toBeNull();
+    expect(within(l1).getByText('Entrega')).toBeTruthy();
     expect(within(l2).getByText('Cliente')).toBeTruthy();
     expect(within(l2).getByText(/Atrasada · venceu 10\/01\/2026/)).toBeTruthy();
   });
