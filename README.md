@@ -11,7 +11,10 @@ cada projeto junto com o cliente. Em produção em
   obrigatória no primeiro acesso). Edita os dados do projeto e pode excluí-lo.
 - Monta a linha do tempo com etapas e sub-etapas, a partir de templates
   (editáveis, com sub-etapas) ajustados já no cadastro.
-- Publica documentos pedindo ao cliente só um OK ou uma assinatura.
+- Publica documentos pedindo ao cliente uma confirmação ou uma assinatura
+  (o cliente também pode pedir ajustes) e pede arquivos ao cliente
+  ("Envios do cliente", vários arquivos por pedido).
+- Pede ao cliente a aprovação de uma etapa, pelo portal, sem contrato.
 - Contratos e termos: termo aprovado ou recusado com um botão; contrato
   assinado dentro do portal ou pela Autentique (validade jurídica).
 - Orçamentos com fornecedores do cadastro do studio; o cliente pode aprovar,
@@ -96,8 +99,9 @@ docs/                     deploy, status e pendências, roteiro de validação
   aplicar num banco que já existe.
 - O cliente nunca altera contratos, termos, documentos ou orçamentos
   diretamente: responde pelas funções `responder_documento`,
-  `responder_contrato` e `decidir_orcamento`, que conferem a posse e mexem só
-  no campo da ação.
+  `responder_contrato`, `decidir_orcamento`, `confirmar_documento` e
+  `responder_etapa`, que conferem a posse e mexem só no campo da ação. Os
+  arquivos que ele manda vão para `sub_arquivos`, com regras próprias.
 
 ## Edge Functions
 
@@ -108,6 +112,7 @@ docs/                     deploy, status e pendências, roteiro de validação
 | `autentique-send` | envia o contrato para assinatura na Autentique |
 | `autentique-check` | consulta o status da assinatura |
 | `autentique-webhook` | recebe avisos da Autentique (redundância) |
+| `avisar-cliente` | e-mail curto ao cliente quando o studio pede algo (confirmar, aprovar, enviar arquivos) |
 
 ## Documentação
 

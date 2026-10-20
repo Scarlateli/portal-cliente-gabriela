@@ -217,3 +217,19 @@ drop policy if exists storage_studio_all on storage.objects;
 create policy storage_studio_all on storage.objects as permissive for all to public
   using (((bucket_id = 'documentos'::text) and is_studio()))
   with check (((bucket_id = 'documentos'::text) and is_studio()));
+
+-- rodada 4 (20/10/2026): arquivos dos envios do cliente
+drop policy if exists sub_arquivos_read on public.sub_arquivos;
+create policy sub_arquivos_read on public.sub_arquivos as permissive for select to authenticated
+  using (((select is_studio()) or owns_project(project_id)));
+drop policy if exists sub_arquivos_insert on public.sub_arquivos;
+create policy sub_arquivos_insert on public.sub_arquivos as permissive for insert to authenticated
+  with check (((select is_studio()) or ((sent_by = 'client'::text) and owns_project(project_id)
+    and (storage_path ~~ ((project_id)::text || '/%'::text))
+    and (exists (select 1 from (stage_subs b join stages s on ((s.id = b.stage_id)))
+      where ((b.id = sub_arquivos.sub_id) and (s.project_id = sub_arquivos.project_id)
+        and (b.responsible = 'cliente'::text) and (not b.done)))))));
+drop policy if exists sub_arquivos_delete on public.sub_arquivos;
+create policy sub_arquivos_delete on public.sub_arquivos as permissive for delete to authenticated
+  using (((select is_studio()) or ((sent_by = 'client'::text) and owns_project(project_id)
+    and (exists (select 1 from stage_subs b where ((b.id = sub_arquivos.sub_id) and (not b.done)))))));

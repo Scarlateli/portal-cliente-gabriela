@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { AprovacaoEtapa } from './AprovacaoEtapa.jsx';
 import {
   Plus,
   Clock,
@@ -16,10 +17,9 @@ import {
   PenLine,
   Trash2,
   Save,
-  Paperclip,
-  Upload,
   ArrowUp,
   ArrowDown,
+  FolderUp,
 } from 'lucide-react';
 import { StatusPill, Empty } from '../atoms.jsx';
 import { STAGE_STATUS, STAGE_CATEGORIES } from '../../lib/constants.js';
@@ -55,8 +55,9 @@ const FILTERS = [
   ['todas', 'Todas'],
 ];
 
-export function Timeline({ db, project, isStudio }) {
+export function Timeline({ db, project, isStudio, alvo = null, abrir = () => {} }) {
   const stages = db.stages(project.id);
+  const arquivos = (db.subArquivos && db.subArquivos(project.id)) || [];
   const [adding, setAdding] = useState(false);
   const [salvandoEtapa, setSalvandoEtapa] = useState(false);
   const [nf, setNf] = useState(etapaNova);
@@ -69,6 +70,15 @@ export function Timeline({ db, project, isStudio }) {
   const templates = db.templates();
   const tplPreview = templates.find((t) => t.id === tplSel);
   const shown = filter === 'todas' ? stages : stages.filter((s) => s.status === filter);
+  // vindo do sino: se o item pedido está escondido pelo filtro, mostra todas
+  useEffect(() => {
+    if (!alvo) return;
+    const visivel = shown.some(
+      (s) => 'etapa-' + s.id === alvo || (s.subs || []).some((b) => 'sub-' + b.id === alvo),
+    );
+    if (!visivel) setFilter('todas');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [alvo]);
 
   const salvarComoTemplate = () => {
     const name = window.prompt('Nome do template (as etapas e sub-etapas atuais viram um modelo reutilizável):');
@@ -223,7 +233,16 @@ export function Timeline({ db, project, isStudio }) {
       ) : (
         <ol className="timeline" key={filter}>
           {shown.map((s) => (
-            <StageItem key={s.id} db={db} s={s} n={stages.indexOf(s) + 1} isStudio={isStudio} />
+            <StageItem
+              key={s.id}
+              db={db}
+              s={s}
+              n={stages.indexOf(s) + 1}
+              isStudio={isStudio}
+              arquivos={arquivos}
+              abrir={abrir}
+              projectId={project.id}
+            />
           ))}
         </ol>
       )}
@@ -348,6 +367,27 @@ function SubForm({ inicial, onSalvar, onCancelar, rotuloSalvar = 'Salvar', limpa
           </label>
         )}
       </div>
+      <label className="sub-form-pede">
+        <input
+          type="checkbox"
+          checked={!!sd.pedeArquivos}
+          onChange={(e) =>
+            setSd({ ...sd, pedeArquivos: e.target.checked, responsible: e.target.checked ? 'cliente' : sd.responsible })
+          }
+        />{' '}
+        Pedir arquivos ao cliente (ele envia pela aba Documentos → Envios do cliente)
+      </label>
+      {sd.pedeArquivos && (
+        <textarea
+          className="sub-form-instrucoes"
+          rows={2}
+          maxLength={600}
+          placeholder="O que o cliente deve mandar (ex.: plantas do apartamento, fotos de cada ambiente)"
+          aria-label="Instruções do pedido de arquivos"
+          value={sd.instructions || ''}
+          onChange={(e) => setSd({ ...sd, instructions: e.target.value })}
+        />
+      )}
       {sd.kind === 'reuniao' && (
         <div className="sub-form-reuniao">
           <div className="seg">
@@ -378,22 +418,30 @@ function SubForm({ inicial, onSalvar, onCancelar, rotuloSalvar = 'Salvar', limpa
 }
 
 /* Tipo, responsável e prazo de uma sub-etapa, sempre visíveis e com nome. */
-function SubResumo({ b }) {
-  const pz = prazoSub(b);
+function SubResumo({ b, comPrazo = true }) {
   return (
     <span className="sub-chips">
       <span className="sub-chip">{rotuloTipoSub(b)}</span>
       <span className={'sub-chip sub-resp sub-resp-' + (b.responsible || 'studio')}>
         <User size={10} /> {ROTULO_RESP[b.responsible] || 'Studio'}
       </span>
-      <span className={'sub-chip sub-prazo sub-prazo-' + pz.estado}>
-        {pz.estado === 'atrasado' ? <AlertTriangle size={10} /> : <CalendarDays size={10} />} {pz.texto}
-      </span>
+      {comPrazo && <SubPrazo b={b} />}
     </span>
   );
 }
 
-function SubItem({ db, s, b, i, total, isStudio }) {
+/* Prazo da sub-etapa; na linha do tempo fica alinhado à direita, numa
+   coluna só, para ser fácil de bater o olho (pedido da Gabriela). */
+function SubPrazo({ b }) {
+  const pz = prazoSub(b);
+  return (
+    <span className={'sub-chip sub-prazo sub-prazo-' + pz.estado}>
+      {pz.estado === 'atrasado' ? <AlertTriangle size={10} /> : <CalendarDays size={10} />} {pz.texto}
+    </span>
+  );
+}
+
+function SubItem({ db, s, b, i, total, isStudio, arquivos = [], abrir }) {
   const [editando, setEditando] = useState(false);
   if (editando)
     return (
@@ -409,8 +457,9 @@ function SubItem({ db, s, b, i, total, isStudio }) {
         />
       </li>
     );
+  const enviados = arquivos.filter((a) => a.subId === b.id).length;
   return (
-    <li className={'sub' + (b.done ? ' done' : '')}>
+    <li className={'sub' + (b.done ? ' done' : '')} id={'alvo-sub-' + b.id}>
       {isStudio ? (
         <button className={'sub-box' + (b.done ? ' on' : '')} onClick={() => db.toggleSub(s.id, b.id)} aria-label={(b.done ? 'Desmarcar ' : 'Concluir ') + b.title}>
           {b.done && <Check size={11} />}
@@ -420,45 +469,26 @@ function SubItem({ db, s, b, i, total, isStudio }) {
       )}
       <div className="sub-corpo">
         <span className="sub-title">{b.title}</span>
-        <SubResumo b={b} />
+        <SubResumo b={b} comPrazo={false} />
         <span className="sub-extra">
+          {b.pedeArquivos && (
+            <button type="button" className="link sm" onClick={() => abrir('docs', 'pedido-' + b.id)}>
+              <FolderUp size={11} />{' '}
+              {enviados
+                ? enviados + (enviados === 1 ? ' arquivo enviado' : ' arquivos enviados')
+                : !isStudio && !b.done
+                  ? 'Enviar arquivos'
+                  : 'Nenhum arquivo ainda'}
+            </button>
+          )}
           {b.kind === 'reuniao' && b.format !== 'presencial' && b.link && (
             <a className="link sm" href={b.link} target="_blank" rel="noreferrer">
               <Link2 size={11} /> Entrar na reunião
             </a>
           )}
-          {b.storagePath ? (
-            <button
-              type="button"
-              className="link sm"
-              onClick={async () => {
-                const url = await db.fileUrl(b.storagePath);
-                if (url) window.open(url, '_blank');
-              }}
-            >
-              <Paperclip size={11} /> {b.fileName || 'arquivo'}
-            </button>
-          ) : b.fileName ? (
-            <span className="micro">
-              <Paperclip size={11} /> {b.fileName}
-            </span>
-          ) : null}
-          {!isStudio && b.responsible === 'cliente' && !b.done && (
-            <label className="link sm sub-upload">
-              <Upload size={11} /> {b.storagePath || b.fileName ? 'Trocar arquivo' : 'Enviar arquivo'}
-              <input
-                type="file"
-                hidden
-                onChange={(e) => {
-                  const f = e.target.files && e.target.files[0];
-                  if (f) db.attachSubFile(s.projectId, s.id, b.id, f);
-                  e.target.value = '';
-                }}
-              />
-            </label>
-          )}
         </span>
       </div>
+      <SubPrazo b={b} />
       {isStudio && (
         <span className="sub-acoes">
           <button className="icon-x" disabled={i === 0} onClick={() => db.moveSub(s.id, b.id, -1)} aria-label={'Subir ' + b.title}>
@@ -493,7 +523,7 @@ function datasEtapa(s) {
   return partes.length ? partes.join(' · ') : 'Sem datas definidas';
 }
 
-function StageItem({ db, s, n, isStudio }) {
+function StageItem({ db, s, n, isStudio, arquivos, abrir, projectId }) {
   const [editing, setEditing] = useState(false);
   const [ef, setEf] = useState(s);
   const [addingSub, setAddingSub] = useState(false);
@@ -543,7 +573,7 @@ function StageItem({ db, s, n, isStudio }) {
   }
 
   return (
-    <li className={'tl-item tl-' + s.status + (late ? ' tl-late' : '')}>
+    <li className={'tl-item tl-' + s.status + (late ? ' tl-late' : '')} id={'alvo-etapa-' + s.id}>
       <span className="tl-rail" aria-hidden />
       <span className="tl-node" aria-hidden>
         {s.status === 'concluida' ? <Check size={13} /> : s.status === 'em_andamento' ? <span className="tl-dot" /> : null}
@@ -621,7 +651,17 @@ function StageItem({ db, s, n, isStudio }) {
             {ss.total > 0 && (
               <ul className="sub-list">
                 {(s.subs || []).map((b, i) => (
-                  <SubItem key={b.id} db={db} s={s} b={b} i={i} total={s.subs.length} isStudio={isStudio} />
+                  <SubItem
+                    key={b.id}
+                    db={db}
+                    s={s}
+                    b={b}
+                    i={i}
+                    total={s.subs.length}
+                    isStudio={isStudio}
+                    arquivos={arquivos}
+                    abrir={abrir}
+                  />
                 ))}
               </ul>
             )}
@@ -644,6 +684,8 @@ function StageItem({ db, s, n, isStudio }) {
         )}
 
         {s.desc && <p className="tl-desc-inline">{s.desc}</p>}
+
+        <AprovacaoEtapa db={db} s={s} isStudio={isStudio} projectId={projectId} />
 
         {isStudio && (
           <div className="status-set">

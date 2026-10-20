@@ -32,6 +32,7 @@ const READ_METHODS = [
   'calendarEvents',
   'fornecedores',
   'pendencias',
+  'subArquivos',
 ];
 
 const ALL_MUTATIONS = [
@@ -78,6 +79,14 @@ const ALL_MUTATIONS = [
   'addComment',
   'addEvent',
   'completeProject',
+  'updateDocument',
+  'replaceDocumentFile',
+  'pedirAprovacaoEtapa',
+  'responderEtapa',
+  'enviarArquivos',
+  'removerArquivo',
+  'setNotaPedido',
+  'avisarCliente',
 ];
 
 // métodos cujo 1º argumento é o pid (usado p/ escolher o que invalidar)
@@ -98,6 +107,10 @@ const PID_FIRST = new Set([
   'addQuote',
   'addEvent',
   'completeProject',
+  'replaceDocumentFile',
+  'enviarArquivos',
+  'removerArquivo',
+  'avisarCliente',
 ]);
 
 /**

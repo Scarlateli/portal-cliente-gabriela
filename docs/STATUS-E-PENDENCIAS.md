@@ -379,3 +379,63 @@ Com a névoa por cima, a resolução basta; se ela mandar o original em alta,
 é só trocar o arquivo com o mesmo nome.
 
 **Pendente da Gabriela:** testar o lado do cliente (roteiro, passos 17 a 22).
+
+## Rodada 4 — revisão da Gabriela em 20/10/2026
+
+**Pendências e sino**
+- Tarefas e prazos do cliente só viram pendência quando vencem em até 7
+  dias ou já venceram (`PRAZO_PROXIMO_DIAS` em `src/lib/pendencias.js`).
+  Pedidos explícitos (aprovar etapa, confirmar ou assinar documento, termo,
+  orçamento) entram sempre.
+- O número do sino conta só o que a pessoa ainda não viu; abrir o sino
+  marca como visto (por pessoa e aparelho, no navegador). A lista continua
+  mostrando tudo até ser resolvido. A janela ao entrar só aparece quando há
+  algo novo.
+- Clicar numa pendência leva ao item: troca de aba, ajusta o filtro da
+  linha do tempo se precisar, rola até o item e o destaca. Antes, clicar
+  numa tarefa estando na própria linha do tempo não fazia nada.
+
+**Linha do tempo e topo do projeto**
+- Prazo das sub-etapas numa coluna à direita.
+- "Próximo prazo" conta também as sub-etapas e diz qual é; texto menor.
+
+**Documentos**
+- O studio edita nome e categoria e troca o arquivo de um documento.
+- "Pedir OK" virou "Pedir confirmação do cliente": o cliente vê um bloco
+  claro e escolhe **Confirmo** (ou **Assinar**) ou **Pedir ajustes** (com
+  mensagem). Ajustes pedidos aparecem para o studio (no documento e no
+  sino), com "Ajustei, pedir de novo".
+- Nova parte **Envios do cliente**: o studio cria pedidos de arquivo (com
+  prazo e instruções) e o cliente manda vários arquivos de uma vez em cada
+  pedido, com um recado opcional. O studio confere e conclui. Os pedidos
+  são sub-etapas com "Pedir arquivos ao cliente" marcado, então aparecem
+  também na linha do tempo. O arquivo que já tinha sido mandado pelo jeito
+  antigo foi levado para a lista nova.
+
+**Aprovação de etapa (sem contrato)**
+- Em cada etapa, o studio usa "Pedir aprovação do cliente". O cliente vê o
+  pedido na etapa e no sino e **aprova** (nome completo + "revisei e
+  aprovo"; ficam nome, data e hora) ou **pede ajustes** (mensagem). O studio
+  vê o resultado na etapa; ajustes pedidos entram no sino dele.
+
+**Aviso por e-mail**
+- Ao pedir confirmação ou assinatura de documento, aprovação de etapa ou um
+  envio de arquivos, o studio pode marcar "Avisar o cliente por e-mail"
+  (marcado por padrão). Edge Function nova: `avisar-cliente` (só o studio
+  chama; usa o vocativo do projeto).
+
+**Calendário**
+- O atalho do Google virou "Salvar na minha agenda", com explicação ao
+  passar o mouse, e só aparece em reuniões, visitas e eventos.
+
+**Banco** (aplicado em 20/10, antes do código, só acréscimos):
+`supabase/sql/2026-10-20-rodada4-aprovacoes-e-envios-do-cliente.sql`,
+também no fim do `schema.sql`; políticas de `sub_arquivos` também em
+`permissoes-producao.sql`. Testado num banco montado do zero (24 cenários:
+dono, outro cliente, studio, pedido aberto e concluído, caminho de arquivo).
+
+**Lição:** o Supabase pede confirmação manual para migrações que apagam
+algo (`drop function`, `drop policy`) e, sem resposta, devolve "cancelled".
+Foi o que travou a Etapa 8 e a 1ª tentativa desta rodada. Por isso a função
+nova se chama `confirmar_documento` e a antiga, `responder_documento`, ficou
+no banco (sem uso pelo código novo; pode ser apagada à mão depois).

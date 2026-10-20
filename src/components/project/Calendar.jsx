@@ -88,16 +88,18 @@ export function Calendar({ db, project, isStudio }) {
                   )}
                 </span>
                 <em>{labelKind(e.kind)}</em>
-                {e.kind !== 'atraso' && (
+                {/* só para compromissos com hora marcada (reunião, visita, evento):
+                    abre o Google Agenda já preenchido para a pessoa salvar */}
+                {['reuniao', 'visita', 'evento'].includes(e.kind || 'evento') && (
                   <a
                     className="ev-gcal"
                     href={linkGoogleAgenda({ title: e.title, date: e.date, time: e.time, link: e.link, projeto: project.name })}
                     target="_blank"
                     rel="noreferrer"
-                    title="Adicionar ao Google Agenda"
-                    aria-label={'Adicionar "' + e.title + '" ao Google Agenda'}
+                    title="Abre o Google Agenda com este compromisso já preenchido, para você salvar na sua agenda"
+                    aria-label={'Salvar "' + e.title + '" na minha agenda do Google'}
                   >
-                    <CalendarPlus size={14} /> <span>Google Agenda</span>
+                    <CalendarPlus size={14} /> <span>Salvar na minha agenda</span>
                   </a>
                 )}
               </li>

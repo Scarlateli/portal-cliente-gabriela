@@ -1,4 +1,5 @@
-import { consumirAba } from '../../lib/pendenciasContexto.js';
+import { consumirPedido, destacarAlvo } from '../../lib/pendenciasContexto.js';
+import { proximoPrazo } from '../../lib/pendencias.js';
 import { useState, useEffect } from 'react';
 import { GerenciarProjeto } from './GerenciarProjeto.jsx';
 import {
@@ -54,6 +55,7 @@ export function ProjectView({ db: baseDb, user, pid, isStudio, onLogout, onBack,
       { key: qk.stages(pid), method: 'stages', args: [pid] },
       { key: qk.calendar(pid), method: 'calendarEvents', args: [pid] },
       { key: qk.documents(pid), method: 'documents', args: [pid] },
+      { key: qk.subArquivos(pid), method: 'subArquivos', args: [pid] },
       { key: qk.contracts(pid), method: 'contracts', args: [pid] },
       { key: qk.payment(pid), method: 'payment', args: [pid] },
       { key: qk.quotes(pid), method: 'quotes', args: [pid] },
@@ -136,13 +138,24 @@ function ProjectInner({
   mutationError,
   clearError,
 }) {
-  // aba pedida pelo sino de pendências (vale uma vez); senão, a linha do tempo
-  const [tab, setTab] = useState(() => consumirAba(project.id) || 'timeline');
+  // aba (e item) pedidos pelo sino de pendências (valem uma vez); senão, a
+  // linha do tempo
+  const [pedidoInicial] = useState(() => consumirPedido(project.id));
+  const [tab, setTab] = useState(() => (pedidoInicial && pedidoInicial.aba) || 'timeline');
+  // item a destacar dentro da aba (vindo do sino ou de um link entre abas)
+  const [alvo, setAlvo] = useState(() => (pedidoInicial && pedidoInicial.alvo) || null);
+  const [vezAlvo, setVezAlvo] = useState(0);
+  const abrir = (aba, novoAlvo = null) => {
+    setTab(aba);
+    setAlvo(novoAlvo);
+    setVezAlvo((n) => n + 1);
+  };
+  useEffect(() => destacarAlvo(alvo), [alvo, vezAlvo, tab]);
   useEffect(() => {
     const ir = (e) => {
       if (e.detail && e.detail.pid === project.id) {
-        consumirAba(project.id);
-        setTab(e.detail.aba);
+        consumirPedido(project.id);
+        abrir(e.detail.aba, e.detail.alvo || null);
       }
     };
     window.addEventListener('gl-ir-aba', ir);
@@ -150,7 +163,7 @@ function ProjectInner({
   }, [project.id]);
   const expired = project.accessUntil && todayISO() > project.accessUntil;
   const heroStages = db.stages(project.id);
-  const heroPend = heroStages.filter((st) => st.status !== 'concluida' && st.end).map((st) => st.end).sort();
+  const prazo = proximoPrazo(heroStages, todayISO());
   const [resent, setResent] = useState(null);
   const saudacao = vocativo(project.greeting, user && user.name);
   const [resending, setResending] = useState(false);
@@ -210,9 +223,9 @@ function ProjectInner({
               </strong>
               <em>etapas concluídas</em>
             </div>
-            <div className="hstat">
-              <strong>{heroPend.length ? fmt(heroPend[0]) : '—'}</strong>
-              <em>próximo prazo</em>
+            <div className={'hstat' + (prazo && prazo.atrasado ? ' hstat-atrasado' : '')}>
+              <strong>{prazo ? fmt(prazo.data) : '—'}</strong>
+              <em>{prazo ? (prazo.atrasado ? 'prazo vencido · ' : 'próximo prazo · ') + prazo.titulo : 'próximo prazo'}</em>
             </div>
           </div>
         </div>
@@ -298,9 +311,9 @@ function ProjectInner({
               ))}
             </nav>
 
-            {tab === 'timeline' && <Timeline db={db} project={project} isStudio={isStudio} />}
+            {tab === 'timeline' && <Timeline db={db} project={project} isStudio={isStudio} alvo={alvo} abrir={abrir} />}
             {tab === 'calendar' && <Calendar db={db} project={project} isStudio={isStudio} />}
-            {tab === 'docs' && <Documents db={db} project={project} isStudio={isStudio} />}
+            {tab === 'docs' && <Documents db={db} project={project} isStudio={isStudio} alvo={alvo} abrir={abrir} />}
             {tab === 'contract' && <Contract db={db} project={project} isStudio={isStudio} />}
             {tab === 'payments' && <Payments db={db} project={project} isStudio={isStudio} />}
             {tab === 'quotes' && <Quotes db={db} project={project} isStudio={isStudio} />}

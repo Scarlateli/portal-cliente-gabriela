@@ -152,3 +152,37 @@ documento, assinar, aprovar e recusar um termo.
 ### 22. No computador e no iPad
 Confira que o nome do projeto não fica azul no iPad, que as abas não têm
 mais setinhas no computador e que o painel do topo ficou menor.
+
+---
+
+## Rodada 4 (depois da revisão de 20/10)
+
+### 23. Sino
+Entre como cliente. O número do sino mostra só o que é novo; abra o sino e
+ele zera, mas a lista continua lá até cada item ser resolvido. Clique num
+item: o portal vai até ele e o destaca.
+
+### 24. Prazos
+Na linha do tempo, os prazos ficam à direita. Tarefas do cliente só entram
+no sino quando o prazo está a até 7 dias ou já venceu. No topo do projeto,
+"próximo prazo" diz qual é a entrega.
+
+### 25. Aprovação de etapa
+Como studio, numa etapa, use **Pedir aprovação do cliente** (com o aviso
+por e-mail marcado). Como cliente, aprove (nome completo + "revisei e
+aprovo") ou peça ajustes. Volte ao studio e veja o resultado na etapa.
+
+### 26. Atas e documentos
+Envie uma ata com **Pedir confirmação do cliente**. Como cliente, use
+**Pedir ajustes** e escreva o motivo. Como studio, veja a mensagem e use
+**Ajustei, pedir de novo**; como cliente, **Confirmo**. Teste também o lápis
+para editar o nome, a categoria ou trocar o arquivo.
+
+### 27. Envios do cliente
+Documentos → **Envios do cliente** → **Novo pedido de arquivos** (ex.:
+"Plantas do apartamento", com prazo e instruções). Como cliente, mande dois
+ou três arquivos de uma vez e deixe um recado. Como studio, confira e use
+**Conferido, concluir pedido**.
+
+### 28. Calendário
+Numa reunião, o atalho agora se chama **Salvar na minha agenda**.

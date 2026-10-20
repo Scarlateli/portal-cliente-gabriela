@@ -1,6 +1,6 @@
 /* Etapa 7: pendências (sino + janela ao entrar). */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, cleanup } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { calcularPendencias } from './pendencias.js';
 import { makeDb } from './db.js';
@@ -28,16 +28,19 @@ describe('calcularPendencias', () => {
       ],
       stages: [
         { id: 's1', projectId: 'p1', title: 'Briefing', status: 'em_andamento', subs: [
-          { title: 'Enviar plantas', done: false, responsible: 'cliente' },
-          { title: 'Reunião', done: false, responsible: 'studio' },
+          // rodada 4: só entra tarefa do cliente com prazo vencido ou em até 7 dias
+          { id: 'b1', title: 'Enviar plantas', done: false, responsible: 'cliente', due: '2026-10-22' },
+          { id: 'b2', title: 'Sem prazo', done: false, responsible: 'cliente' },
+          { id: 'b3', title: 'Longe', done: false, responsible: 'cliente', due: '2026-12-01' },
+          { id: 'b4', title: 'Reunião', done: false, responsible: 'studio', due: '2026-10-21' },
         ] },
       ],
-    });
+    }, '2026-10-20');
     expect(r.map((x) => [x.aba, x.texto])).toEqual([
       ['docs', 'Assinar: Planta'],
       ['contract', 'Aprovar ou recusar: Imagens'],
       ['quotes', 'Decidir orçamento: Bianchi (Marcenaria)'],
-      ['timeline', 'Tarefa: Enviar plantas (Briefing)'],
+      ['timeline', 'Tarefa: Enviar plantas · até 22/10'],
     ]);
   });
 
@@ -64,7 +67,10 @@ describe('calcularPendencias', () => {
 });
 
 describe('sino e janela', () => {
-  beforeEach(() => sessionStorage.clear());
+  beforeEach(() => {
+    sessionStorage.clear();
+    localStorage.clear();
+  });
 
   function montar(user) {
     const irPara = vi.fn();
@@ -79,21 +85,28 @@ describe('sino e janela', () => {
     return irPara;
   }
 
-  it('cliente vê a janela ao entrar e vai direto à aba da pendência', async () => {
+  it('cliente vê a janela ao entrar e vai direto ao item da pendência', async () => {
     const irPara = montar({ id: 'u1', role: 'client', name: 'Vanessa' });
     expect(screen.getByRole('dialog', { name: /pendências no projeto/i })).toBeTruthy();
     await userEvent.click(screen.getByText(/Assinar: Planta/));
-    expect(irPara).toHaveBeenCalledWith('p1', 'docs');
+    // aba e item: o portal rola até o documento e o destaca
+    expect(irPara).toHaveBeenCalledWith('p1', 'docs', 'doc-d3');
     expect(screen.queryByRole('dialog')).toBeNull();
   });
 
-  it('"Ver depois" fecha e não reabre na mesma sessão; o sino continua com a contagem', async () => {
+  it('o número do sino conta só as novas; depois de vistas, a lista continua', async () => {
     montar({ id: 'u1', role: 'client', name: 'Vanessa' });
+    const sino = () => screen.getByRole('button', { name: /pendência/i });
+    expect(Number(sino().textContent)).toBeGreaterThan(0);
     await userEvent.click(screen.getByText('Ver depois'));
     expect(screen.queryByRole('dialog')).toBeNull();
-    const sino = screen.getByRole('button', { name: /pendências/ });
-    expect(Number(sino.textContent)).toBeGreaterThan(0);
-    // remonta (outra tela): a janela não volta
+    // vistas: o número some…
+    expect(sino().textContent).toBe('');
+    // …mas o sino ainda mostra o que falta resolver
+    await userEvent.click(sino());
+    expect(screen.getByText(/Assinar: Planta/)).toBeTruthy();
+    // remonta (outra tela ou outro acesso): a janela não volta, porque não há novidade
+    cleanup();
     montar({ id: 'u1', role: 'client', name: 'Vanessa' });
     expect(screen.queryByRole('dialog', { name: /pendências no projeto/i })).toBeNull();
   });

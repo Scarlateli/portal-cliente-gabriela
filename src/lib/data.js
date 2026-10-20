@@ -35,6 +35,7 @@ export const qk = {
   calendar: (pid) => ['calendar', pid],
   fornecedores: () => ['fornecedores'],
   pendencias: () => ['pendencias'],
+  subArquivos: (pid) => ['subArquivos', pid],
 };
 
 /**
@@ -56,6 +57,14 @@ export function invalidationsFor(method, pid) {
     deleteSub: [qk.stages(pid)],
     updateSub: [qk.stages(pid), qk.calendar(pid)],
     moveSub: [qk.stages(pid)],
+    updateDocument: [qk.documents(pid)],
+    replaceDocumentFile: [qk.documents(pid)],
+    pedirAprovacaoEtapa: [qk.stages(pid)],
+    responderEtapa: [qk.stages(pid)],
+    enviarArquivos: [qk.subArquivos(pid), qk.stages(pid)],
+    removerArquivo: [qk.subArquivos(pid)],
+    setNotaPedido: [qk.stages(pid)],
+    avisarCliente: [],
     applyTemplate: [qk.stages(pid), qk.calendar(pid)],
     addTemplate: [qk.templates()],
     deleteTemplate: [qk.templates()],

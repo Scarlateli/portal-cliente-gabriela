@@ -160,8 +160,8 @@ function AppInner() {
   }
 
   // sino de pendências: navega até o projeto e a aba onde a pendência se resolve
-  const irPara = (pid, aba) => {
-    pedirAba(pid, aba);
+  const irPara = (pid, aba, alvo) => {
+    pedirAba(pid, aba, alvo);
     if (user && user.role === 'studio') setStudioPid(pid);
     else setClientPid(pid);
   };

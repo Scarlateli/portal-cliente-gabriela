@@ -13,7 +13,7 @@ import { getSupabase } from './client.js';
 import { addMonthsISO, todayISO, fmt, stageOverdue } from '../helpers.js';
 
 const STAGE_COLS =
-  'id, projectId:project_id, ord, title, category, status, owner, start, "end", "time", link, presencial, "desc", rescheduledFrom:rescheduled_from, subs:stage_subs(id, ord, title, done, kind, kindLabel:kind_label, responsible, due, time, format, link, storagePath:storage_path, fileName:file_name)';
+  'id, projectId:project_id, ord, title, category, status, owner, start, "end", "time", link, presencial, "desc", rescheduledFrom:rescheduled_from, approval, approvalRequestedAt:approval_requested_at, approvalAt:approval_at, approvalName:approval_name, approvalNote:approval_note, subs:stage_subs(id, ord, title, done, kind, kindLabel:kind_label, responsible, due, time, format, link, pedeArquivos:pede_arquivos, instructions, clientNote:client_note, storagePath:storage_path, fileName:file_name)';
 const PROJECT_COLS =
   'id, code, name, clientId:client_id, status, address, addressComplement:address_complement, neighborhood, city, state, cep, greeting, start, due, completedAt:completed_at, accessUntil:access_until';
 const QUOTE_COLS =
@@ -57,7 +57,16 @@ export function makeSupabaseDb() {
     time: b.time || null,
     format: b.format || null,
     link: b.link || null,
+    pede_arquivos: !!b.pedeArquivos,
+    instructions: b.pedeArquivos ? String(b.instructions || '').trim() || null : null,
   });
+  // nome de arquivo seguro para o Storage (sem acentos nem símbolos)
+  const nomeSeguro = (n) =>
+    String(n || 'arquivo')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^\w.-]+/g, '_')
+      .slice(-80);
   // campos de projeto que o cadastro e a edição gravam
   const camposProjeto = (d) => ({
     address: d.address || null,
@@ -156,6 +165,8 @@ export function makeSupabaseDb() {
             kind: b.kind || 'tarefa',
             kindLabel: b.kind === 'outro' ? String(b.kindLabel || '').trim().slice(0, 40) : '',
             responsible: b.responsible || 'studio',
+            pedeArquivos: !!b.pedeArquivos,
+            instructions: b.pedeArquivos ? String(b.instructions || '').trim() : '',
           })),
       }));
 
@@ -249,7 +260,7 @@ export function makeSupabaseDb() {
       const { data, error } = await supabase
         .from('documents')
         .select(
-          'id, projectId:project_id, name, type, size, date, storagePath:storage_path, approval, response, respondedAt:responded_at, respondedName:responded_name',
+          'id, projectId:project_id, name, type, size, date, storagePath:storage_path, approval, response, respondedAt:responded_at, respondedName:responded_name, responseNote:response_note',
         )
         .eq('project_id', pid);
       must(error);
@@ -294,14 +305,19 @@ export function makeSupabaseDb() {
     // pendências de quem está logado (Etapa 7). A RLS já limita o cliente
     // aos projetos dele; o studio enxerga todos.
     pendencias: async (role) => {
-      const [pr, st, dc, ct, qt] = await Promise.all([
+      const [pr, st, dc, ct, qt, ar] = await Promise.all([
         supabase.from('projects').select('id, code, name, status'),
-        supabase.from('stages').select('id, projectId:project_id, title, status, owner, "end", subs:stage_subs(title, done, responsible)'),
+        supabase
+          .from('stages')
+          .select(
+            'id, projectId:project_id, title, status, owner, "end", approval, subs:stage_subs(id, title, done, responsible, due, pedeArquivos:pede_arquivos)',
+          ),
         supabase.from('documents').select('id, projectId:project_id, name, approval, response'),
         supabase.from('contracts').select('id, projectId:project_id, name, kind, method, sigStatus:sig_status'),
         supabase.from('quotes').select('id, projectId:project_id, supplier, segment, status'),
+        supabase.from('sub_arquivos').select('subId:sub_id'),
       ]);
-      for (const r of [pr, st, dc, ct, qt]) must(r.error);
+      for (const r of [pr, st, dc, ct, qt, ar]) must(r.error);
       return calcularPendencias({
         role,
         projects: pr.data || [],
@@ -309,6 +325,7 @@ export function makeSupabaseDb() {
         documents: dc.data || [],
         contracts: ct.data || [],
         quotes: qt.data || [],
+        arquivos: ar.data || [],
       });
     },
     // cadastro de fornecedores do studio (Etapa 8); RLS: só o studio lê
@@ -779,10 +796,107 @@ export function makeSupabaseDb() {
         .eq('id', did);
       must(error);
     },
-    responderDocumento: async (did, nome) => {
-      const { error } = await supabase.rpc('responder_documento', { p_documento: did, p_nome: nome || null });
+    // decisao: 'confirmar' (OK ou assinatura, conforme o pedido) ou 'ajustes'
+    responderDocumento: async (did, nome, decisao = 'confirmar', mensagem = null) => {
+      const { error } = await supabase.rpc('confirmar_documento', {
+        p_documento: did,
+        p_decisao: decisao,
+        p_nome: nome || null,
+        p_mensagem: mensagem || null,
+      });
       must(error);
     },
+    updateDocument: async (did, d) => {
+      const { error } = await supabase
+        .from('documents')
+        .update({ name: String(d.name || '').trim(), type: d.type })
+        .eq('id', did);
+      must(error);
+    },
+    // troca o arquivo de um documento (mantém nome, categoria e pedido)
+    replaceDocumentFile: async (pid, did, file) => {
+      const { data: antigo } = await supabase.from('documents').select('storage_path').eq('id', did).maybeSingle();
+      const path = pid + '/' + Date.now() + '-' + nomeSeguro(file.name);
+      const { error: upErr } = await supabase.storage.from('documentos').upload(path, file);
+      if (upErr) throw upErr;
+      const { error } = await supabase
+        .from('documents')
+        .update({
+          storage_path: path,
+          size: (file.size / 1048576).toFixed(1).replace('.', ',') + ' MB',
+          date: todayISO(),
+        })
+        .eq('id', did);
+      must(error);
+      if (antigo && antigo.storage_path) await supabase.storage.from('documentos').remove([antigo.storage_path]);
+    },
+
+    /* ---- Rodada 4: aprovação de etapa e envios do cliente ---- */
+    pedirAprovacaoEtapa: async (sid, pedir = true) => {
+      const { error } = await supabase
+        .from('stages')
+        .update({
+          approval: pedir ? 'pendente' : 'nenhuma',
+          approval_requested_at: pedir ? new Date().toISOString() : null,
+          approval_at: null,
+          approval_name: null,
+          approval_note: null,
+        })
+        .eq('id', sid);
+      must(error);
+    },
+    responderEtapa: async (sid, decisao, nome, mensagem) => {
+      const { error } = await supabase.rpc('responder_etapa', {
+        p_etapa: sid,
+        p_decisao: decisao,
+        p_nome: nome || null,
+        p_mensagem: mensagem || null,
+      });
+      must(error);
+    },
+    subArquivos: async (pid) => {
+      const { data, error } = await supabase
+        .from('sub_arquivos')
+        .select('id, subId:sub_id, projectId:project_id, name, storagePath:storage_path, size, sentBy:sent_by, createdAt:created_at')
+        .eq('project_id', pid)
+        .order('created_at');
+      must(error);
+      return data || [];
+    },
+    // vários arquivos de uma vez para um pedido; quem manda: 'client' | 'studio'
+    enviarArquivos: async (pid, bid, files, sentBy) => {
+      for (const file of files) {
+        const path = pid + '/envios/' + bid + '/' + Date.now() + '-' + nomeSeguro(file.name);
+        const { error: upErr } = await supabase.storage.from('documentos').upload(path, file);
+        if (upErr) throw upErr;
+        const { error } = await supabase.from('sub_arquivos').insert({
+          sub_id: bid,
+          project_id: pid,
+          name: file.name,
+          storage_path: path,
+          size: (file.size / 1048576).toFixed(1).replace('.', ',') + ' MB',
+          sent_by: sentBy === 'studio' ? 'studio' : 'client',
+        });
+        must(error);
+      }
+    },
+    removerArquivo: async (pid, aid) => {
+      const { data: a } = await supabase.from('sub_arquivos').select('storage_path').eq('id', aid).maybeSingle();
+      const { error } = await supabase.from('sub_arquivos').delete().eq('id', aid);
+      must(error);
+      // o studio apaga o arquivo do Storage; o cliente não tem essa permissão
+      // (o arquivo fica guardado e some junto com o projeto)
+      if (a && a.storage_path) await supabase.storage.from('documentos').remove([a.storage_path]);
+    },
+    setNotaPedido: async (sid, bid, nota) => {
+      const { error } = await supabase
+        .from('stage_subs')
+        .update({ client_note: String(nota || '').trim().slice(0, 1000) || null })
+        .eq('id', bid);
+      must(error);
+    },
+    // e-mail curto avisando o cliente de que há algo esperando por ele
+    avisarCliente: async (pid, texto) => invocar('avisar-cliente', { projectId: pid, texto }),
     responderContrato: async (cid, acao, nome, motivo) => {
       const { error } = await supabase.rpc('responder_contrato', {
         p_contrato: cid,

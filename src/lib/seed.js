@@ -33,10 +33,10 @@ export const seed = {
       id: 's2', projectId: 'p1', ord: 2, title: 'Envio de referências e aprovações', category: 'Documentação', status: 'em_andamento', owner: 'client', start: '2026-05-25', end: '2026-06-10', time: '', link: '', presencial: false, desc: 'Materiais que o cliente precisa enviar e aprovar para liberar a próxima etapa.', subs: [
         { id: 'sb4', title: 'Enviar fotos do espaço', done: true },
         { id: 'sb5', title: 'Aprovar moodboard', done: false },
-        { id: 'sb6', title: 'Enviar plantas do prédio', done: false },
+        { id: 'sb6', title: 'Enviar plantas do prédio', done: false, kind: 'documentacao', responsible: 'cliente', due: '2026-06-10', pedeArquivos: true, instructions: 'Plantas do apartamento e do prédio (PDF ou foto). Se tiver o manual do proprietário, mande junto.', clientNote: '' },
       ],
     },
-    { id: 's3', projectId: 'p1', ord: 3, title: 'Apresentação do projeto 3D', category: 'Reunião', status: 'em_andamento', owner: 'studio', start: '2026-06-27', end: '2026-06-27', time: '14:00', presencial: false, link: 'https://meet.google.com/abc-defg-hij', desc: 'Apresentação da modelagem 3D com materiais, cores e iluminação.', subs: [] },
+    { id: 's3', projectId: 'p1', ord: 3, title: 'Apresentação do projeto 3D', category: 'Reunião', status: 'em_andamento', owner: 'studio', start: '2026-06-27', end: '2026-06-27', time: '14:00', presencial: false, link: 'https://meet.google.com/abc-defg-hij', desc: 'Apresentação da modelagem 3D com materiais, cores e iluminação.', approval: 'pendente', approvalRequestedAt: '2026-06-28T12:00:00Z', subs: [] },
     { id: 's4', projectId: 'p1', ord: 4, title: 'Projeto executivo', category: 'Entrega', status: 'a_fazer', owner: 'studio', start: '2026-07-01', end: '2026-07-10', time: '', link: '', presencial: false, desc: 'Detalhamento técnico, pranchas e especificações para a execução da obra.', subs: [] },
     { id: 's5', projectId: 'p2', ord: 1, title: 'Reunião de briefing', category: 'Reunião', status: 'concluida', owner: 'studio', start: '2026-05-12', end: '2026-05-12', time: '09:30', presencial: true, link: '', desc: 'Primeira reunião de levantamento de necessidades.', subs: [] },
     { id: 's6', projectId: 'p2', ord: 2, title: 'Medição no local', category: 'Visita técnica', status: 'em_andamento', owner: 'studio', start: '2026-06-20', end: '2026-06-22', time: '', link: '', presencial: false, desc: 'Visita técnica para medição dos ambientes.', subs: [] },
@@ -77,6 +77,8 @@ export const seed = {
     { id: 'q2', projectId: 'p1', segment: 'Iluminação', supplier: 'Lumini Iluminação', amount: 9800, fileName: 'orcamento-lumini.pdf', status: 'aprovado', studioNote: 'Inclui projeto luminotécnico e instalação.', comments: [{ author: 'client', body: 'Pode aprovar, gostei das luminárias.', at: 'Ontem 14:10' }], decidedAt: '2026-06-10', contact: 'Patrícia · (11) 95555-0102 · contato@lumini.com.br', deadline: '30 dias após aprovação', payment: '50% entrada, 50% na entrega', contractStatus: 'em_producao', notes: 'Garantia de 1 ano nas luminárias. Instalação inclusa.' },
     { id: 'q3', projectId: 'p1', segment: 'Marmoraria', supplier: 'Mármores SP', amount: 14500, fileName: 'orcamento-marmores.pdf', status: 'pendente', studioNote: 'Quartzo branco para bancadas. Aguardo sua aprovação.', comments: [], decidedAt: null, contact: '', deadline: '', payment: '', contractStatus: 'a_iniciar', notes: '' },
   ],
+  // arquivos que o cliente mandou nos pedidos de arquivo (rodada 4)
+  subArquivos: [],
   // cadastro de fornecedores do studio (Etapa 8)
   fornecedores: [
     { id: 'f1', name: 'Marcenaria Bianchi', segment: 'Marcenaria', contact: 'Paulo Bianchi', phone: '(11) 98888-1111', email: 'contato@bianchi.com.br', notes: 'Prazo médio de 45 dias.' },

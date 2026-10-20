@@ -1,14 +1,16 @@
 import { useContext, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Bell, ChevronRight, X } from 'lucide-react';
-import { PendenciasCtx, CHAVE_JANELA } from '../lib/pendenciasContexto.js';
+import { PendenciasCtx, CHAVE_JANELA, lerVistas, marcarVistas } from '../lib/pendenciasContexto.js';
 import { qk } from '../lib/data.js';
 import { useResolvedDb, specsFor } from '../lib/useResolvedDb.js';
 
 /* Etapa 7 — sino de pendências no topo de todas as telas, para o studio e
    para o cliente, e a janela que abre ao entrar enquanto houver pendências.
-   Uma pendência só some quando é resolvida (é calculada a partir dos dados,
-   não é uma mensagem que se marca como lida). */
+   Uma pendência só some da lista quando é resolvida (é calculada a partir
+   dos dados). O número do sino, porém, conta só as que a pessoa ainda não
+   viu: abrir o sino marca as atuais como vistas (rodada 4). A janela ao
+   entrar só aparece quando há alguma nova. */
 export function SinoPendencias() {
   const ctx = useContext(PendenciasCtx);
   if (!ctx) return null;
@@ -21,6 +23,13 @@ function Sino({ baseDb, user, irPara }) {
     specsFor(baseDb, [{ key: qk.pendencias(), method: 'pendencias', args: [user.role, user.id] }]),
   );
   const lista = (r.ready && r.db.pendencias(user.role, user.id)) || [];
+  const [vistas, setVistas] = useState(() => lerVistas(user.id));
+  const novas = lista.filter((p) => !vistas.has(p.id));
+  const marcarTodas = () => {
+    const ids = lista.map((p) => p.id);
+    marcarVistas(user.id, ids);
+    setVistas(new Set(ids));
+  };
   const [aberto, setAberto] = useState(false);
   const [janela, setJanela] = useState(() => {
     try {
@@ -30,9 +39,12 @@ function Sino({ baseDb, user, irPara }) {
     }
   });
   const caixa = useRef(null);
+  const novasAoAbrir = useRef(new Set());
+  if (!aberto) novasAoAbrir.current = new Set(novas.map((p) => p.id));
 
   const fecharJanela = () => {
     setJanela(false);
+    marcarTodas();
     try {
       sessionStorage.setItem(CHAVE_JANELA, '1');
     } catch {
@@ -42,7 +54,11 @@ function Sino({ baseDb, user, irPara }) {
   const ir = (p) => {
     setAberto(false);
     fecharJanela();
-    irPara(p.pid, p.aba);
+    irPara(p.pid, p.aba, p.alvo);
+  };
+  const abrirSino = () => {
+    if (!aberto) marcarTodas();
+    setAberto(!aberto);
   };
 
   useEffect(() => {
@@ -57,27 +73,29 @@ function Sino({ baseDb, user, irPara }) {
     };
   }, [aberto]);
 
-  const n = lista.length;
+  const n = novas.length;
   return (
     <div className="sino" ref={caixa}>
       <button
         type="button"
         className="icon-btn sino-btn"
-        aria-label={n ? n + (n === 1 ? ' pendência' : ' pendências') : 'Pendências'}
+        aria-label={
+          n ? n + (n === 1 ? ' pendência nova' : ' pendências novas') : lista.length ? 'Pendências' : 'Pendências (nenhuma)'
+        }
         aria-expanded={aberto}
-        onClick={() => setAberto(!aberto)}
+        onClick={abrirSino}
       >
         <Bell size={17} />
         {n > 0 && <span className="sino-n">{n > 9 ? '9+' : n}</span>}
       </button>
       {aberto && (
         <div className="sino-painel" role="dialog" aria-label="Pendências">
-          <ListaPendencias lista={lista} vazio="Nenhuma pendência. Está tudo em dia." onIr={ir} />
+          <ListaPendencias lista={lista} novas={novasAoAbrir.current} vazio="Nenhuma pendência. Está tudo em dia." onIr={ir} />
         </div>
       )}
       {janela && n > 0 && (
         <JanelaPendencias
-          lista={lista}
+          lista={novas}
           studio={user.role === 'studio'}
           onIr={ir}
           onFechar={fecharJanela}
@@ -87,7 +105,7 @@ function Sino({ baseDb, user, irPara }) {
   );
 }
 
-function ListaPendencias({ lista, vazio, onIr }) {
+function ListaPendencias({ lista, vazio, onIr, novas = null }) {
   if (!lista.length) return <p className="sino-vazio">{vazio}</p>;
   // agrupa por projeto (o cliente costuma ter um; o studio, vários)
   const grupos = [];
@@ -102,7 +120,7 @@ function ListaPendencias({ lista, vazio, onIr }) {
       <ul>
         {g.itens.map((p) => (
           <li key={p.id}>
-            <button type="button" onClick={() => onIr(p)}>
+            <button type="button" onClick={() => onIr(p)} className={novas && novas.has(p.id) ? 'sino-nova' : undefined}>
               <span>{p.texto}</span>
               <ChevronRight size={14} />
             </button>

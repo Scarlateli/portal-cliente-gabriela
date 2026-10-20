@@ -1,20 +1,89 @@
-import { useState, useRef } from 'react';
-import { Upload, FileText, Download, Trash2, Check, PenLine } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
+import { Upload, FileText, Download, Trash2, Check, PenLine, Pencil, RefreshCw, MessageSquareWarning, Send } from 'lucide-react';
 import { AssinaturaPortal } from './Assinatura.jsx';
+import { EnviosCliente } from './EnviosCliente.jsx';
 import { erroAmigavel } from '../../lib/erros.js';
 import { Empty } from '../atoms.jsx';
 import { DOC_TYPES } from '../../lib/constants.js';
 import { fmt, validarArquivo } from '../../lib/helpers.js';
+import { IS_SUPABASE } from '../../lib/data.js';
 
-export function Documents({ db, project, isStudio }) {
+/* Documentos do projeto, em duas partes:
+   - Documentos: o que o studio publica (atas, plantas, briefing…), com
+     pedido de confirmação ou de assinatura ao cliente;
+   - Envios do cliente: os pedidos de arquivo, onde o cliente manda o que
+     o studio precisa (vários arquivos por pedido). */
+export function Documents({ db, project, isStudio, alvo = null, abrir = () => {} }) {
+  const [parte, setParte] = useState(() => (alvo && String(alvo).startsWith('pedido-') ? 'envios' : 'docs'));
+  useEffect(() => {
+    if (alvo && String(alvo).startsWith('pedido-')) setParte('envios');
+    else if (alvo && String(alvo).startsWith('doc-')) setParte('docs');
+  }, [alvo]);
+  const pedidos = db
+    .stages(project.id)
+    .flatMap((s) => (s.subs || []).filter((b) => b.pedeArquivos))
+    .filter((b) => !b.done).length;
+
+  return (
+    <>
+      <div className="doc-partes" role="tablist" aria-label="Partes de Documentos">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={parte === 'docs'}
+          className={'filter' + (parte === 'docs' ? ' on' : '')}
+          onClick={() => setParte('docs')}
+        >
+          Documentos
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={parte === 'envios'}
+          className={'filter' + (parte === 'envios' ? ' on' : '')}
+          onClick={() => setParte('envios')}
+        >
+          Envios do cliente{pedidos ? ' · ' + pedidos + (pedidos === 1 ? ' aberto' : ' abertos') : ''}
+        </button>
+      </div>
+      {parte === 'docs' ? (
+        <DocumentosStudio db={db} project={project} isStudio={isStudio} />
+      ) : (
+        <EnviosCliente db={db} project={project} isStudio={isStudio} abrir={abrir} />
+      )}
+    </>
+  );
+}
+
+const PEDIDOS = [
+  ['nenhuma', 'Sem pedido ao cliente'],
+  ['ok', 'Pedir confirmação do cliente'],
+  ['assinatura', 'Pedir assinatura'],
+];
+const textoAviso = (d, approval) =>
+  (approval === 'assinatura' ? 'Assinar o documento "' : 'Confirmar o documento "') + d.name + '"';
+
+function DocumentosStudio({ db, project, isStudio }) {
   const docs = db.documents(project.id);
   const [filter, setFilter] = useState('');
   const [type, setType] = useState('geral');
-  // o que a Gabriela pede ao cliente ao enviar: nada, só um OK, ou assinatura
+  // o que a Gabriela pede ao cliente ao enviar: nada, uma confirmação, ou assinatura
   const [pedido, setPedido] = useState('nenhuma');
+  const [avisar, setAvisar] = useState(IS_SUPABASE);
   const fileRef = useRef(null);
   const [enviando, setEnviando] = useState(false);
   const [aviso, setAviso] = useState('');
+  const [editando, setEditando] = useState(null);
+
+  const avisarCliente = async (texto) => {
+    if (!avisar || !IS_SUPABASE) return;
+    try {
+      const r = await db.avisarCliente(project.id, texto);
+      setAviso(r && r.emailSent ? 'Cliente avisado por e-mail.' : 'O e-mail ao cliente não foi enviado.');
+    } catch {
+      setAviso('O e-mail ao cliente não foi enviado.');
+    }
+  };
   const onPick = async (e) => {
     const f = e.target.files && e.target.files[0];
     e.target.value = '';
@@ -32,6 +101,7 @@ export function Documents({ db, project, isStudio }) {
         { name: f.name, type, approval: pedido, size: (f.size / 1048576).toFixed(1).replace('.', ',') + ' MB' },
         f,
       );
+      if (pedido !== 'nenhuma') await avisarCliente(textoAviso({ name: f.name }, pedido));
     } finally {
       setEnviando(false);
     }
@@ -53,43 +123,37 @@ export function Documents({ db, project, isStudio }) {
         <h2>Documentos</h2>
         {isStudio && (
           <div className="head-actions">
-            <select className="mini-select" value={type} onChange={(e) => setType(e.target.value)}>
+            <select className="mini-select" aria-label="Categoria do documento" value={type} onChange={(e) => setType(e.target.value)}>
               {DOC_TYPES.map((t) => (
                 <option key={t.id} value={t.id}>
                   {t.label}
                 </option>
               ))}
             </select>
-            <select
-              className="mini-select"
-              value={pedido}
-              onChange={(e) => setPedido(e.target.value)}
-              aria-label="O que pedir ao cliente"
-            >
+            <select className="mini-select" value={pedido} onChange={(e) => setPedido(e.target.value)} aria-label="O que pedir ao cliente">
               {PEDIDOS.map(([v, r]) => (
                 <option key={v} value={v}>
                   {r}
                 </option>
               ))}
             </select>
-            <button disabled={enviando}
-              className="btn btn-ghost btn-sm"
-              onClick={() => fileRef.current && fileRef.current.click()}
-            >
-              <Upload size={14} /> Enviar PDF
+            <button disabled={enviando} className="btn btn-ghost btn-sm" onClick={() => fileRef.current && fileRef.current.click()}>
+              <Upload size={14} /> {enviando ? 'Enviando…' : 'Enviar arquivo'}
             </button>
             <input ref={fileRef} type="file" accept="application/pdf,image/*,.doc,.docx,.xls,.xlsx" hidden onChange={onPick} />
+            {IS_SUPABASE && (
+              <label className="micro doc-avisar">
+                <input type="checkbox" checked={avisar} onChange={(e) => setAvisar(e.target.checked)} /> Avisar o cliente por
+                e-mail quando houver pedido
+              </label>
+            )}
             {aviso && <p className="micro aviso-upload">{aviso}</p>}
           </div>
         )}
       </header>
       <div className="filter-row">
         {DOC_TYPES.map((t) => (
-          <button
-            key={t.id}
-            className={'filter' + (filter === t.id ? ' on' : '')}
-            onClick={() => setFilter(filter === t.id ? '' : t.id)}
-          >
+          <button key={t.id} className={'filter' + (filter === t.id ? ' on' : '')} onClick={() => setFilter(filter === t.id ? '' : t.id)}>
             {t.label}
           </button>
         ))}
@@ -98,128 +162,263 @@ export function Documents({ db, project, isStudio }) {
         <Empty text={filter ? 'Nenhum documento nesta categoria.' : 'Nenhum documento ainda.'} />
       ) : (
         <ul className="doc-list">
-          {shown.map((d) => (
-            <li key={d.id} className="doc">
-              <span className="doc-ic">
-                <FileText size={18} />
-              </span>
-              <span className="doc-meta">
-                <strong>{d.name}</strong>
-                <small>
-                  {typeLabel(d.type)} · {d.size} · {fmt(d.date)}
-                </small>
-                <SituacaoDoc d={d} />
-              </span>
-              <button
-                className="icon-btn"
-                title={d.storagePath ? 'Baixar' : 'Arquivo indisponível'}
-                onClick={() => openDoc(d)}
-                disabled={!d.storagePath}
-              >
-                <Download size={16} />
-              </button>
-              {isStudio && (
-                <select
-                  className="mini-select doc-pedido"
-                  aria-label={'O que pedir ao cliente sobre ' + d.name}
-                  value={d.approval || 'nenhuma'}
-                  onChange={(e) => {
-                    const novo = e.target.value;
-                    if (d.response && !window.confirm('O cliente já respondeu este documento. Pedir de novo apaga a resposta anterior. Continuar?')) return;
-                    db.setDocumentApproval(d.id, novo);
-                  }}
-                >
-                  {PEDIDOS.map(([v, r]) => (
-                    <option key={v} value={v}>
-                      {r}
-                    </option>
-                  ))}
-                </select>
-              )}
-              {isStudio && (
-                <button
-                  className="icon-btn icon-del"
-                  title="Excluir"
-                  onClick={() => {
-                    if (window.confirm('Excluir "' + d.name + '"?')) db.deleteDocument(d.id);
-                  }}
-                >
-                  <Trash2 size={16} />
+          {shown.map((d) =>
+            editando === d.id ? (
+              <EditarDocumento key={d.id} db={db} d={d} projectId={project.id} onFechar={() => setEditando(null)} />
+            ) : (
+              <li key={d.id} className="doc" id={'alvo-doc-' + d.id}>
+                <span className="doc-ic">
+                  <FileText size={18} />
+                </span>
+                <span className="doc-meta">
+                  <strong>{d.name}</strong>
+                  <small>
+                    {typeLabel(d.type)} · {d.size} · {fmt(d.date)}
+                  </small>
+                  <SituacaoDoc d={d} />
+                </span>
+                <button className="icon-btn" title={d.storagePath ? 'Abrir' : 'Arquivo indisponível'} aria-label={'Abrir ' + d.name} onClick={() => openDoc(d)} disabled={!d.storagePath}>
+                  <Download size={16} />
                 </button>
-              )}
-              {!isStudio && <RespostaCliente db={db} d={d} />}
-            </li>
-          ))}
+                {isStudio && (
+                  <select
+                    className="mini-select doc-pedido"
+                    aria-label={'O que pedir ao cliente sobre ' + d.name}
+                    value={d.approval || 'nenhuma'}
+                    onChange={async (e) => {
+                      const novo = e.target.value;
+                      if (d.response && !window.confirm('O cliente já respondeu este documento. Pedir de novo apaga a resposta anterior. Continuar?')) return;
+                      await db.setDocumentApproval(d.id, novo);
+                      if (novo !== 'nenhuma') await avisarCliente(textoAviso(d, novo));
+                    }}
+                  >
+                    {PEDIDOS.map(([v, r]) => (
+                      <option key={v} value={v}>
+                        {r}
+                      </option>
+                    ))}
+                  </select>
+                )}
+                {isStudio && (
+                  <button className="icon-btn" title="Editar" aria-label={'Editar ' + d.name} onClick={() => setEditando(d.id)}>
+                    <Pencil size={15} />
+                  </button>
+                )}
+                {isStudio && (
+                  <button
+                    className="icon-btn icon-del"
+                    title="Excluir"
+                    aria-label={'Excluir ' + d.name}
+                    onClick={() => {
+                      if (window.confirm('Excluir "' + d.name + '"?')) db.deleteDocument(d.id);
+                    }}
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                )}
+                {isStudio && d.response === 'ajustes' && (
+                  <button
+                    type="button"
+                    className="link sm doc-pedir-de-novo"
+                    onClick={async () => {
+                      await db.setDocumentApproval(d.id, d.approval);
+                      await avisarCliente(textoAviso(d, d.approval));
+                    }}
+                  >
+                    <Send size={12} /> Ajustei, pedir de novo
+                  </button>
+                )}
+                {!isStudio && <RespostaCliente db={db} d={d} />}
+              </li>
+            ),
+          )}
         </ul>
       )}
     </section>
   );
 }
 
-const PEDIDOS = [
-  ['nenhuma', 'Sem pedido ao cliente'],
-  ['ok', 'Pedir OK do cliente'],
-  ['assinatura', 'Pedir assinatura'],
-];
+/* Editar nome e categoria, ou trocar o arquivo (studio). */
+function EditarDocumento({ db, d, projectId, onFechar }) {
+  const [nome, setNome] = useState(d.name);
+  const [tipo, setTipo] = useState(d.type);
+  const [salvando, setSalvando] = useState(false);
+  const [aviso, setAviso] = useState('');
+  const arq = useRef(null);
+  const salvar = async () => {
+    if (!nome.trim() || salvando) return;
+    setSalvando(true);
+    try {
+      await db.updateDocument(d.id, { name: nome.trim(), type: tipo });
+      onFechar();
+    } catch {
+      setSalvando(false);
+    }
+  };
+  const trocar = async (e) => {
+    const f = e.target.files && e.target.files[0];
+    e.target.value = '';
+    if (!f) return;
+    const problema = validarArquivo(f);
+    if (problema) return setAviso(problema);
+    setSalvando(true);
+    try {
+      await db.replaceDocumentFile(projectId, d.id, f);
+      setAviso('Arquivo trocado.');
+    } finally {
+      setSalvando(false);
+    }
+  };
+  return (
+    <li className="doc doc-editando" id={'alvo-doc-' + d.id}>
+      <div className="form-grid">
+        <label className="lab">
+          Nome do documento
+          <input value={nome} onChange={(e) => setNome(e.target.value)} aria-label="Nome do documento" />
+        </label>
+        <label className="lab">
+          Categoria
+          <select value={tipo} onChange={(e) => setTipo(e.target.value)} aria-label="Categoria">
+            {DOC_TYPES.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.label}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+      <div className="row">
+        <button type="button" className="btn btn-primary btn-sm" disabled={!nome.trim() || salvando} onClick={salvar}>
+          {salvando ? 'Salvando…' : 'Salvar'}
+        </button>
+        <button type="button" className="btn btn-ghost btn-sm" disabled={salvando} onClick={() => arq.current && arq.current.click()}>
+          <RefreshCw size={13} /> Trocar o arquivo
+        </button>
+        <input ref={arq} type="file" accept="application/pdf,image/*,.doc,.docx,.xls,.xlsx" hidden onChange={trocar} />
+        <button type="button" className="btn btn-ghost btn-sm" onClick={onFechar}>
+          Fechar
+        </button>
+        {aviso && <span className="micro">{aviso}</span>}
+      </div>
+    </li>
+  );
+}
 
 const dataCurta = (iso) => (iso ? fmt(String(iso).slice(0, 10)) : '');
 
 function SituacaoDoc({ d }) {
   if (!d.approval || d.approval === 'nenhuma') return null;
   if (d.response === 'assinado')
-    return <span className="doc-sit ok">Assinado por {d.respondedName} em {dataCurta(d.respondedAt)}</span>;
+    return (
+      <span className="doc-sit ok">
+        Assinado por {d.respondedName} em {dataCurta(d.respondedAt)}
+      </span>
+    );
   if (d.response === 'aprovado')
-    return <span className="doc-sit ok">OK do cliente em {dataCurta(d.respondedAt)}</span>;
+    return (
+      <span className="doc-sit ok">
+        Confirmado por {d.respondedName || 'cliente'} em {dataCurta(d.respondedAt)}
+      </span>
+    );
+  if (d.response === 'ajustes')
+    return (
+      <span className="doc-sit pendente">
+        <MessageSquareWarning size={12} /> Ajustes pedidos em {dataCurta(d.respondedAt)}: “{d.responseNote}”
+      </span>
+    );
   return (
-    <span className="doc-sit pendente">{d.approval === 'assinatura' ? 'Aguardando assinatura do cliente' : 'Aguardando OK do cliente'}</span>
+    <span className="doc-sit pendente">
+      {d.approval === 'assinatura' ? 'Aguardando assinatura do cliente' : 'Aguardando confirmação do cliente'}
+    </span>
   );
 }
 
+/* Resposta do cliente: confirmar (ou assinar) ou pedir ajustes. */
 function RespostaCliente({ db, d }) {
-  const [assinando, setAssinando] = useState(false);
+  const [modo, setModo] = useState(null); // 'assinar' | 'ajustes' | null
+  const [msg, setMsg] = useState('');
   const [enviando, setEnviando] = useState(false);
   const [erro, setErro] = useState('');
   if (!d.approval || d.approval === 'nenhuma' || d.response) return null;
 
-  if (d.approval === 'ok')
+  const enviar = async (fn) => {
+    setErro('');
+    setEnviando(true);
+    try {
+      await fn();
+      setModo(null);
+    } catch (e) {
+      setErro(erroAmigavel(e).texto);
+    } finally {
+      setEnviando(false);
+    }
+  };
+
+  if (modo === 'assinar')
     return (
-      <span className="doc-resposta">
-        <button
-          type="button"
-          className="btn btn-primary btn-sm"
-          disabled={enviando}
-          onClick={async () => {
-            setErro('');
-            setEnviando(true);
-            try {
-              await db.responderDocumento(d.id);
-            } catch (e) {
-              setErro(erroAmigavel(e).texto);
-            } finally {
-              setEnviando(false);
-            }
+      <div className="doc-assinar">
+        <AssinaturaPortal
+          titulo={d.name}
+          onAssinar={async (nome) => {
+            await db.responderDocumento(d.id, nome);
+            setModo(null);
           }}
-        >
-          <Check size={13} /> {enviando ? 'Enviando…' : 'Dar OK'}
-        </button>
-        {erro && <span className="error">{erro}</span>}
-      </span>
+          onCancelar={() => setModo(null)}
+        />
+      </div>
     );
 
-  return assinando ? (
-    <div className="doc-assinar">
-      <AssinaturaPortal
-        titulo={d.name}
-        onAssinar={async (nome) => {
-          await db.responderDocumento(d.id, nome);
-          setAssinando(false);
-        }}
-        onCancelar={() => setAssinando(false)}
-      />
+  if (modo === 'ajustes')
+    return (
+      <div className="doc-assinar doc-ajustes">
+        <label className="lab">
+          O que precisa ser ajustado em “{d.name}”?
+          <textarea rows={3} value={msg} onChange={(e) => setMsg(e.target.value)} aria-label="O que precisa ser ajustado" />
+        </label>
+        <div className="row">
+          <button
+            type="button"
+            className="btn btn-primary btn-sm"
+            disabled={!msg.trim() || enviando}
+            onClick={() => enviar(() => db.responderDocumento(d.id, null, 'ajustes', msg.trim()))}
+          >
+            {enviando ? 'Enviando…' : 'Enviar pedido de ajustes'}
+          </button>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={() => setModo(null)}>
+            Voltar
+          </button>
+        </div>
+        {erro && <span className="error">{erro}</span>}
+      </div>
+    );
+
+  return (
+    <div className="doc-confirmar">
+      <p className="doc-confirmar-texto">
+        {d.approval === 'assinatura'
+          ? 'O studio pede a sua assinatura neste documento.'
+          : 'O studio pede que você confirme que está de acordo com este documento.'}
+      </p>
+      <div className="row">
+        {d.approval === 'assinatura' ? (
+          <button type="button" className="btn btn-primary btn-sm" onClick={() => setModo('assinar')}>
+            <PenLine size={13} /> Assinar
+          </button>
+        ) : (
+          <button
+            type="button"
+            className="btn btn-primary btn-sm"
+            disabled={enviando}
+            onClick={() => enviar(() => db.responderDocumento(d.id))}
+          >
+            <Check size={13} /> {enviando ? 'Enviando…' : 'Confirmo'}
+          </button>
+        )}
+        <button type="button" className="btn btn-ghost btn-sm" onClick={() => setModo('ajustes')}>
+          <MessageSquareWarning size={13} /> Pedir ajustes
+        </button>
+      </div>
+      {erro && <span className="error">{erro}</span>}
     </div>
-  ) : (
-    <button type="button" className="btn btn-primary btn-sm doc-resposta" onClick={() => setAssinando(true)}>
-      <PenLine size={13} /> Assinar
-    </button>
   );
 }

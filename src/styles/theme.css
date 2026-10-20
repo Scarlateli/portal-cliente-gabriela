@@ -792,3 +792,70 @@ button{color:inherit}
 .cp .sub-form .inline-lab{display:flex;flex-direction:column;align-items:flex-start;gap:4px;font-size:11.5px;color:var(--muted)}
 .cp .tl-late .tl-body{border-color:rgba(93,29,24,.55)}
 .cp .proj-foot{gap:12px;flex-wrap:wrap}
+
+/* ===== Rodada 4 (revisão de 20/10) ===== */
+/* item destacado ao chegar pelo sino ou por um link entre abas */
+.cp .destaque{animation:destaque 2.4s ease}
+@keyframes destaque{0%,30%{box-shadow:0 0 0 3px rgba(170,155,131,.75);background-color:rgba(170,155,131,.18)}100%{box-shadow:0 0 0 0 rgba(170,155,131,0)}}
+@media (prefers-reduced-motion:reduce){.cp .destaque{animation:none;outline:2px solid var(--gl-areia)}}
+.cp .sino-nova{font-weight:500}
+.cp .sino-nova::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--gl-vermelho);flex:none;order:-1;margin-right:-2px}
+
+/* sub-etapa: prazo numa coluna à direita */
+.cp .sub > .sub-prazo{flex:none;margin-left:auto;align-self:center}
+.cp .sub > .sub-prazo-feito{background:transparent;color:var(--muted)}
+.cp .sub .sub-prazo-sem{border-color:transparent}
+@media (max-width:640px){.cp .sub{flex-wrap:wrap}.cp .sub > .sub-prazo{min-width:0;margin-left:27px}}
+.cp .sub-form-pede{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--muted)}
+.cp .sub-form-instrucoes,.cp .envios-novo textarea{width:100%;border:1px solid var(--line);border-radius:4px;padding:8px 11px;font:inherit;font-size:13px;background:var(--card);color:var(--ink)}
+
+/* próximo prazo no topo do projeto: menor, dizendo o quê */
+.cp .hstat strong{font-size:20px}
+.cp .hstat em{text-transform:none;letter-spacing:.02em;font-size:11.5px}
+.cp .hstat-atrasado strong{color:var(--gl-vermelho)}
+
+/* aprovação de etapa */
+.cp .aprov{margin-top:10px;padding-top:10px;border-top:1px dashed var(--gl-hairline-2);font-size:13px}
+.cp .aprov p{display:flex;align-items:flex-start;gap:6px;margin:0;line-height:1.5}
+.cp .aprov p svg{flex:none;margin-top:2px}
+.cp .aprov-vazio{border-top:0;padding-top:0;margin-top:6px}
+.cp .aprov-pendente p{color:var(--gl-terra)}
+.cp .aprov-aprovada p{color:#3f6b45}
+.cp .aprov-ajustes p{color:var(--gl-vermelho)}
+.cp .aprov-acoes{display:flex;gap:14px;align-items:center;margin-top:6px;flex-wrap:wrap}
+.cp .aprov-check{display:flex;align-items:flex-start;gap:8px;font-size:13px;line-height:1.45;margin:8px 0}
+.cp .aprov-check input{margin-top:3px}
+.cp .aprov-cliente{background:rgba(170,155,131,.14);border:1px solid rgba(170,155,131,.45);border-radius:6px;padding:12px 14px;margin-top:12px}
+.cp .aprov-titulo{font-weight:500;color:var(--gl-marrom)!important;margin-bottom:8px!important}
+.cp .aprov-form{display:flex;flex-direction:column;gap:6px;max-width:460px}
+.cp .aprov-form textarea,.cp .doc-ajustes textarea{width:100%;border:1px solid var(--line);border-radius:4px;padding:8px 11px;font:inherit;font-size:13px}
+.cp .aprov-pedir{background:var(--brand-soft);border:1px solid var(--gl-hairline-2);border-radius:6px;padding:12px 14px}
+
+/* documentos: duas partes, edição, confirmação */
+.cp .doc-partes{display:flex;gap:6px;margin:0 0 12px}
+.cp .doc-avisar{display:flex;align-items:center;gap:6px;flex-basis:100%;justify-content:flex-end}
+.cp .doc-editando{display:block;padding:12px 0}
+.cp .doc-confirmar{flex-basis:100%;background:rgba(170,155,131,.14);border:1px solid rgba(170,155,131,.45);border-radius:6px;padding:10px 12px;margin-top:6px}
+.cp .doc-confirmar-texto{margin:0 0 6px;font-size:13px;color:var(--gl-marrom)}
+.cp .doc-pedir-de-novo{flex-basis:100%;justify-content:flex-start;margin-left:42px}
+.cp .doc-sit svg{vertical-align:-2px}
+
+/* envios do cliente */
+.cp .envios-intro{margin:-4px 0 12px}
+.cp .envios{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:12px}
+.cp .envio{border:1px solid var(--gl-hairline-2);border-radius:6px;padding:14px 16px;background:var(--card)}
+.cp .envio-feito{background:var(--gl-surface-2);border-color:var(--gl-hairline)}
+.cp .envio-topo{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+.cp .envio-topo h3{display:flex;align-items:center;gap:7px;font-size:15px;font-weight:500;margin:0}
+.cp .envio-etapa{margin-top:2px;font-size:12px}
+.cp .envio-situacao{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.cp .pill-todo{background:rgba(93,29,24,.09);color:var(--gl-vermelho)}
+.cp .envio-instrucoes{margin:8px 0 0;font-size:13px;line-height:1.55;color:var(--ink);border-left:2px solid var(--gl-areia);padding-left:10px}
+.cp .envio-arquivos{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-direction:column;gap:4px}
+.cp .envio-arquivos li{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.cp .envio-nota{margin-top:8px;font-size:13px}
+.cp .envio-nota p{margin:0}
+.cp .envio-nota textarea{width:100%;border:1px solid var(--line);border-radius:4px;padding:8px 11px;font:inherit;font-size:13px}
+.cp .envio-acoes{margin-top:10px;align-items:center}
+.cp .doc-editando{padding:12px 14px}
+.cp .doc-pedido{max-width:230px}

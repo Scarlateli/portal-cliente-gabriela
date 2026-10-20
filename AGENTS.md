@@ -47,6 +47,12 @@ O **site institucional é OUTRO repositório** — veja `docs/BRIEFING-SITE.md`.
    (`signOut({ scope: 'local' })`). O modo global derrubava o iPad quando a
    Gabriela saía no computador. Edge Functions são chamadas por `invocar`
    (em `db-supabase.js`), que renova a sessão e tenta de novo após um 401.
+10. **Migrações sem apagar nada**: pelo conector do Supabase, uma migração
+   com `drop function`/`drop policy` pede confirmação manual e volta
+   "cancelled" se ninguém confirmar. Prefira criar ao lado (função com nome
+   novo, política com `create policy` numa tabela nova) e deixe a limpeza
+   para depois, à mão. Aplique em partes pequenas e confira o estado no
+   banco depois de cada uma.
 
 ## Arquitetura de dados (importante!)
 

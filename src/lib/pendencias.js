@@ -1,42 +1,74 @@
-/* Pendências (Etapa 7): o que está esperando uma ação de quem está logado.
+/* Pendências: o que está esperando uma ação de quem está logado.
    Diferente das notificações (o que aconteceu), uma pendência só some quando
    é resolvida. Função pura: recebe os dados já carregados (mock ou Supabase,
    no mesmo formato) e devolve a lista.
 
-   Cada item: { id, pid, projeto, aba, texto }
-   - aba: a aba do projeto onde a pendência se resolve. */
+   Cada item: { id, pid, projeto, aba, alvo, texto }
+   - aba: a aba do projeto onde a pendência se resolve;
+   - alvo: o item dentro da aba (o portal rola até ele e o destaca).
+
+   Rodada 4: tarefas e prazos do cliente só entram quando estão perto
+   (até PRAZO_PROXIMO_DIAS) ou vencidos. Pedidos explícitos (aprovar etapa,
+   confirmar documento, assinar, decidir orçamento) entram sempre. */
+
+export const PRAZO_PROXIMO_DIAS = 7;
 
 const hojeISO = () => new Date().toISOString().slice(0, 10);
+const somarDias = (iso, n) => {
+  const d = new Date(iso + 'T12:00:00Z');
+  d.setUTCDate(d.getUTCDate() + n);
+  return d.toISOString().slice(0, 10);
+};
+const dataBR = (iso) => iso.slice(8, 10) + '/' + iso.slice(5, 7);
 
-export function calcularPendencias({ role, projects = [], stages = [], documents = [], contracts = [], quotes = [] }, hoje = hojeISO()) {
+export function calcularPendencias(
+  { role, projects = [], stages = [], documents = [], contracts = [], quotes = [], arquivos = [] },
+  hoje = hojeISO(),
+) {
   const ativos = new Map(projects.filter((p) => p.status !== 'concluido').map((p) => [p.id, p]));
   const nome = (pid) => (ativos.get(pid) || {}).name || '';
   const out = [];
-  const add = (id, pid, aba, texto) => {
-    if (ativos.has(pid)) out.push({ id, pid, projeto: nome(pid), aba, texto });
+  const add = (id, pid, aba, alvo, texto) => {
+    if (ativos.has(pid)) out.push({ id, pid, projeto: nome(pid), aba, alvo, texto });
   };
   const metodo = (c) => c.method || (c.kind === 'termo' ? 'aceite' : 'autentique');
+  const limite = somarDias(hoje, PRAZO_PROXIMO_DIAS);
+  const perto = (iso) => !!iso && iso <= limite; // inclui os vencidos
+  const quando = (iso) => (iso < hoje ? ' · atrasada' : iso === hoje ? ' · vence hoje' : ' · até ' + dataBR(iso));
+  const comArquivo = new Set(arquivos.map((a) => a.subId));
 
   if (role === 'studio') {
+    stages
+      .filter((s) => s.approval === 'ajustes')
+      .forEach((s) => add('e-' + s.id, s.projectId, 'timeline', 'etapa-' + s.id, 'Ajustes pedidos na etapa: ' + s.title));
+    documents
+      .filter((d) => d.response === 'ajustes')
+      .forEach((d) => add('d-' + d.id, d.projectId, 'docs', 'doc-' + d.id, 'Ajustes pedidos no documento: ' + d.name));
     contracts
       .filter((c) => c.sigStatus === 'recusado')
-      .forEach((c) =>
-        add('c-' + c.id, c.projectId, 'contract', 'Recusado pelo cliente: ' + c.name),
-      );
+      .forEach((c) => add('c-' + c.id, c.projectId, 'contract', 'contrato-' + c.id, 'Recusado pelo cliente: ' + c.name));
     quotes
       .filter((q) => q.status === 'negociacao')
-      .forEach((q) => add('q-' + q.id, q.projectId, 'quotes', 'Pedido de negociação: ' + q.supplier));
+      .forEach((q) => add('q-' + q.id, q.projectId, 'quotes', 'orc-' + q.id, 'Pedido de negociação: ' + q.supplier));
+    stages.forEach((s) =>
+      (s.subs || [])
+        .filter((b) => b.pedeArquivos && !b.done && comArquivo.has(b.id))
+        .forEach((b) => add('a-' + b.id, s.projectId, 'docs', 'pedido-' + b.id, 'Arquivos do cliente para conferir: ' + b.title)),
+    );
     stages
       .filter((s) => s.owner === 'client' && s.status !== 'concluida' && s.end && s.end < hoje)
-      .forEach((s) => add('s-' + s.id, s.projectId, 'timeline', 'Etapa do cliente atrasada: ' + s.title));
+      .forEach((s) => add('s-' + s.id, s.projectId, 'timeline', 'etapa-' + s.id, 'Etapa do cliente atrasada: ' + s.title));
     return out;
   }
 
-  // cliente
+  // cliente — primeiro o que ele precisa decidir, depois o que tem prazo
+  stages
+    .filter((s) => s.approval === 'pendente')
+    .forEach((s) => add('e-' + s.id, s.projectId, 'timeline', 'etapa-' + s.id, 'Aprovar a etapa: ' + s.title));
   documents
     .filter((d) => d.approval && d.approval !== 'nenhuma' && !d.response)
     .forEach((d) =>
-      add('d-' + d.id, d.projectId, 'docs', (d.approval === 'assinatura' ? 'Assinar: ' : 'Dar OK: ') + d.name),
+      add('d-' + d.id, d.projectId, 'docs', 'doc-' + d.id, (d.approval === 'assinatura' ? 'Assinar: ' : 'Confirmar: ') + d.name),
     );
   contracts
     .filter((c) => c.sigStatus === 'enviado')
@@ -48,19 +80,44 @@ export function calcularPendencias({ role, projects = [], stages = [], documents
           : m === 'portal'
             ? 'Assinar: ' + c.name
             : 'Assinar pelo e-mail da Autentique: ' + c.name;
-      add('c-' + c.id, c.projectId, 'contract', texto);
+      add('c-' + c.id, c.projectId, 'contract', 'contrato-' + c.id, texto);
     });
   quotes
     .filter((q) => q.status === 'pendente')
-    .forEach((q) => add('q-' + q.id, q.projectId, 'quotes', 'Decidir orçamento: ' + q.supplier + ' (' + q.segment + ')'));
+    .forEach((q) =>
+      add('q-' + q.id, q.projectId, 'quotes', 'orc-' + q.id, 'Decidir orçamento: ' + q.supplier + ' (' + q.segment + ')'),
+    );
   stages
     .filter((s) => s.status !== 'concluida')
     .forEach((s) => {
       (s.subs || [])
-        .filter((b) => b.responsible === 'cliente' && !b.done)
-        .forEach((b, i) => add('b-' + s.id + '-' + i, s.projectId, 'timeline', 'Tarefa: ' + b.title + ' (' + s.title + ')'));
-      if (s.owner === 'client' && s.end)
-        add('s-' + s.id, s.projectId, 'timeline', (s.end < hoje ? 'Prazo vencido: ' : 'Etapa sua: ') + s.title);
+        .filter((b) => b.responsible === 'cliente' && !b.done && perto(b.due))
+        .forEach((b) => {
+          if (b.pedeArquivos) {
+            if (!comArquivo.has(b.id))
+              add('b-' + b.id, s.projectId, 'docs', 'pedido-' + b.id, 'Enviar arquivos: ' + b.title + quando(b.due));
+          } else add('b-' + b.id, s.projectId, 'timeline', 'sub-' + b.id, 'Tarefa: ' + b.title + quando(b.due));
+        });
+      if (s.owner === 'client' && perto(s.end))
+        add('s-' + s.id, s.projectId, 'timeline', 'etapa-' + s.id, (s.end < hoje ? 'Prazo vencido: ' : 'Etapa sua: ') + s.title);
     });
   return out;
+}
+
+/* Próximo prazo do projeto, contando etapas e sub-etapas que ainda não
+   terminaram: { data, titulo, atrasado } ou null. */
+export function proximoPrazo(stages = [], hoje = hojeISO()) {
+  const prazos = [];
+  stages
+    .filter((s) => s.status !== 'concluida')
+    .forEach((s) => {
+      if (s.end) prazos.push({ data: s.end, titulo: s.title });
+      (s.subs || []).filter((b) => !b.done && b.due).forEach((b) => prazos.push({ data: b.due, titulo: b.title }));
+    });
+  if (!prazos.length) return null;
+  const futuros = prazos.filter((p) => p.data >= hoje).sort((a, b) => (a.data < b.data ? -1 : 1));
+  if (futuros.length) return { ...futuros[0], atrasado: false };
+  // tudo vencido: mostra o mais antigo, marcado como atrasado
+  const vencido = prazos.sort((a, b) => (a.data < b.data ? -1 : 1))[0];
+  return { ...vencido, atrasado: true };
 }

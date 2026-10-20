@@ -12,6 +12,7 @@ const novaSub = (b) => ({
   id: uid('sb'), title: String(b.title).trim(), done: false, kind: b.kind || 'tarefa',
   kindLabel: b.kind === 'outro' ? String(b.kindLabel || '').trim().slice(0, 40) : '',
   responsible: b.responsible || 'studio', due: b.due || '', time: b.time || '', format: b.format || '', link: b.link || '',
+  pedeArquivos: !!b.pedeArquivos, instructions: b.pedeArquivos ? String(b.instructions || '').trim() : '', clientNote: '',
 });
 const camposProjeto = (d) => ({
   address: d.address || '', addressComplement: d.addressComplement || '', neighborhood: d.neighborhood || '',
@@ -67,8 +68,10 @@ export function makeDb(state, set) {
         documents: doProjeto(state.documents),
         contracts: doProjeto(state.contracts),
         quotes: doProjeto(state.quotes),
+        arquivos: doProjeto(state.subArquivos),
       });
     },
+    subArquivos: (pid) => (state.subArquivos || []).filter((a) => a.projectId === pid),
     fornecedores: () => (state.fornecedores || []).slice().sort((a, b) => a.name.localeCompare(b.name, 'pt-BR')),
     suppliers: (pid) => byP('quotes', pid).filter((q) => q.status === 'aprovado'),
     calendarEvents: (pid) => {
@@ -116,7 +119,7 @@ export function makeDb(state, set) {
     updateStage: (sid, patch) => set((s) => ({ ...s, stages: s.stages.map((x) => x.id === sid ? { ...x, ...patch } : x) })),
     rescheduleStage: (sid, newEnd) => set((s) => ({ ...s, stages: s.stages.map((x) => x.id === sid ? { ...x, rescheduledFrom: x.rescheduledFrom || x.end, end: newEnd } : x) })),
     addSub: (sid, d) => set((s) => { const it = typeof d === 'string' ? { title: d } : d; return { ...s, stages: s.stages.map((x) => x.id === sid ? { ...x, subs: [...(x.subs || []), novaSub(it)] } : x) }; }),
-    updateSub: (sid, bid, d) => set((s) => ({ ...s, stages: s.stages.map((x) => x.id === sid ? { ...x, subs: (x.subs || []).map((b) => b.id === bid ? { ...novaSub(d), id: b.id, done: b.done, fileName: b.fileName, storagePath: b.storagePath } : b) } : x) })),
+    updateSub: (sid, bid, d) => set((s) => ({ ...s, stages: s.stages.map((x) => x.id === sid ? { ...x, subs: (x.subs || []).map((b) => b.id === bid ? { ...novaSub(d), id: b.id, done: b.done, fileName: b.fileName, storagePath: b.storagePath, clientNote: b.clientNote || '' } : b) } : x) })),
     moveSub: (sid, bid, dir) => set((s) => ({ ...s, stages: s.stages.map((x) => {
       if (x.id !== sid) return x;
       const subs = (x.subs || []).slice();
@@ -139,12 +142,48 @@ export function makeDb(state, set) {
     updateTemplate: (tid, name, items) => set((s) => ({ ...s, templates: s.templates.map((t) => t.id === tid ? { ...t, name, items } : t) })),
     addDocument: (pid, d) => set((s) => ({ ...s, documents: [...s.documents, { id: uid('d'), projectId: pid, name: d.name, type: d.type, size: d.size, date: todayISO(), approval: d.approval || 'nenhuma', response: null, respondedAt: null, respondedName: null }] })),
     deleteDocument: (did) => set((s) => ({ ...s, documents: s.documents.filter((x) => x.id !== did) })),
-    setDocumentApproval: (did, approval) => set((s) => ({ ...s, documents: s.documents.map((x) => x.id === did ? { ...x, approval, response: null, respondedAt: null, respondedName: null } : x) })),
+    setDocumentApproval: (did, approval) => set((s) => ({ ...s, documents: s.documents.map((x) => x.id === did ? { ...x, approval, response: null, respondedAt: null, respondedName: null, responseNote: null } : x) })),
+    updateDocument: (did, d) => set((s) => ({ ...s, documents: s.documents.map((x) => x.id === did ? { ...x, name: String(d.name || '').trim(), type: d.type } : x) })),
+    replaceDocumentFile: (pid, did, file) => set((s) => ({ ...s, documents: s.documents.map((x) => x.id === did ? { ...x, size: (file.size / 1048576).toFixed(1).replace('.', ',') + ' MB', date: todayISO() } : x) })),
+    // Rodada 4 — espelha responder_etapa e as regras de sub_arquivos do banco
+    pedirAprovacaoEtapa: (sid, pedir = true) => set((s) => ({ ...s, stages: s.stages.map((x) => x.id === sid ? { ...x, approval: pedir ? 'pendente' : 'nenhuma', approvalRequestedAt: pedir ? new Date().toISOString() : null, approvalAt: null, approvalName: null, approvalNote: null } : x) })),
+    responderEtapa: (sid, decisao, nome, mensagem) => {
+      const st = state.stages.find((x) => x.id === sid);
+      if (!st || st.approval !== 'pendente') throw new Error('Esta etapa não está aguardando a sua aprovação.');
+      const msg = String(mensagem || '').trim();
+      const cliente = (state.users.find((u) => u.id === (state.projects.find((p) => p.id === st.projectId) || {}).clientId) || {}).name;
+      let patch;
+      if (decisao === 'aprovar') {
+        if (String(nome || '').trim().length < 3) throw new Error('Digite o seu nome completo para aprovar.');
+        patch = { approval: 'aprovada', approvalAt: new Date().toISOString(), approvalName: String(nome).trim(), approvalNote: msg || null };
+      } else if (decisao === 'ajustes') {
+        if (!msg) throw new Error('Conte o que precisa ser ajustado.');
+        patch = { approval: 'ajustes', approvalAt: new Date().toISOString(), approvalName: cliente, approvalNote: msg };
+      } else throw new Error('Decisão inválida.');
+      set((s) => ({ ...s, stages: s.stages.map((x) => (x.id === sid ? { ...x, ...patch } : x)) }));
+    },
+    enviarArquivos: (pid, bid, files, sentBy) => {
+      const sub = state.stages.flatMap((x) => x.subs || []).find((b) => b.id === bid);
+      if (!sub || (sentBy !== 'studio' && (sub.responsible !== 'cliente' || sub.done))) throw new Error('Este pedido não está aberto para envio.');
+      const novos = Array.from(files).map((f) => ({ id: uid('ar'), subId: bid, projectId: pid, name: f.name, storagePath: null, size: (f.size / 1048576).toFixed(1).replace('.', ',') + ' MB', sentBy: sentBy === 'studio' ? 'studio' : 'client', createdAt: new Date().toISOString() }));
+      set((s) => ({ ...s, subArquivos: [...(s.subArquivos || []), ...novos] }));
+    },
+    removerArquivo: (pid, aid) => set((s) => ({ ...s, subArquivos: (s.subArquivos || []).filter((a) => a.id !== aid) })),
+    setNotaPedido: (sid, bid, nota) => set((s) => ({ ...s, stages: s.stages.map((x) => x.id === sid ? { ...x, subs: (x.subs || []).map((b) => b.id === bid ? { ...b, clientNote: String(nota || '').trim().slice(0, 1000) } : b) } : x) })),
+    // no modo demonstração não há e-mail: só confirma que "enviaria"
+    avisarCliente: () => ({ emailSent: false, demo: true }),
     // espelha a função responder_documento do banco (mesmas regras)
-    responderDocumento: (did, nome) => {
+    responderDocumento: (did, nome, decisao = 'confirmar', mensagem = null) => {
       const d = state.documents.find((x) => x.id === did);
       if (!d || !d.approval || d.approval === 'nenhuma') throw new Error('Este documento não pede resposta.');
       if (d.response) throw new Error('Este documento já foi respondido.');
+      const cliente = (state.users.find((u) => u.id === (state.projects.find((p) => p.id === d.projectId) || {}).clientId) || {}).name;
+      if (decisao === 'ajustes') {
+        const msg = String(mensagem || '').trim();
+        if (!msg) throw new Error('Conte o que precisa ser ajustado.');
+        set((s) => ({ ...s, documents: s.documents.map((x) => x.id === did ? { ...x, response: 'ajustes', responseNote: msg, respondedAt: new Date().toISOString(), respondedName: cliente } : x) }));
+        return;
+      }
       if (d.approval === 'assinatura' && String(nome || '').trim().length < 3) throw new Error('Digite o seu nome completo para assinar.');
       const quem = d.approval === 'assinatura' ? String(nome).trim() : (state.users.find((u) => u.id === (state.projects.find((p) => p.id === d.projectId) || {}).clientId) || {}).name;
       set((s) => ({ ...s, documents: s.documents.map((x) => x.id === did ? { ...x, response: d.approval === 'assinatura' ? 'assinado' : 'aprovado', respondedAt: new Date().toISOString(), respondedName: quem } : x) }));
