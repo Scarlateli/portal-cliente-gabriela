@@ -163,3 +163,38 @@ describe('avisos com desfazer', async () => {
     vi.useRealTimers();
   });
 });
+
+describe('visualizador e envio arrastando', async () => {
+  const { Visualizador } = await import('../components/project/Visualizador.jsx');
+  const { EnviosCliente } = await import('../components/project/EnviosCliente.jsx');
+  const { fireEvent } = await import('@testing-library/react');
+  it('abre a imagem no portal (blob) com o painel ao lado', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => ({ ok: true, blob: async () => new Blob(['x'], { type: 'image/png' }) })));
+    const criar = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:teste');
+    const db2 = { fileUrl: async () => 'https://assinada' };
+    render(
+      <Visualizador db={db2} arquivo={{ name: 'foto.png', storagePath: 'p1/foto.png' }} onFechar={() => {}}>
+        <p>Painel de aprovação</p>
+      </Visualizador>,
+    );
+    expect(await screen.findByRole('img', { name: 'foto.png' })).toBeTruthy();
+    expect(screen.getByText('Painel de aprovação')).toBeTruthy();
+    criar.mockRestore();
+    vi.unstubAllGlobals();
+  });
+  it('sem arquivo (demonstração): avisa em vez de quebrar', async () => {
+    render(<Visualizador db={{ fileUrl: async () => null }} arquivo={{ name: 'a.pdf', storagePath: null }} onFechar={() => {}} />);
+    expect(await screen.findByText(/indisponível/)).toBeTruthy();
+  });
+  it('soltar arquivos envia um de cada vez', async () => {
+    const pedido = { id: 'b1', title: 'Plantas', responsible: 'cliente', done: false, due: '', pedeArquivos: true };
+    const db3 = { stages: () => [{ id: 's1', title: 'Briefing', status: 'em_andamento', subs: [pedido] }], subArquivos: () => [], enviarArquivos: vi.fn(async () => {}) };
+    const { container } = render(<EnviosCliente db={db3} project={{ id: 'p1' }} isStudio={false} />);
+    const f1 = new File(['a'], 'a.pdf', { type: 'application/pdf' });
+    const f2 = new File(['b'], 'b.jpg', { type: 'image/jpeg' });
+    fireEvent.drop(container.querySelector('.soltar'), { dataTransfer: { files: [f1, f2] } });
+    await screen.findByText('b.jpg');
+    await vi.waitFor(() => expect(db3.enviarArquivos).toHaveBeenCalledTimes(2));
+    expect(db3.enviarArquivos).toHaveBeenNthCalledWith(1, 'p1', 'b1', [f1], 'client');
+  });
+});

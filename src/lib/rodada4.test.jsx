@@ -153,6 +153,8 @@ describe('telas', () => {
     const f1 = new File(['a'], 'planta-1.pdf', { type: 'application/pdf' });
     const f2 = new File(['b'], 'planta-2.pdf', { type: 'application/pdf' });
     await userEvent.upload(input, [f1, f2]);
-    expect(db.enviarArquivos).toHaveBeenCalledWith('p1', 'b1', [f1, f2], 'client');
+    // rodada 10: um de cada vez, para mostrar a situação de cada arquivo
+    expect(db.enviarArquivos).toHaveBeenCalledWith('p1', 'b1', [f1], 'client');
+    expect(db.enviarArquivos).toHaveBeenCalledWith('p1', 'b1', [f2], 'client');
   });
 });

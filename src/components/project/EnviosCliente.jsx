@@ -1,10 +1,12 @@
-import { useState, useRef } from 'react';
-import { FolderUp, Upload, Download, Trash2, Plus, Check, RotateCcw, CalendarDays, AlertTriangle } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
+import { FolderUp, Upload, Download, Trash2, Plus, Check, RotateCcw, CalendarDays, AlertTriangle, FileText } from 'lucide-react';
 import { Empty } from '../atoms.jsx';
 import { fmt, validarArquivo } from '../../lib/helpers.js';
 import { prazoSub } from '../../lib/etapas.js';
 import { IS_SUPABASE } from '../../lib/data.js';
 import { useAvisos } from '../../lib/avisosContexto.js';
+import { Visualizador } from './Visualizador.jsx';
+import { tipoArquivo } from '../../lib/tipoArquivo.js';
 
 /* Envios do cliente (rodada 4): o studio cria pedidos de arquivo (são
    sub-etapas com "pedir arquivos" marcado) e o cliente manda quantos
@@ -143,6 +145,10 @@ function Pedido({ db, projectId, b, s, isStudio, arquivos, abrir }) {
   const { avisar, excluirComDesfazer } = useAvisos();
   const input = useRef(null);
   const [enviando, setEnviando] = useState(false);
+  // rodada 10: arrastar e soltar, situação de cada arquivo e visualizador
+  const [arrastando, setArrastando] = useState(false);
+  const [fila, setFila] = useState([]); // [{ nome, estado: 'esperando'|'enviando'|'ok'|'erro' }]
+  const [vendo, setVendo] = useState(null);
   const [aviso, setAviso] = useState('');
   const [nota, setNota] = useState(b.clientNote || '');
   const [editandoNota, setEditandoNota] = useState(false);
@@ -185,26 +191,39 @@ function Pedido({ db, projectId, b, s, isStudio, arquivos, abrir }) {
     }
   };
 
-  const escolher = async (e) => {
-    const lista = Array.from(e.target.files || []);
-    e.target.value = '';
-    if (!lista.length) return;
+  // um arquivo de cada vez, para mostrar a situação de cada um
+  const enviarLista = async (lista) => {
+    if (!lista.length || enviando) return;
     const recusados = lista.map((f) => [f, validarArquivo(f)]).filter(([, p]) => p);
     const ok = lista.filter((f) => !validarArquivo(f));
     setAviso(recusados.length ? recusados.map(([f, p]) => f.name + ': ' + p).join(' ') : '');
     if (!ok.length) return;
     setEnviando(true);
+    setFila(ok.map((f) => ({ nome: f.name, estado: 'esperando' })));
+    const marcar = (i, estado) => setFila((l) => l.map((x, j) => (j === i ? { ...x, estado } : x)));
+    let enviados = 0;
     try {
-      await db.enviarArquivos(projectId, b.id, ok, isStudio ? 'studio' : 'client');
-      avisar(ok.length === 1 ? 'Arquivo enviado' : ok.length + ' arquivos enviados');
+      for (let i = 0; i < ok.length; i++) {
+        marcar(i, 'enviando');
+        try {
+          await db.enviarArquivos(projectId, b.id, [ok[i]], isStudio ? 'studio' : 'client');
+          marcar(i, 'ok');
+          enviados++;
+        } catch {
+          marcar(i, 'erro');
+        }
+      }
+      if (enviados) avisar(enviados === 1 ? 'Arquivo enviado' : enviados + ' arquivos enviados');
+      if (enviados < ok.length) setAviso('Alguns arquivos não foram enviados. Tente de novo.');
     } finally {
       setEnviando(false);
+      setTimeout(() => setFila((l) => l.filter((x) => x.estado === 'erro')), 2500);
     }
   };
-  const abrirArquivo = async (a) => {
-    if (!a.storagePath) return;
-    const url = await db.fileUrl(a.storagePath);
-    if (url) window.open(url, '_blank', 'noopener');
+  const escolher = (e) => {
+    const lista = Array.from(e.target.files || []);
+    e.target.value = '';
+    enviarLista(lista);
   };
 
   return (
@@ -248,8 +267,9 @@ function Pedido({ db, projectId, b, s, isStudio, arquivos, abrir }) {
           <ul className="envio-arquivos">
             {visiveis.map((a) => (
               <li key={a.id}>
-                <button type="button" className="link sm" onClick={() => abrirArquivo(a)} disabled={!a.storagePath}>
-                  <Download size={12} /> {a.name}
+                <Miniatura db={db} a={a} />
+                <button type="button" className="link sm" onClick={() => setVendo(a)} title="Ver o arquivo">
+                  {a.name}
                 </button>
                 <span className="micro">
                   {a.size ? a.size + ' · ' : ''}
@@ -328,12 +348,39 @@ function Pedido({ db, projectId, b, s, isStudio, arquivos, abrir }) {
 
       <div className="row envio-acoes">
         {podeEnviar && (
-          <>
+          <div
+            className={'soltar' + (arrastando ? ' soltar-ativo' : '')}
+            onDragOver={(e) => {
+              e.preventDefault();
+              setArrastando(true);
+            }}
+            onDragLeave={() => setArrastando(false)}
+            onDrop={(e) => {
+              e.preventDefault();
+              setArrastando(false);
+              enviarLista(Array.from(e.dataTransfer.files || []));
+            }}
+          >
+            <Upload size={18} aria-hidden />
+            <span className="soltar-texto">
+              <strong>{arrastando ? 'Solte para enviar' : 'Arraste os arquivos aqui'}</strong>
+              <small>PDF, fotos, Word ou Excel · até 20 MB cada</small>
+            </span>
             <button type="button" className="btn btn-primary btn-sm" disabled={enviando} onClick={() => input.current && input.current.click()}>
-              <Upload size={13} /> {enviando ? 'Enviando…' : arquivos.length ? 'Enviar mais arquivos' : 'Enviar arquivos'}
+              {enviando ? 'Enviando…' : arquivos.length ? 'Escolher mais arquivos' : 'Escolher arquivos'}
             </button>
             <input ref={input} type="file" multiple accept="application/pdf,image/*,.doc,.docx,.xls,.xlsx" hidden onChange={escolher} />
-          </>
+          </div>
+        )}
+        {fila.length > 0 && (
+          <ul className="fila" aria-live="polite">
+            {fila.map((x, i) => (
+              <li key={i} className={'fila-' + x.estado}>
+                <span>{x.nome}</span>
+                <em>{{ esperando: 'na fila', enviando: 'enviando…', ok: 'enviado ✓', erro: 'não enviado' }[x.estado]}</em>
+              </li>
+            ))}
+          </ul>
         )}
         {isStudio &&
           (aberto ? (
@@ -386,6 +433,28 @@ function Pedido({ db, projectId, b, s, isStudio, arquivos, abrir }) {
       )}
 
       {aviso && <p className="micro aviso-upload">{aviso}</p>}
+      {vendo && <Visualizador db={db} arquivo={vendo} onFechar={() => setVendo(null)} />}
     </li>
+  );
+}
+
+/* Miniatura das fotos enviadas (rodada 10); outros arquivos ganham um ícone */
+function Miniatura({ db, a }) {
+  const [url, setUrl] = useState(null);
+  const imagem = tipoArquivo(a.name) === 'imagem' && a.storagePath && !!db.fileUrl;
+  useEffect(() => {
+    if (!imagem) return undefined;
+    let vivo = true;
+    Promise.resolve(db.fileUrl(a.storagePath))
+      .then((u) => vivo && setUrl(u))
+      .catch(() => {});
+    return () => {
+      vivo = false;
+    };
+  }, [db, a.storagePath, imagem]);
+  return (
+    <span className="mini" aria-hidden>
+      {url ? <img src={url} alt="" loading="lazy" /> : <FileText size={14} />}
+    </span>
   );
 }

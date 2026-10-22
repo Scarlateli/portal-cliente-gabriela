@@ -8,6 +8,7 @@ import { DOC_TYPES } from '../../lib/constants.js';
 import { fmt, validarArquivo } from '../../lib/helpers.js';
 import { IS_SUPABASE } from '../../lib/data.js';
 import { useAvisos } from '../../lib/avisosContexto.js';
+import { Visualizador } from './Visualizador.jsx';
 
 /* Documentos do projeto, em duas partes:
    - Documentos: o que o studio publica (atas, plantas, briefing…), com
@@ -69,6 +70,9 @@ const textoAviso = (d, approval) =>
 function DocumentosStudio({ db, project, isStudio }) {
   const { avisar: avisarOk, excluirComDesfazer, ocultos } = useAvisos();
   const docs = db.documents(project.id).filter((d) => !ocultos.has(d.id));
+  // documento aberto no visualizador (rodada 10)
+  const [vendoId, setVendoId] = useState(null);
+  const vendo = vendoId ? docs.find((d) => d.id === vendoId) : null;
   const [filter, setFilter] = useState('');
   const [type, setType] = useState('geral');
   // o que a Gabriela pede ao cliente ao enviar: nada, uma confirmação, ou assinatura
@@ -207,7 +211,9 @@ function DocumentosStudio({ db, project, isStudio }) {
                   <FileText size={18} />
                 </span>
                 <span className="doc-meta">
-                  <strong>{d.name}</strong>
+                  <button type="button" className="doc-nome" onClick={() => setVendoId(d.id)} title="Ver o documento">
+                    {d.name}
+                  </button>
                   <small>
                     {typeLabel(d.type)} · {d.size} · {fmt(d.date)}
                   </small>
@@ -269,6 +275,15 @@ function DocumentosStudio({ db, project, isStudio }) {
             ),
           )}
         </ul>
+      )}
+      {vendo && (
+        <Visualizador db={db} arquivo={vendo} onFechar={() => setVendoId(null)}>
+          <p className="visu-info">
+            {typeLabel(vendo.type)} · {vendo.size} · {fmt(vendo.date)}
+          </p>
+          <SituacaoDoc d={vendo} />
+          {!isStudio && <RespostaCliente db={db} d={vendo} />}
+        </Visualizador>
       )}
     </section>
   );
