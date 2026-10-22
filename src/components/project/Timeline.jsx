@@ -235,7 +235,13 @@ export function Timeline({ db, project, isStudio, alvo = null, abrir = () => {} 
       )}
 
       {stages.length === 0 ? (
-        <Empty text="Nenhuma etapa ainda. Use um template ou adicione manualmente." />
+        <Empty
+          text={
+            isStudio
+              ? 'Nenhuma etapa ainda. Use um template ou “Nova etapa” para montar o cronograma.'
+              : 'As etapas do projeto aparecem aqui assim que o studio montar o cronograma.'
+          }
+        />
       ) : shown.length === 0 ? (
         <Empty
           text={

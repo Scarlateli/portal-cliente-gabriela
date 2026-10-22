@@ -219,7 +219,13 @@ export function Quotes({ db, project, isStudio }) {
       )}
 
       {quotes.length === 0 ? (
-        <Empty text="Nenhum orçamento publicado ainda." />
+        <Empty
+          text={
+            isStudio
+              ? 'Nenhum orçamento publicado ainda. Ao publicar, o cliente pode aprovar, recusar ou negociar por aqui.'
+              : 'Nenhum orçamento ainda. Quando o studio publicar orçamentos de fornecedores, você decide por aqui.'
+          }
+        />
       ) : grouped.length === 0 ? (
         <Empty text="Nenhum orçamento neste filtro." />
       ) : (

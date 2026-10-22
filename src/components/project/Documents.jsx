@@ -199,7 +199,15 @@ function DocumentosStudio({ db, project, isStudio }) {
         ))}
       </div>
       {shown.length === 0 ? (
-        <Empty text={filter ? 'Nenhum documento nesta categoria.' : 'Nenhum documento ainda.'} />
+        <Empty
+          text={
+            filter
+              ? 'Nenhum documento em “' + typeLabel(filter) + '” ainda.'
+              : isStudio
+                ? 'Nenhum documento ainda. Use “Enviar Documento” para mandar a primeira ata ou entrega.'
+                : 'Nenhum documento ainda. Assim que o studio enviar a primeira ata ou entrega, ela aparece aqui.'
+          }
+        />
       ) : (
         <ul className="doc-list">
           {shown.map((d) =>

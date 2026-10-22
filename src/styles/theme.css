@@ -1151,3 +1151,39 @@ button{color:inherit}
 .cp .mini{display:inline-grid;place-items:center;width:36px;height:36px;flex:none;border-radius:4px;overflow:hidden;background:var(--fundo-item)}
 .cp .mini img{width:100%;height:100%;object-fit:cover}
 .cp .envio-arquivos-bloco .envio-arquivos li{gap:10px}
+
+/* ===================== Rodada 10 — navegação no celular, esqueleto, vazios ===================== */
+.cp .navbar,.cp .nav-folha,.cp .nav-folha-fundo{display:none}
+@media (max-width:720px){
+  .cp nav.tabs{display:none}
+  .cp .content{padding-bottom:calc(96px + env(safe-area-inset-bottom))}
+  .cp .navbar{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:40;padding:6px 6px calc(6px + env(safe-area-inset-bottom));background:rgba(251,250,248,.96);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border-top:1px solid var(--gl-hairline)}
+  .cp .navbar button{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;min-height:52px;border:0;background:none;color:var(--ink);font-size:var(--fs-12);cursor:pointer;opacity:.62}
+  .cp .navbar button.on{opacity:1;font-weight:500}
+  .cp .navbar button.on .nav-ic{background:var(--brand-soft)}
+  .cp .nav-ic{position:relative;display:grid;place-items:center;width:52px;height:28px;border-radius:999px}
+  .cp .nav-n{position:absolute;top:-4px;right:6px;min-width:17px;height:17px;padding:0 4px;border-radius:999px;background:var(--late);color:#fff;font-size:11px;line-height:17px;font-weight:500;text-align:center}
+  .cp .nav-folha-fundo{display:block;position:fixed;inset:0;z-index:38;background:rgba(33,9,9,.25)}
+  .cp .nav-folha{display:flex;flex-direction:column;position:fixed;left:10px;right:10px;bottom:calc(76px + env(safe-area-inset-bottom));z-index:41;padding:8px;border-radius:12px;background:var(--card);box-shadow:0 20px 50px -20px rgba(33,9,9,.5)}
+  .cp .nav-folha button{position:relative;display:flex;align-items:center;gap:12px;min-height:52px;padding:0 14px;border:0;border-radius:8px;background:none;color:var(--ink);font-size:var(--fs-16);text-align:left;cursor:pointer}
+  .cp .nav-folha button.on{background:var(--fundo-item);font-weight:500}
+  .cp .nav-folha .nav-n{position:static;margin-left:auto}
+}
+/* esqueleto de carregamento */
+.cp .esq{display:flex;flex-direction:column;gap:22px}
+.cp .esq-hero,.cp .esq-painel{background:var(--card);border-radius:var(--raio);padding:32px 30px;display:flex;flex-direction:column;gap:14px}
+.cp .esq-abas{display:flex;gap:18px;padding:6px 0}
+.cp .esq-l{display:block;height:14px;border-radius:999px;background:linear-gradient(90deg,rgba(33,9,9,.06) 25%,rgba(33,9,9,.11) 37%,rgba(33,9,9,.06) 63%);background-size:400% 100%;animation:esq-brilho 1.4s ease infinite}
+.cp .esq-titulo{height:34px;border-radius:8px}
+.cp .esq-w20{width:20%}.cp .esq-w30{width:30%}.cp .esq-w40{width:40%}.cp .esq-w50{width:50%}
+.cp .esq-aba{width:90px}
+.cp .esq-linha{display:flex;align-items:center;gap:14px}
+.cp .esq-bola{width:22px;height:22px;border-radius:50%;flex:none;background:rgba(33,9,9,.07)}
+@keyframes esq-brilho{0%{background-position:100% 50%}100%{background-position:0 50%}}
+@media (prefers-reduced-motion:reduce){.cp .esq-l{animation:none}}
+/* telas vazias: mais calmas, em coluna */
+.cp .empty{flex-direction:column;text-align:center;gap:8px;padding:30px 22px;line-height:1.5}
+.cp .empty span{max-width:520px}
+.cp .empty svg{opacity:.5}
+@media (max-width:720px){.cp .fase{min-width:128px}}
+.cp #aba-conteudo{display:block;scroll-margin-top:76px}

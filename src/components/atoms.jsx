@@ -109,6 +109,36 @@ export function Empty({ text }) {
   );
 }
 
+/* Esqueleto de carregamento (rodada 10): o desenho da tela em tons claros
+   enquanto os dados chegam, no lugar da tela em branco com "Carregando…". */
+export function Esqueleto({ abas = true }) {
+  return (
+    <div className="esq" aria-busy="true" aria-label="Carregando">
+      <div className="esq-hero">
+        <span className="esq-l esq-w20" />
+        <span className="esq-l esq-titulo esq-w50" />
+        <span className="esq-l esq-w40" />
+        <span className="esq-l esq-w30" />
+      </div>
+      {abas && (
+        <div className="esq-abas">
+          {[0, 1, 2, 3, 4].map((i) => (
+            <span key={i} className="esq-l esq-aba" />
+          ))}
+        </div>
+      )}
+      <div className="esq-painel">
+        {[70, 55, 62].map((w, i) => (
+          <div key={i} className="esq-linha">
+            <span className="esq-bola" />
+            <span className="esq-l" style={{ width: w + '%' }} />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function TopBar({ user, onLogout, left, right }) {
   return (
     <header className="topbar">

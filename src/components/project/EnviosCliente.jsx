@@ -41,7 +41,13 @@ export function EnviosCliente({ db, project, isStudio, abrir = () => {} }) {
       {isStudio && criando && <NovoPedido db={db} project={project} stages={stages} onFechar={() => setCriando(false)} />}
       {isStudio && !stages.length && <p className="hint">Crie as etapas do projeto antes de pedir arquivos.</p>}
       {pedidos.length === 0 ? (
-        <Empty text={isStudio ? 'Nenhum pedido de arquivos ainda.' : 'Nenhum arquivo pedido no momento.'} />
+        <Empty
+          text={
+            isStudio
+              ? 'Nenhum pedido de arquivos ainda. Use “Novo pedido de arquivos” para pedir plantas, fotos ou referências.'
+              : 'Nenhum arquivo pedido no momento. Quando o studio precisar de algo seu, o pedido aparece aqui.'
+          }
+        />
       ) : (
         <ul className="envios">
           {pedidos.map(({ b, s }) => (

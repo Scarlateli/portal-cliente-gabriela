@@ -25,7 +25,7 @@ import {
   Sun,
   Video,
 } from 'lucide-react';
-import { TopBar, Empty, Loading, ErrorBox, ErrorBanner } from '../atoms.jsx';
+import { TopBar, Empty, Esqueleto, ErrorBox, ErrorBanner } from '../atoms.jsx';
 import { stageOverdue, fmt, todayISO } from '../../lib/helpers.js';
 
 import { newProjectSchema, validate } from '../../lib/validation.js';
@@ -50,7 +50,7 @@ export function AdminHome({ db: baseDb, user, onLogout, onOpen }) {
     return (
       <div className="shell">
         <TopBar user={user} onLogout={onLogout} />
-        <main id="conteudo" className="content">{r.error ? <ErrorBox error={r.error} /> : <Loading />}</main>
+        <main id="conteudo" className="content">{r.error ? <ErrorBox error={r.error} /> : <Esqueleto />}</main>
       </div>
     );
   }
@@ -128,7 +128,7 @@ function AdminInner({ db, baseDb, user, onLogout, onOpen, mutationError, clearEr
         {tab === 'hoje' && <Hoje db={db} pend={pend} onOpen={onOpen} />}
         {tab === 'projetos' &&
           (projects.length === 0 ? (
-            <Empty text="Nenhum projeto por aqui ainda — comece pela aba “Novo projeto”." />
+            <Empty text="Nenhum projeto por aqui ainda. Comece pela aba “Novo Projeto”: em poucos minutos o cliente recebe o acesso." />
           ) : (
             <div className="proj-grid">
               {projects.map((p) => (

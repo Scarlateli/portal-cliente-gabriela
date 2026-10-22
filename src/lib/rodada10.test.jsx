@@ -198,3 +198,18 @@ describe('visualizador e envio arrastando', async () => {
     expect(db3.enviarArquivos).toHaveBeenNthCalledWith(1, 'p1', 'b1', [f1], 'client');
   });
 });
+
+describe('navegação no celular', async () => {
+  const { NavInferior } = await import('../components/project/ProjectView.jsx');
+  it('4 itens, contagem de pendências e "Mais" com as outras seções', async () => {
+    const setTab = vi.fn();
+    window.scrollTo = vi.fn();
+    const pend = [{ id: '1', aba: 'docs' }, { id: '2', aba: 'contract' }, { id: '3', aba: 'quotes' }];
+    render(<NavInferior tab="timeline" setTab={setTab} pendencias={pend} />);
+    const barra = screen.getByRole('navigation', { name: 'Seções do projeto' });
+    expect(within(barra).getAllByRole('button').map((b) => b.getAttribute('aria-label'))).toEqual(['Início', 'Documentos, 1 pendência', 'Agenda', 'Mais, 2 pendências']);
+    await userEvent.click(within(barra).getByRole('button', { name: /Mais/ }));
+    await userEvent.click(screen.getByRole('menuitem', { name: /Orçamentos/ }));
+    expect(setTab).toHaveBeenCalledWith('quotes');
+  });
+});

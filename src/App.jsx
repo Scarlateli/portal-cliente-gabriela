@@ -9,7 +9,7 @@ import { queryClient } from './lib/queryClient.js';
 import { getSupabase } from './lib/supabase/client.js';
 import { Login } from './components/Login.jsx';
 import { SetPassword } from './components/SetPassword.jsx';
-import { Loading, ErrorBox } from './components/atoms.jsx';
+import { Loading, ErrorBox, Esqueleto } from './components/atoms.jsx';
 import { AdminHome } from './components/admin/AdminHome.jsx';
 import { ProjectView } from './components/project/ProjectView.jsx';
 import { PrintView } from './components/PrintView.jsx';
@@ -190,7 +190,7 @@ function ClientArea({ db, user, clientPid, setClientPid, onLogout, onPrint }) {
   if (!r.ready) {
     return (
       <div className="shell">
-        <main id="conteudo" className="content">{r.error ? <ErrorBox error={r.error} /> : <Loading />}</main>
+        <main id="conteudo" className="content">{r.error ? <ErrorBox error={r.error} /> : <Esqueleto />}</main>
       </div>
     );
   }

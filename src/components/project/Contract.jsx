@@ -160,7 +160,13 @@ export function Contract({ db, project, isStudio }) {
       </div>
 
       {shown.length === 0 ? (
-        <Empty text="Nenhum documento por aqui ainda." />
+        <Empty
+          text={
+            isStudio
+              ? 'Nenhum contrato ou termo ainda. Use “Novo documento” para subir o contrato ou criar um termo.'
+              : 'Nenhum contrato ou termo por aqui. Quando houver algo para você ler, aprovar ou assinar, aparece aqui.'
+          }
+        />
       ) : (
         shown.map((c) => <ContractDoc key={c.id} db={db} c={c} isStudio={isStudio} clientName={clientName} project={project} />)
       )}

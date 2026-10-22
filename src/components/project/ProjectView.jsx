@@ -1,6 +1,7 @@
 import { consumirPedido, destacarAlvo } from '../../lib/pendenciasContexto.js';
 import { proximaEtapa } from '../../lib/pendencias.js';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { GerenciarProjeto } from './GerenciarProjeto.jsx';
 import {
   GitCommitVertical,
@@ -22,8 +23,10 @@ import {
   Check,
   ArrowRight,
   ChevronRight,
+  House,
+  Menu,
 } from 'lucide-react';
-import { TopBar, Loading, ErrorBox, ErrorBanner } from '../atoms.jsx';
+import { TopBar, Esqueleto, ErrorBox, ErrorBanner } from '../atoms.jsx';
 import { fmt, todayISO } from '../../lib/helpers.js';
 import { enderecoCurto, vocativo } from '../../lib/endereco.js';
 import { qk, IS_SUPABASE } from '../../lib/data.js';
@@ -85,7 +88,7 @@ export function ProjectView({ db: baseDb, user, pid, isStudio, onLogout, onBack,
             ) : null
           }
         />
-        <main id="conteudo" className="content">{r.error ? <ErrorBox error={r.error} /> : <Loading />}</main>
+        <main id="conteudo" className="content">{r.error ? <ErrorBox error={r.error} /> : <Esqueleto />}</main>
       </div>
     );
   }
@@ -332,6 +335,7 @@ function ProjectInner({
               ))}
             </nav>
 
+            <span id="aba-conteudo" aria-hidden />
             {tab === 'timeline' && <Timeline db={db} project={project} isStudio={isStudio} alvo={alvo} abrir={abrir} />}
             {tab === 'calendar' && <Calendar db={db} project={project} isStudio={isStudio} />}
             {tab === 'docs' && <Documents db={db} project={project} isStudio={isStudio} alvo={alvo} abrir={abrir} />}
@@ -339,6 +343,7 @@ function ProjectInner({
             {tab === 'payments' && <Payments db={db} project={project} isStudio={isStudio} />}
             {tab === 'quotes' && <Quotes db={db} project={project} isStudio={isStudio} />}
             {tab === 'suppliers' && <Suppliers db={db} project={project} isStudio={isStudio} />}
+            <NavInferior tab={tab} setTab={setTab} pendencias={minhas} />
           </>
         )}
 
@@ -408,11 +413,18 @@ function ProjectInner({
 /* Onde estamos (rodada 10): as fases do projeto numa linha, com a atual
    marcada, como num acompanhamento de pedido. */
 export function Fases({ stages }) {
+  // no celular, a linha rola de lado: começa mostrando a fase atual
+  const lista = useRef(null);
+  useEffect(() => {
+    const el = lista.current && lista.current.querySelector('[aria-current="step"]');
+    if (el && lista.current.scrollWidth > lista.current.clientWidth)
+      lista.current.scrollLeft = el.offsetLeft - lista.current.clientWidth / 2 + el.clientWidth / 2;
+  }, [stages]);
   if (!stages || stages.length < 2) return null;
   const algumaEmAndamento = stages.some((s) => s.status === 'em_andamento');
   const primeiraAberta = (stages.find((s) => s.status !== 'concluida') || {}).id;
   return (
-    <ol className="fases" aria-label="Fases do projeto">
+    <ol className="fases" aria-label="Fases do projeto" ref={lista}>
       {stages.map((s) => {
         const estado =
           s.status === 'concluida'
@@ -477,5 +489,64 @@ export function ProximoPasso({ lista, abrir }) {
         </ul>
       )}
     </section>
+  );
+}
+
+/* Navegação embaixo no celular (rodada 10): 4 itens ao alcance do polegar,
+   com o número de pendências de cada parte. Some no computador e no iPad,
+   onde ficam as abas de cima. */
+const NAV = [
+  { id: 'timeline', label: 'Início', I: House },
+  { id: 'docs', label: 'Documentos', I: FileText },
+  { id: 'calendar', label: 'Agenda', I: CalendarDays },
+];
+const MAIS = ['contract', 'payments', 'quotes', 'suppliers'];
+
+export function NavInferior({ tab, setTab, pendencias = [] }) {
+  const [mais, setMais] = useState(false);
+  const conta = (abas) => pendencias.filter((p) => abas.includes(p.aba)).length;
+  const ir = (id) => {
+    setTab(id);
+    setMais(false);
+    // leva ao começo da seção escolhida (logo abaixo do topo do projeto)
+    const alvo = document.getElementById('aba-conteudo');
+    if (alvo && alvo.scrollIntoView) setTimeout(() => alvo.scrollIntoView({ behavior: 'smooth', block: 'start' }), 0);
+  };
+  const nMais = conta(MAIS);
+  const nome = (label, n) => label + (n ? ', ' + n + (n === 1 ? ' pendência' : ' pendências') : '');
+  // fora do conteúdo (que tem animação com transform e prenderia o "fixed")
+  return createPortal(
+    <>
+      {mais && <div className="nav-folha-fundo" onClick={() => setMais(false)} aria-hidden />}
+      {mais && (
+        <div className="nav-folha" role="menu" aria-label="Mais seções">
+          {TABS.filter((t) => MAIS.includes(t.id)).map(({ id, label, I }) => (
+            <button key={id} type="button" role="menuitem" className={tab === id ? 'on' : undefined} aria-label={nome(label, conta([id]))} onClick={() => ir(id)}>
+              <I size={18} /> <span>{label}</span>
+              {conta([id]) > 0 && <span className="nav-n">{conta([id])}</span>}
+            </button>
+          ))}
+        </div>
+      )}
+      <nav className="navbar" aria-label="Seções do projeto">
+        {NAV.map(({ id, label, I }) => (
+          <button key={id} type="button" className={tab === id ? 'on' : undefined} aria-current={tab === id ? 'page' : undefined} aria-label={nome(label, conta([id]))} onClick={() => ir(id)}>
+            <span className="nav-ic">
+              <I size={20} />
+              {conta([id]) > 0 && <span className="nav-n">{conta([id])}</span>}
+            </span>
+            {label}
+          </button>
+        ))}
+        <button type="button" className={MAIS.includes(tab) || mais ? 'on' : undefined} aria-expanded={mais} aria-label={nome('Mais', nMais)} onClick={() => setMais(!mais)}>
+          <span className="nav-ic">
+            <Menu size={20} />
+            {nMais > 0 && <span className="nav-n">{nMais}</span>}
+          </span>
+          Mais
+        </button>
+      </nav>
+    </>,
+    document.querySelector('.cp') || document.body,
   );
 }
