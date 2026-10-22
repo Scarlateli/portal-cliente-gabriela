@@ -601,3 +601,40 @@ Sem mudança no banco nesta rodada.
 do `schema.sql`. A função `confirmar_documento` mantém os mesmos parâmetros;
 agora grava o comentário também na aprovação. Foram testados 7 cenários num
 banco local.
+
+## Rodada 9 — revisão geral (22/10/2026)
+
+Conferência na tela renderizada, item por item, das rodadas 5 a 8.
+
+**O que estava incompleto: a cor do texto.** O texto principal já estava em
+#210909, mas:
+- o secundário (endereços, datas, legendas, abas, "/5") estava numa versão
+  70% mais clara da mesma cor;
+- uns 70 textos usavam o vinho, o terra ou o vermelho escuro da marca (links,
+  títulos de segmento, "Aprovado por…", "Responsável: Cliente",
+  "Aguardando…").
+
+Agora todo texto comum é #210909. Sobre os 470 textos medidos nas telas do
+studio, só têm outra cor:
+- vermelho de atraso e erro;
+- verde de pago e aprovado;
+- laranja de em andamento ou em produção;
+- os botões de excluir;
+- o texto claro dentro dos botões escuros.
+
+No topo do projeto, quando a fase está atrasada, o nome fica em #210909 e só
+"Prazo vencido – …" fica em vermelho.
+
+**Conferido e certo** (rodada 7):
+- fundo #ECE9E3, cartões e topo #FBFAF8;
+- topo com 62px;
+- fase com a mesma fonte do "0/5" (Futura Light, 20px);
+- "Prazos Previstos";
+- "Tipo – Cliente" na cor do botão "Em andamento";
+- datas na mesma fonte;
+- concluída sem texto;
+- "Vencido" com a data embaixo;
+- arquivos numa linha própria;
+- barra de edição só com o mouse em cima, inclusive depois de um clique.
+
+Sem mudança no banco.
