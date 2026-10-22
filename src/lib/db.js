@@ -1,4 +1,5 @@
 import { calcularPendencias } from './pendencias.js';
+import { agendaGeral } from './agendaStudio.js';
 /* ------------------------------- db -----------------------------------
    Camada de dados MOCK em memória (não persiste entre sessões).
    A interface aqui é a "fonte da verdade" que o backend real deve espelhar
@@ -73,6 +74,8 @@ export function makeDb(state, set) {
       });
     },
     subArquivos: (pid) => (state.subArquivos || []).filter((a) => a.projectId === pid),
+    // tela "Hoje" do studio: atrasados e próximos 7 dias de todos os projetos
+    agendaStudio: () => agendaGeral({ projects: state.projects, stages: state.stages, events: state.events || [] }),
     fornecedores: () => (state.fornecedores || []).slice().sort((a, b) => a.name.localeCompare(b.name, 'pt-BR')),
     suppliers: (pid) => byP('quotes', pid).filter((q) => q.status === 'aprovado'),
     calendarEvents: (pid) => {

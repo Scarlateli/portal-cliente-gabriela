@@ -33,6 +33,7 @@ const READ_METHODS = [
   'fornecedores',
   'pendencias',
   'subArquivos',
+  'agendaStudio',
 ];
 
 const ALL_MUTATIONS = [
@@ -189,7 +190,9 @@ export function useResolvedDb(baseDb, specs, scopePid = null) {
                           ? qk.fornecedores()
                           : m === 'pendencias'
                             ? qk.pendencias()
-                            : [m, args[0]];
+                            : m === 'agendaStudio'
+                              ? qk.agenda()
+                              : [m, args[0]];
         return queryClient.getQueryData(key);
       };
     }

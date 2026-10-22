@@ -83,3 +83,50 @@ describe('linha do tempo do cliente', () => {
     expect(proximaEtapa([{ title: 'X', status: 'em_andamento', end: '2026-01-01', owner: 'studio' }], '2026-10-22')).toMatchObject({ atrasado: true, doCliente: false });
   });
 });
+
+describe('agenda geral do studio', async () => {
+  const { agendaGeral, rotuloDia } = await import('./agendaStudio.js');
+  const HOJE = '2026-10-22';
+  const dados = {
+    projects: [{ id: 'p1', name: 'Casa A', status: 'em_andamento' }, { id: 'p2', name: 'Casa B', status: 'concluido' }],
+    stages: [
+      {
+        id: 's1', projectId: 'p1', title: 'Briefing', category: 'Etapa', status: 'em_andamento', owner: 'studio', end: '2026-10-25',
+        subs: [
+          { id: 'b1', title: 'Reunião', kind: 'reuniao', due: '2026-10-22', time: '15:00', format: 'online', link: 'https://meet', done: false },
+          { id: 'b2', title: 'Planta', kind: 'entrega', due: '2026-10-10', done: false },
+          { id: 'b3', title: 'Fotos', kind: 'tarefa', due: '2026-10-23', responsible: 'cliente', pedeArquivos: true, done: false },
+          { id: 'b4', title: 'Longe', kind: 'tarefa', due: '2026-12-01', done: false },
+          { id: 'b5', title: 'Feita', kind: 'tarefa', due: '2026-10-23', done: true },
+        ],
+      },
+      { id: 's2', projectId: 'p2', title: 'Projeto encerrado', category: 'Etapa', status: 'em_andamento', end: '2026-10-23', subs: [] },
+    ],
+    events: [{ id: 'e1', projectId: 'p1', date: '2026-10-24', title: 'Visita à loja', time: '10:00' }],
+  };
+  it('separa atrasados e próximos 7 dias, só de projetos ativos', () => {
+    const r = agendaGeral(dados, HOJE);
+    expect(r.atrasados.map((x) => x.titulo)).toEqual(['Planta']);
+    expect(r.proximos.map((x) => x.titulo)).toEqual(['Reunião', 'Fotos', 'Visita à loja', 'Briefing']);
+    expect(r.proximos[1]).toMatchObject({ quem: 'Cliente', aba: 'docs', alvo: 'pedido-b3', projeto: 'Casa A' });
+    expect(r.proximos[0]).toMatchObject({ hora: '15:00', link: 'https://meet' });
+  });
+  it('rótulos de dia', () => {
+    expect(rotuloDia('2026-10-22', HOJE)).toBe('Hoje');
+    expect(rotuloDia('2026-10-23', HOJE)).toBe('Amanhã');
+    expect(rotuloDia('2026-10-28', HOJE)).toBe('qua, 28/10');
+  });
+});
+
+describe('etapa no studio: status no balão e ações no menu ⋯', () => {
+  it('troca o status pelo seletor e edita pelo menu', async () => {
+    const db2 = { stages: () => [etapas[1]], templates: () => [], setStageStatus: vi.fn() };
+    render(<Timeline db={db2} project={{ id: 'p1' }} isStudio />);
+    expect(screen.queryByRole('button', { name: 'Concluída' })).toBeNull();
+    await userEvent.selectOptions(screen.getByLabelText('Status da etapa', { selector: 'select' }), 'concluida');
+    expect(db2.setStageStatus).toHaveBeenCalledWith('s2', 'concluida');
+    await userEvent.click(screen.getByRole('button', { name: 'Mais ações da etapa Estudo' }));
+    await userEvent.click(screen.getByRole('menuitem', { name: /Editar etapa/ }));
+    expect(screen.getByLabelText('Título da etapa')).toBeTruthy();
+  });
+});

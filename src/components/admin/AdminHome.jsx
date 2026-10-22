@@ -1,4 +1,6 @@
-import { useState } from 'react';
+import { useState, useContext } from 'react';
+import { PendenciasCtx } from '../../lib/pendenciasContexto.js';
+import { rotuloDia } from '../../lib/agendaStudio.js';
 import { EtapasEditor } from './EtapasEditor.jsx';
 import { Fornecedores } from './Fornecedores.jsx';
 import { etapaVazia, copiarItens, rotuloTipoSub, ROTULO_RESP } from '../../lib/etapas.js';
@@ -20,6 +22,8 @@ import {
   Pencil,
   Handshake,
   Plus,
+  Sun,
+  Video,
 } from 'lucide-react';
 import { TopBar, Empty, Loading, ErrorBox, ErrorBanner } from '../atoms.jsx';
 import { stageOverdue, fmt, todayISO } from '../../lib/helpers.js';
@@ -36,6 +40,9 @@ export function AdminHome({ db: baseDb, user, onLogout, onOpen }) {
       { key: qk.notifications(), method: 'notifications' },
       { key: qk.templates(), method: 'templates' },
       { key: qk.fornecedores(), method: 'fornecedores' },
+      // tela "Hoje" (rodada 10)
+      { key: qk.pendencias(), method: 'pendencias', args: ['studio', user && user.id] },
+      { key: qk.agenda(), method: 'agendaStudio' },
     ]),
   );
 
@@ -62,7 +69,9 @@ export function AdminHome({ db: baseDb, user, onLogout, onOpen }) {
 }
 
 function AdminInner({ db, baseDb, user, onLogout, onOpen, mutationError, clearError }) {
-  const [tab, setTab] = useState('projetos');
+  // rodada 10: o painel abre em "Hoje" (o que espera por ela e a semana)
+  const [tab, setTab] = useState('hoje');
+  const pend = (db.pendencias && db.pendencias('studio', user.id)) || [];
   const projects = db.projects();
   const notes = db.notifications();
   const alerts = notes.filter((n) => n.kind === 'atraso').length;
@@ -81,6 +90,9 @@ function AdminInner({ db, baseDb, user, onLogout, onOpen, mutationError, clearEr
         </div>
         <ErrorBanner error={mutationError} onClose={clearError} />
         <nav className="tabs" role="tablist">
+          <button className={'tab' + (tab === 'hoje' ? ' active' : '')} onClick={() => setTab('hoje')}>
+            <Sun size={15} /> Hoje {pend.length > 0 && <span className="tab-badge">{pend.length}</span>}
+          </button>
           <button
             className={'tab' + (tab === 'projetos' ? ' active' : '')}
             onClick={() => setTab('projetos')}
@@ -113,6 +125,7 @@ function AdminInner({ db, baseDb, user, onLogout, onOpen, mutationError, clearEr
             {alerts > 0 && <span className="tab-badge">{alerts}</span>}
           </button>
         </nav>
+        {tab === 'hoje' && <Hoje db={db} pend={pend} onOpen={onOpen} />}
         {tab === 'projetos' &&
           (projects.length === 0 ? (
             <Empty text="Nenhum projeto por aqui ainda — comece pela aba “Novo projeto”." />
@@ -558,6 +571,114 @@ function Templates({ db }) {
         })}
       </div>
       {formNovoAberto && formulario('Novo template')}
+    </section>
+  );
+}
+
+/* Hoje (rodada 10): tudo o que espera pela Gabriela, de todos os projetos,
+   e a agenda dos próximos 7 dias, num lugar só. */
+function Hoje({ db, pend, onOpen }) {
+  const ctx = useContext(PendenciasCtx);
+  const ir = (pid, aba, alvo) => (ctx ? ctx.irPara(pid, aba, alvo) : onOpen(pid));
+  const agenda = (db.agendaStudio && db.agendaStudio()) || { atrasados: [], proximos: [] };
+  const hoje = todayISO();
+  const grupos = [];
+  for (const p of pend) {
+    let g = grupos.find((x) => x.pid === p.pid);
+    if (!g) grupos.push((g = { pid: p.pid, projeto: p.projeto, itens: [] }));
+    g.itens.push(p);
+  }
+  const dias = [];
+  for (const it of agenda.proximos) {
+    let d = dias.find((x) => x.data === it.data);
+    if (!d) dias.push((d = { data: it.data, itens: [] }));
+    d.itens.push(it);
+  }
+  const dataLonga = (() => {
+    const t = new Intl.DateTimeFormat('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' }).format(new Date());
+    return t.charAt(0).toUpperCase() + t.slice(1);
+  })();
+  const Linha = ({ it, atrasado }) => (
+    <li className="hoje-item">
+      <span className={'hoje-quando' + (atrasado ? ' hoje-atrasado' : '')}>
+        {atrasado ? 'Venceu ' + fmt(it.data).slice(0, 5) : it.hora || '—'}
+      </span>
+      <button type="button" className="hoje-alvo" onClick={() => ir(it.pid, it.aba, it.alvo || null)}>
+        <strong>{it.titulo}</strong>
+        <span>
+          {it.projeto} · {it.tipo}
+          {it.quem ? ' – ' + it.quem : ''}
+        </span>
+      </button>
+      {it.link && !atrasado && (
+        <a className="btn-mini" href={it.link} target="_blank" rel="noreferrer">
+          <Video size={12} /> Entrar
+        </a>
+      )}
+    </li>
+  );
+  return (
+    <section className="panel hoje">
+      <header className="panel-head">
+        <h2>Hoje</h2>
+        <span className="hoje-data">{dataLonga}</span>
+      </header>
+      <div className="hoje-grade">
+        <div className="hoje-col">
+          <h3>
+            Esperando você <span className="hoje-n">{pend.length}</span>
+          </h3>
+          {pend.length === 0 ? (
+            <p className="hoje-vazio">
+              <CircleCheck size={16} /> Nada esperando por você. Tudo em dia.
+            </p>
+          ) : (
+            grupos.map((g) => (
+              <div key={g.pid} className="hoje-grupo">
+                <h4>{g.projeto}</h4>
+                <ul>
+                  {g.itens.map((p) => (
+                    <li key={p.id}>
+                      <button type="button" className="hoje-pend" onClick={() => ir(p.pid, p.aba, p.alvo)}>
+                        <span>{p.texto}</span> <ChevronRight size={14} aria-hidden />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))
+          )}
+        </div>
+        <div className="hoje-col">
+          {agenda.atrasados.length > 0 && (
+            <>
+              <h3>
+                Atrasados <span className="hoje-n hoje-n-atraso">{agenda.atrasados.length}</span>
+              </h3>
+              <ul className="hoje-lista">
+                {agenda.atrasados.map((it) => (
+                  <Linha key={it.id} it={it} atrasado />
+                ))}
+              </ul>
+            </>
+          )}
+          <h3>Próximos 7 dias</h3>
+          {dias.length === 0 ? (
+            <p className="hoje-vazio">Nenhuma reunião, visita ou prazo nos próximos 7 dias.</p>
+          ) : (
+            dias.map((d) => (
+              <div key={d.data} className="hoje-dia">
+                <h4>{rotuloDia(d.data, hoje)}</h4>
+                <ul className="hoje-lista">
+                  {d.itens.map((it) => (
+                    <Linha key={it.id} it={it} />
+                  ))}
+                </ul>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
     </section>
   );
 }

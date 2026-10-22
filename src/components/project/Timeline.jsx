@@ -22,7 +22,7 @@ import {
   FolderUp,
   ChevronDown,
 } from 'lucide-react';
-import { StatusPill, Empty } from '../atoms.jsx';
+import { StatusPill, Empty, MenuMais, StatusSelect } from '../atoms.jsx';
 import { STAGE_STATUS, STAGE_CATEGORIES } from '../../lib/constants.js';
 import { stageOverdue, subStats, fmt } from '../../lib/helpers.js';
 import {
@@ -696,16 +696,36 @@ function StageItem({ db, s, isStudio, arquivos, abrir, projectId, inicialAberta 
               <User size={11} /> Responsável: Cliente
             </span>
           )}
+          {isStudio && (
+            <MenuMais
+              rotulo={'Mais ações da etapa ' + s.title}
+              itens={[
+                { rotulo: 'Editar etapa', Icone: PenLine, acao: startEdit },
+                {
+                  rotulo: 'Excluir etapa',
+                  Icone: Trash2,
+                  perigo: true,
+                  acao: () => {
+                    if (window.confirm('Excluir a etapa "' + s.title + '"?')) db.deleteStage(s.id);
+                  },
+                },
+              ]}
+            />
+          )}
           {s.rescheduledFrom && (
             <span className="tag tag-resched">
               <CalendarClock size={11} /> Reagendada de {fmt(s.rescheduledFrom)}
             </span>
           )}
+          {/* studio: o status é um seletor no próprio balão (rodada 10) */}
+          {isStudio && (
+            <StatusSelect status={s.status} opcoes={STAGE_STATUS} onChange={(v) => db.setStageStatus(s.id, v)} />
+          )}
           {late ? (
             <span className="pill pill-late">
               <AlertTriangle size={12} /> Em atraso
             </span>
-          ) : novaData ? (
+          ) : isStudio ? null : novaData ? (
             <span className="pill pill-next">
               <CalendarClock size={12} /> Nova data em definição
             </span>
@@ -792,27 +812,6 @@ function StageItem({ db, s, isStudio, arquivos, abrir, projectId, inicialAberta 
 
         <AprovacaoEtapa db={db} s={s} isStudio={isStudio} projectId={projectId} />
 
-        {isStudio && (
-          <div className="status-set">
-            {STAGE_STATUS.map((st) => (
-              <button key={st.id} className={'chip' + (s.status === st.id ? ' chip-on' : '')} onClick={() => db.setStageStatus(s.id, st.id)}>
-                {st.label}
-              </button>
-            ))}
-            <button className="chip" onClick={startEdit}>
-              <PenLine size={12} /> Editar etapa
-            </button>
-            <button
-              className="chip chip-del"
-              title="Excluir etapa"
-              onClick={() => {
-                if (window.confirm('Excluir a etapa "' + s.title + '"?')) db.deleteStage(s.id);
-              }}
-            >
-              <Trash2 size={12} /> Excluir
-            </button>
-          </div>
-        )}
         </>
         )}
       </div>

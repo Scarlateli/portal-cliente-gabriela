@@ -1,4 +1,5 @@
 import { calcularPendencias } from '../pendencias.js';
+import { agendaGeral } from '../agendaStudio.js';
 /* --------------------- data layer (Supabase) --------------------------
    Espelho ASSÍNCRONO da interface de src/lib/db.js (makeDb). Cada leitura
    devolve uma Promise; as mutações fazem insert/update/delete. Os SELECTs
@@ -331,6 +332,20 @@ export function makeSupabaseDb() {
         quotes: qt.data || [],
         arquivos: ar.data || [],
       });
+    },
+    // tela "Hoje" do studio: atrasados e próximos 7 dias de todos os projetos
+    agendaStudio: async () => {
+      const [pr, st, ev] = await Promise.all([
+        supabase.from('projects').select('id, name, status'),
+        supabase
+          .from('stages')
+          .select(
+            'id, projectId:project_id, title, category, status, owner, start, "end", "time", subs:stage_subs(id, title, done, kind, kindLabel:kind_label, responsible, due, time, format, link, pedeArquivos:pede_arquivos)',
+          ),
+        supabase.from('events').select('id, projectId:project_id, date, title, kind, time, link'),
+      ]);
+      for (const r of [pr, st, ev]) must(r.error);
+      return agendaGeral({ projects: pr.data || [], stages: st.data || [], events: ev.data || [] });
     },
     // cadastro de fornecedores do studio (Etapa 8); RLS: só o studio lê
     fornecedores: async () => {

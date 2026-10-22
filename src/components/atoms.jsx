@@ -1,3 +1,4 @@
+import { useState, useRef, useEffect } from 'react';
 import { SinoPendencias } from './Pendencias.jsx';
 import { erroAmigavel } from '../lib/erros.js';
 import {
@@ -9,6 +10,7 @@ import {
   Loader2,
   AlertTriangle,
   X,
+  MoreHorizontal,
 } from 'lucide-react';
 import { LOCKUP, STUDIO } from '../lib/constants.js';
 
@@ -131,5 +133,73 @@ export function TopBar({ user, onLogout, left, right }) {
         </button>
       </div>
     </header>
+  );
+}
+
+/* Menu "⋯" (rodada 10): ações menos usadas (editar, excluir) num menu, em
+   vez de botões fixos em cada item. itens: [{ rotulo, Icone, acao, perigo }] */
+export function MenuMais({ itens, rotulo = 'Mais ações' }) {
+  const [aberto, setAberto] = useState(false);
+  const caixa = useRef(null);
+  useEffect(() => {
+    if (!aberto) return undefined;
+    const fora = (e) => caixa.current && !caixa.current.contains(e.target) && setAberto(false);
+    const esc = (e) => e.key === 'Escape' && setAberto(false);
+    document.addEventListener('mousedown', fora);
+    document.addEventListener('keydown', esc);
+    return () => {
+      document.removeEventListener('mousedown', fora);
+      document.removeEventListener('keydown', esc);
+    };
+  }, [aberto]);
+  return (
+    <div className="menu-mais" ref={caixa}>
+      <button
+        type="button"
+        className="icon-btn menu-mais-btn"
+        aria-label={rotulo}
+        aria-haspopup="menu"
+        aria-expanded={aberto}
+        onClick={() => setAberto(!aberto)}
+      >
+        <MoreHorizontal size={16} />
+      </button>
+      {aberto && (
+        <ul className="menu-mais-lista" role="menu">
+          {itens.map(({ rotulo: r, Icone, acao, perigo }) => (
+            <li key={r} role="none">
+              <button
+                type="button"
+                role="menuitem"
+                className={perigo ? 'perigo' : undefined}
+                onClick={() => {
+                  setAberto(false);
+                  acao();
+                }}
+              >
+                {Icone && <Icone size={14} />} {r}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+/* Status como seletor no próprio balão (rodada 10, studio) */
+export function StatusSelect({ status, onChange, opcoes }) {
+  const cls = { concluida: 'pill-done', em_andamento: 'pill-now', a_fazer: 'pill-next' }[status] || 'pill-next';
+  return (
+    <label className={'pill pill-select ' + cls}>
+      <span className="sr-only">Status da etapa</span>
+      <select value={status} onChange={(e) => onChange(e.target.value)} aria-label="Status da etapa">
+        {opcoes.map((o) => (
+          <option key={o.id} value={o.id}>
+            {o.label}
+          </option>
+        ))}
+      </select>
+    </label>
   );
 }
