@@ -19,6 +19,9 @@ import {
   Printer,
   KeyRound,
   MessageCircle,
+  Check,
+  ArrowRight,
+  ChevronRight,
 } from 'lucide-react';
 import { TopBar, Loading, ErrorBox, ErrorBanner } from '../atoms.jsx';
 import { fmt, todayISO } from '../../lib/helpers.js';
@@ -60,6 +63,8 @@ export function ProjectView({ db: baseDb, user, pid, isStudio, onLogout, onBack,
       { key: qk.payment(pid), method: 'payment', args: [pid] },
       { key: qk.quotes(pid), method: 'quotes', args: [pid] },
       { key: qk.suppliers(pid), method: 'suppliers', args: [pid] },
+      // o que espera pelo cliente (cartão "Seu próximo passo")
+      ...(!isStudio && user ? [{ key: qk.pendencias(), method: 'pendencias', args: [user.role, user.id] }] : []),
       // cadastro de fornecedores: só o studio usa (e só o studio enxerga)
       ...(isStudio ? [{ key: qk.fornecedores(), method: 'fornecedores' }] : []),
     ]),
@@ -164,6 +169,9 @@ function ProjectInner({
   const expired = project.accessUntil && todayISO() > project.accessUntil;
   const heroStages = db.stages(project.id);
   const prazo = proximaEtapa(heroStages, todayISO());
+  // atraso do studio não aparece em vermelho para o cliente (rodada 10)
+  const prazoNeutro = prazo && prazo.atrasado && !isStudio && !prazo.doCliente;
+  const minhas = !isStudio && db.pendencias ? (db.pendencias(user.role, user.id) || []).filter((p) => p.pid === project.id) : [];
   const [resent, setResent] = useState(null);
   const saudacao = vocativo(project.greeting, user && user.name);
   const [resending, setResending] = useState(false);
@@ -225,18 +233,23 @@ function ProjectInner({
               <em>etapas concluídas</em>
             </div>
             {/* a fase com o próximo prazo e a data dela (só etapas macro) */}
-            <div className={'hstat hstat-fase' + (prazo && prazo.atrasado ? ' hstat-atrasado' : '')}>
+            <div className={'hstat hstat-fase' + (prazo && prazo.atrasado && !prazoNeutro ? ' hstat-atrasado' : '')}>
               <strong>{prazo ? prazo.titulo : '—'}</strong>
               <em>
                 {!prazo
                   ? 'Próxima etapa'
-                  : prazo.data
-                    ? (prazo.atrasado ? 'Prazo vencido – ' : 'Prazo – ') + fmt(prazo.data)
-                    : 'Sem prazo definido'}
+                  : prazoNeutro
+                    ? 'Nova data em definição'
+                    : prazo.data
+                      ? (prazo.atrasado ? 'Prazo vencido – ' : 'Prazo – ') + fmt(prazo.data)
+                      : 'Sem prazo definido'}
               </em>
             </div>
           </div>
+          <Fases stages={heroStages} />
         </div>
+
+        {!isStudio && !expired && <ProximoPasso lista={minhas} abrir={abrir} />}
 
         {project.accessUntil && (
           <div className={'access ' + (expired ? 'access-off' : '')}>
@@ -389,5 +402,80 @@ function ProjectInner({
         )}
       </main>
     </div>
+  );
+}
+
+/* Onde estamos (rodada 10): as fases do projeto numa linha, com a atual
+   marcada, como num acompanhamento de pedido. */
+export function Fases({ stages }) {
+  if (!stages || stages.length < 2) return null;
+  const algumaEmAndamento = stages.some((s) => s.status === 'em_andamento');
+  const primeiraAberta = (stages.find((s) => s.status !== 'concluida') || {}).id;
+  return (
+    <ol className="fases" aria-label="Fases do projeto">
+      {stages.map((s) => {
+        const estado =
+          s.status === 'concluida'
+            ? 'feita'
+            : s.status === 'em_andamento' || (!algumaEmAndamento && s.id === primeiraAberta)
+              ? 'atual'
+              : 'futura';
+        return (
+          <li key={s.id} className={'fase fase-' + estado} aria-current={estado === 'atual' ? 'step' : undefined}>
+            <span className="fase-ponto" aria-hidden>
+              {estado === 'feita' && <Check size={11} />}
+            </span>
+            <span className="fase-nome">{s.title}</span>
+            <span className="sr-only">{estado === 'feita' ? ' (concluída)' : estado === 'atual' ? ' (em andamento)' : ''}</span>
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
+
+/* Seu próximo passo (rodada 10): no lugar da janela que abria por cima ao
+   entrar, um cartão fixo com a ação mais importante e as demais embaixo. */
+export function ProximoPasso({ lista, abrir }) {
+  const [primeiro, ...resto] = lista;
+  const [todas, setTodas] = useState(false);
+  const visiveis = todas ? resto : resto.slice(0, 3);
+  if (!primeiro)
+    return (
+      <section className="proximo proximo-ok" aria-label="Seu próximo passo">
+        <Check size={18} aria-hidden /> <span>Tudo em dia. Não há nada esperando por você agora.</span>
+      </section>
+    );
+  return (
+    <section className="proximo" aria-label="Seu próximo passo">
+      <div className="proximo-topo">
+        <span className="proximo-rot">Seu próximo passo</span>
+        {lista.length > 1 && <span className="proximo-n">{lista.length} pendências</span>}
+      </div>
+      <div className="proximo-principal">
+        <p>{primeiro.texto}</p>
+        <button type="button" className="btn btn-primary btn-sm" onClick={() => abrir(primeiro.aba, primeiro.alvo)}>
+          Resolver <ArrowRight size={14} />
+        </button>
+      </div>
+      {resto.length > 0 && (
+        <ul className="proximo-resto">
+          {visiveis.map((p) => (
+            <li key={p.id}>
+              <button type="button" onClick={() => abrir(p.aba, p.alvo)}>
+                <span>{p.texto}</span> <ChevronRight size={14} aria-hidden />
+              </button>
+            </li>
+          ))}
+          {resto.length > 3 && (
+            <li>
+              <button type="button" className="proximo-mais" onClick={() => setTodas(!todas)}>
+                <span>{todas ? 'Mostrar menos' : 'Ver mais ' + (resto.length - 3) + (resto.length - 3 === 1 ? ' pendência' : ' pendências')}</span>
+              </button>
+            </li>
+          )}
+        </ul>
+      )}
+    </section>
   );
 }

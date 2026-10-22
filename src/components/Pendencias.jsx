@@ -1,7 +1,6 @@
 import { useContext, useEffect, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
-import { Bell, ChevronRight, X } from 'lucide-react';
-import { PendenciasCtx, CHAVE_JANELA, lerVistas, marcarVistas } from '../lib/pendenciasContexto.js';
+import { Bell, ChevronRight } from 'lucide-react';
+import { PendenciasCtx, lerVistas, marcarVistas } from '../lib/pendenciasContexto.js';
 import { qk } from '../lib/data.js';
 import { useResolvedDb, specsFor } from '../lib/useResolvedDb.js';
 
@@ -9,8 +8,10 @@ import { useResolvedDb, specsFor } from '../lib/useResolvedDb.js';
    para o cliente, e a janela que abre ao entrar enquanto houver pendências.
    Uma pendência só some da lista quando é resolvida (é calculada a partir
    dos dados). O número do sino, porém, conta só as que a pessoa ainda não
-   viu: abrir o sino marca as atuais como vistas (rodada 4). A janela ao
-   entrar só aparece quando há alguma nova. */
+   viu: abrir o sino marca as atuais como vistas (rodada 4).
+   Rodada 10: não abre mais uma janela por cima ao entrar. O cliente vê as
+   pendências no cartão "Seu próximo passo" do projeto; o studio, na aba
+   "Hoje" do painel. */
 export function SinoPendencias() {
   const ctx = useContext(PendenciasCtx);
   if (!ctx) return null;
@@ -31,29 +32,13 @@ function Sino({ baseDb, user, irPara }) {
     setVistas(new Set(ids));
   };
   const [aberto, setAberto] = useState(false);
-  const [janela, setJanela] = useState(() => {
-    try {
-      return !sessionStorage.getItem(CHAVE_JANELA);
-    } catch {
-      return true;
-    }
-  });
   const caixa = useRef(null);
   const novasAoAbrir = useRef(new Set());
   if (!aberto) novasAoAbrir.current = new Set(novas.map((p) => p.id));
 
-  const fecharJanela = () => {
-    setJanela(false);
-    marcarTodas();
-    try {
-      sessionStorage.setItem(CHAVE_JANELA, '1');
-    } catch {
-      /* ignora */
-    }
-  };
   const ir = (p) => {
     setAberto(false);
-    fecharJanela();
+    marcarTodas();
     irPara(p.pid, p.aba, p.alvo);
   };
   const abrirSino = () => {
@@ -93,14 +78,6 @@ function Sino({ baseDb, user, irPara }) {
           <ListaPendencias lista={lista} novas={novasAoAbrir.current} vazio="Nenhuma pendência. Está tudo em dia." onIr={ir} />
         </div>
       )}
-      {janela && n > 0 && (
-        <JanelaPendencias
-          lista={novas}
-          studio={user.role === 'studio'}
-          onIr={ir}
-          onFechar={fecharJanela}
-        />
-      )}
     </div>
   );
 }
@@ -129,53 +106,4 @@ function ListaPendencias({ lista, vazio, onIr, novas = null }) {
       </ul>
     </div>
   ));
-}
-
-function JanelaPendencias({ lista, studio, onIr, onFechar }) {
-  const fechar = useRef(null);
-  useEffect(() => {
-    if (fechar.current) fechar.current.focus();
-    const esc = (e) => e.key === 'Escape' && onFechar();
-    document.addEventListener('keydown', esc);
-    return () => document.removeEventListener('keydown', esc);
-  }, [onFechar]);
-  const n = lista.length;
-  // fora do cabeçalho (que cria seu próprio contexto de posição), dentro da
-  // raiz .cp para manter os estilos
-  const raiz = document.querySelector('.cp') || document.body;
-  return createPortal(
-    <div className="janela-fundo" onMouseDown={(e) => e.target === e.currentTarget && onFechar()}>
-      <div className="janela" role="dialog" aria-modal="true" aria-labelledby="janela-titulo">
-        <header>
-          <h2 id="janela-titulo">
-            {studio
-              ? n === 1
-                ? 'Há 1 pendência esperando você'
-                : 'Há ' + n + ' pendências esperando você'
-              : n === 1
-                ? 'Você tem 1 pendência'
-                : 'Você tem ' + n + ' pendências'}
-          </h2>
-          <button
-            type="button"
-            className="icon-btn"
-            aria-label="Fechar"
-            ref={fechar}
-            onClick={onFechar}
-          >
-            <X size={16} />
-          </button>
-        </header>
-        <div className="janela-corpo">
-          <ListaPendencias lista={lista} onIr={onIr} />
-        </div>
-        <footer>
-          <button type="button" className="btn btn-ghost btn-sm" onClick={onFechar}>
-            Ver depois
-          </button>
-        </footer>
-      </div>
-    </div>,
-    raiz,
-  );
 }

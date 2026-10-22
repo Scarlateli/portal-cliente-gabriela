@@ -20,6 +20,7 @@ import {
   ArrowUp,
   ArrowDown,
   FolderUp,
+  ChevronDown,
 } from 'lucide-react';
 import { StatusPill, Empty } from '../atoms.jsx';
 import { STAGE_STATUS, STAGE_CATEGORIES } from '../../lib/constants.js';
@@ -68,7 +69,10 @@ export function Timeline({ db, project, isStudio, alvo = null, abrir = () => {} 
   const [filter, setFilter] = useState('em_andamento');
   const templates = db.templates();
   const tplPreview = templates.find((t) => t.id === tplSel);
-  const shown = filter === 'todas' ? stages : stages.filter((s) => s.status === filter);
+  // rodada 10: o cliente vê todas as etapas, recolhidas, com a atual aberta;
+  // os filtros ficam só para o studio
+  const shown = !isStudio || filter === 'todas' ? stages : stages.filter((s) => s.status === filter);
+  const foco = (stages.find((s) => s.status === 'em_andamento') || stages.find((s) => s.status !== 'concluida') || {}).id;
   // vindo do sino: se o item pedido está escondido pelo filtro, mostra todas
   useEffect(() => {
     if (!alvo) return;
@@ -124,6 +128,7 @@ export function Timeline({ db, project, isStudio, alvo = null, abrir = () => {} 
         )}
       </header>
 
+      {isStudio && (
       <div className="filter-row">
         {FILTERS.map(([f, label]) => (
           <button key={f} className={'filter' + (filter === f ? ' on' : '')} onClick={() => setFilter(f)}>
@@ -131,6 +136,7 @@ export function Timeline({ db, project, isStudio, alvo = null, abrir = () => {} 
           </button>
         ))}
       </div>
+      )}
 
       {isStudio && tplPreview && (
         <div className="tpl-preview">
@@ -246,6 +252,8 @@ export function Timeline({ db, project, isStudio, alvo = null, abrir = () => {} 
               arquivos={arquivos}
               abrir={abrir}
               projectId={project.id}
+              inicialAberta={isStudio || s.id === foco}
+              alvo={alvo}
             />
           ))}
         </ol>
@@ -479,7 +487,10 @@ function SubItem({ db, s, b, i, total, isStudio, atual = false, arquivos = [], a
   const enviados = arquivos.filter((a) => a.subId === b.id).length;
   const doCliente = b.responsible === 'cliente';
   const entregue = !!b.entregueEm || b.done;
-  const q = quandoSub(b);
+  let q = quandoSub(b);
+  // cliente: tarefa do studio que passou do prazo não aparece como "Vencido"
+  if (!isStudio && q && q.estado === 'atrasado' && b.responsible !== 'cliente')
+    q = SUB_COM_HORARIO.includes(b.kind) ? { ...q, estado: 'ok' } : null;
   const irEnvio = () => abrir('docs', 'pedido-' + b.id);
   let acao = null;
   if (b.pedeArquivos && !isStudio)
@@ -592,12 +603,23 @@ function DatasEtapa({ s }) {
   );
 }
 
-function StageItem({ db, s, isStudio, arquivos, abrir, projectId }) {
+function StageItem({ db, s, isStudio, arquivos, abrir, projectId, inicialAberta = true, alvo = null }) {
   const [editing, setEditing] = useState(false);
+  const [aberta, setAberta] = useState(inicialAberta);
+  // vindo do sino ou do "próximo passo": abre a etapa do item pedido
+  useEffect(() => {
+    if (alvo && ('etapa-' + s.id === alvo || (s.subs || []).some((b) => 'sub-' + b.id === alvo))) setAberta(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [alvo]);
   const [ef, setEf] = useState(s);
   const [addingSub, setAddingSub] = useState(false);
   const [newEnd, setNewEnd] = useState(s.end || '');
-  const late = stageOverdue(s);
+  const atrasada = stageOverdue(s);
+  // rodada 10: atraso do studio não assusta o cliente; para ele aparece
+  // "Nova data em definição", em tom neutro. Atraso do cliente segue em
+  // vermelho, porque depende dele.
+  const late = atrasada && (isStudio || s.owner === 'client');
+  const novaData = atrasada && !late;
   const ss = subStats(s);
   // a primeira sub-etapa ainda aberta ganha o destaque da bolinha
   const primeiraAberta = ((s.subs || []).find((b) => !b.done) || {}).id;
@@ -648,9 +670,16 @@ function StageItem({ db, s, isStudio, arquivos, abrir, projectId }) {
       <span className="tl-node" aria-hidden>
         {s.status === 'concluida' ? <Check size={13} /> : s.status === 'em_andamento' ? <span className="tl-dot" /> : null}
       </span>
-      <div className="tl-body">
+      <div className={'tl-body' + (aberta ? '' : ' tl-recolhida')}>
         <div className="tl-top">
-          <h3>{s.title}</h3>
+          {isStudio ? (
+            <h3>{s.title}</h3>
+          ) : (
+            <button type="button" className="tl-abrir" aria-expanded={aberta} onClick={() => setAberta(!aberta)}>
+              <ChevronDown size={16} className="tl-seta" aria-hidden />
+              <h3>{s.title}</h3>
+            </button>
+          )}
           <DatasEtapa s={s} />
         </div>
         <div className="tl-meta">
@@ -676,10 +705,17 @@ function StageItem({ db, s, isStudio, arquivos, abrir, projectId }) {
             <span className="pill pill-late">
               <AlertTriangle size={12} /> Em atraso
             </span>
+          ) : novaData ? (
+            <span className="pill pill-next">
+              <CalendarClock size={12} /> Nova data em definição
+            </span>
           ) : (
             <StatusPill status={s.status} />
           )}
         </div>
+
+        {aberta && (
+        <>
 
         {s.category === 'Reunião' && !s.presencial && s.link && (
           <a className="meet-link" href={s.link} target="_blank" rel="noreferrer">
@@ -776,6 +812,8 @@ function StageItem({ db, s, isStudio, arquivos, abrir, projectId }) {
               <Trash2 size={12} /> Excluir
             </button>
           </div>
+        )}
+        </>
         )}
       </div>
     </li>

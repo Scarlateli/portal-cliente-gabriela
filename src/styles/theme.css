@@ -1028,3 +1028,38 @@ button{color:inherit}
   .cp .tab{min-height:48px}
   .cp .link.sm{min-height:44px;display:inline-flex;align-items:center}
 }
+
+/* ===================== Rodada 10 — experiência do cliente ===================== */
+.cp .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+/* fases do projeto: onde estamos */
+.cp .fases{list-style:none;display:flex;margin:22px 0 0;padding:20px 0 2px;border-top:1px solid var(--gl-hairline);overflow-x:auto;scrollbar-width:none}
+.cp .fases::-webkit-scrollbar{display:none}
+.cp .fase{position:relative;flex:1 1 0;min-width:104px;display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;padding:0 6px}
+.cp .fase::before{content:'';position:absolute;top:10px;right:50%;left:-50%;height:1.5px;background:var(--line)}
+.cp .fase:first-child::before{display:none}
+.cp .fase-feita::before,.cp .fase-atual::before{background:var(--brand)}
+.cp .fase-ponto{position:relative;z-index:1;display:grid;place-items:center;width:21px;height:21px;border-radius:50%;border:1.5px solid var(--gl-ink-60);background:var(--card);color:#fff}
+.cp .fase-feita .fase-ponto{background:var(--brand);border-color:var(--brand)}
+.cp .fase-atual .fase-ponto{border-color:var(--now);background:var(--now-soft);box-shadow:0 0 0 5px var(--now-soft)}
+.cp .fase-nome{font-size:var(--fs-12);letter-spacing:.06em;text-transform:uppercase;line-height:1.35;color:var(--ink)}
+.cp .fase-atual .fase-nome{font-weight:500}
+.cp .fase-futura .fase-nome{opacity:.62}
+/* seu próximo passo */
+.cp .proximo{margin-top:18px;background:var(--card);border-radius:var(--raio);border-left:3px solid var(--now);padding:18px 22px}
+.cp .proximo-ok{display:flex;align-items:center;gap:10px;border-left-color:var(--ok);font-size:var(--fs-16);padding:16px 22px}
+.cp .proximo-ok svg{color:var(--ok)}
+.cp .proximo-topo{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.cp .proximo-rot{font-size:var(--fs-12);letter-spacing:.12em;text-transform:uppercase;font-weight:500}
+.cp .proximo-n{font-size:var(--fs-12)}
+.cp .proximo-principal{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:8px;flex-wrap:wrap}
+.cp .proximo-principal p{font-family:var(--font-display);font-size:var(--fs-20);font-weight:400;line-height:1.3;margin:0}
+.cp .proximo-resto{list-style:none;margin:12px 0 0;padding:10px 0 0;border-top:1px solid var(--gl-hairline);display:flex;flex-direction:column}
+.cp .proximo-resto button{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;background:none;border:0;padding:8px 0;font-size:var(--fs-14);color:var(--ink);text-align:left;cursor:pointer}
+.cp .proximo-resto button:hover span{text-decoration:underline;text-underline-offset:3px}
+/* etapas recolhidas (cliente) */
+.cp .tl-abrir{display:flex;align-items:center;gap:8px;background:none;border:0;padding:0;margin:0;color:inherit;cursor:pointer;text-align:left}
+.cp .tl-seta{flex:none;transition:transform .2s ease}
+.cp .tl-abrir[aria-expanded="false"] .tl-seta{transform:rotate(-90deg)}
+.cp .tl-recolhida .tl-meta{margin-bottom:0}
+.cp .timeline .tl-item:has(.tl-recolhida){padding-bottom:14px}
+.cp .proximo-resto .proximo-mais{font-weight:500}
