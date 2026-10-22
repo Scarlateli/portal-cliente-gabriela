@@ -192,9 +192,12 @@ function ProjectInner({
             <span className="hero-tag">
               {project.status === 'concluido' ? 'Concluído' : 'Em andamento'}
             </span>
-            <span className="hero-code">
-              <Hash size={11} /> {project.code}
-            </span>
+            {/* o código do projeto é do studio; o cliente não precisa dele */}
+            {isStudio && (
+              <span className="hero-code">
+                <Hash size={11} /> {project.code}
+              </span>
+            )}
           </div>
           {!isStudio && saudacao && <p className="hero-ola">Olá, {saudacao}</p>}
           <h1 className="hero-name">{project.name}</h1>

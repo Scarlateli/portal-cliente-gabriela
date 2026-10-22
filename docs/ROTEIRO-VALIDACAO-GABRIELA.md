@@ -256,3 +256,21 @@ Num pedido com vários arquivos, use "Ver todos" e "Baixar todos (.zip)".
 ### 38. Comprovante
 Em Contratos e Termos, num termo aprovado, clique em "Baixar comprovante
 (PDF)".
+
+---
+
+## Rodada 8 — visão do cliente (22/10)
+
+### 39. Topo
+Como cliente, confira que o código do projeto não aparece.
+
+### 40. Comentário na aprovação
+- Peça a aprovação de uma ata.
+- Como cliente, escreva um comentário e clique em "Aprovo".
+- Como studio, confira o comentário embaixo de "Aprovado por …".
+
+### 41. Envios
+Como cliente:
+- confira o texto novo no topo dos Envios;
+- num pedido já conferido pelo studio, confira o balão "Envio validado pelo
+  studio.".

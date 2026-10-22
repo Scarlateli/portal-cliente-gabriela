@@ -195,7 +195,8 @@ export function makeDb(state, set) {
       }
       if (d.approval === 'assinatura' && String(nome || '').trim().length < 3) throw new Error('Digite o seu nome completo para assinar.');
       const quem = d.approval === 'assinatura' ? String(nome).trim() : (state.users.find((u) => u.id === (state.projects.find((p) => p.id === d.projectId) || {}).clientId) || {}).name;
-      set((s) => ({ ...s, documents: s.documents.map((x) => x.id === did ? { ...x, response: d.approval === 'assinatura' ? 'assinado' : 'aprovado', respondedAt: new Date().toISOString(), respondedName: quem } : x) }));
+      const nota = String(mensagem || '').trim().slice(0, 2000) || null; // comentário opcional (rodada 8)
+      set((s) => ({ ...s, documents: s.documents.map((x) => x.id === did ? { ...x, response: d.approval === 'assinatura' ? 'assinado' : 'aprovado', respondedAt: new Date().toISOString(), respondedName: quem, responseNote: nota } : x) }));
     },
     // espelha a função responder_contrato do banco (mesmas regras)
     responderContrato: (cid, acao, nome, motivo) => {

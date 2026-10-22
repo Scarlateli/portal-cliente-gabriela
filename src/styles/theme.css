@@ -986,3 +986,12 @@ button{color:inherit}
 .cp .envio-arquivos-bloco .envio-arquivos li{min-width:0}
 .cp .envio-arquivos-bloco .envio-arquivos .link{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .cp .envio-ver-todos{margin-top:6px}
+
+/* ===================== Rodada 8 — visão do cliente (22/10) ===================== */
+.cp .doc-comentar{margin:8px 0 10px}
+.cp .doc-comentar textarea{border:1px solid var(--line);border-radius:4px;padding:8px 11px;font-size:13px;outline:none;background:var(--card);resize:vertical;width:100%}
+.cp .doc-comentar textarea:focus{border-color:var(--brand)}
+.cp .doc-comentario{display:flex;align-items:flex-start;gap:5px;font-size:12px;color:var(--muted);margin-top:3px;line-height:1.45}
+.cp .doc-comentario svg{flex:none;margin-top:2px}
+/* "Envio validado pelo studio." num balãozinho */
+.cp .envio-validado{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:500;color:var(--ok);background:var(--ok-soft);border-radius:999px;padding:4px 11px}

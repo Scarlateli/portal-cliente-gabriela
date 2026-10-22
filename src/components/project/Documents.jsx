@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Upload, FileText, Download, Trash2, Check, PenLine, Pencil, RefreshCw, MessageSquareWarning, Send } from 'lucide-react';
+import { Upload, FileText, Download, Trash2, Check, PenLine, Pencil, RefreshCw, MessageSquareWarning, MessageSquare, Send } from 'lucide-react';
 import { AssinaturaPortal } from './Assinatura.jsx';
 import { EnviosCliente } from './EnviosCliente.jsx';
 import { erroAmigavel } from '../../lib/erros.js';
@@ -342,17 +342,29 @@ const dataCurta = (iso) => (iso ? fmt(String(iso).slice(0, 10)) : '');
 
 function SituacaoDoc({ d }) {
   if (!d.approval || d.approval === 'nenhuma') return null;
+  // comentário que o cliente deixou ao aprovar ou assinar (rodada 8)
+  const comentario = d.responseNote ? (
+    <span className="doc-comentario">
+      <MessageSquare size={12} /> Comentário do cliente: “{d.responseNote}”
+    </span>
+  ) : null;
   if (d.response === 'assinado')
     return (
-      <span className="doc-sit ok">
-        Assinado por {d.respondedName} em {dataCurta(d.respondedAt)}
-      </span>
+      <>
+        <span className="doc-sit ok">
+          Assinado por {d.respondedName} em {dataCurta(d.respondedAt)}
+        </span>
+        {comentario}
+      </>
     );
   if (d.response === 'aprovado')
     return (
-      <span className="doc-sit ok">
-        Aprovado por {d.respondedName || 'cliente'} em {dataCurta(d.respondedAt)}
-      </span>
+      <>
+        <span className="doc-sit ok">
+          Aprovado por {d.respondedName || 'cliente'} em {dataCurta(d.respondedAt)}
+        </span>
+        {comentario}
+      </>
     );
   if (d.response === 'ajustes')
     return (
@@ -394,7 +406,7 @@ function RespostaCliente({ db, d }) {
         <AssinaturaPortal
           titulo={d.name}
           onAssinar={async (nome) => {
-            await db.responderDocumento(d.id, nome);
+            await db.responderDocumento(d.id, nome, 'confirmar', msg.trim() || null);
             setModo(null);
           }}
           onCancelar={() => setModo(null)}
@@ -433,6 +445,19 @@ function RespostaCliente({ db, d }) {
           ? 'O studio pede a sua assinatura neste documento.'
           : 'O studio pede a sua aprovação deste documento.'}
       </p>
+      {/* rodada 8: o cliente pode comentar ao aprovar; para pedir ajustes,
+          o comentário vira a mensagem (e é obrigatório) */}
+      <label className="lab doc-comentar">
+        Comentário (opcional)
+        <textarea
+          rows={2}
+          maxLength={2000}
+          value={msg}
+          onChange={(e) => setMsg(e.target.value)}
+          placeholder="Escreva aqui se quiser deixar uma observação para o studio"
+          aria-label="Comentário para o studio"
+        />
+      </label>
       <div className="row">
         {d.approval === 'assinatura' ? (
           <button type="button" className="btn btn-primary btn-sm" onClick={() => setModo('assinar')}>
@@ -443,7 +468,7 @@ function RespostaCliente({ db, d }) {
             type="button"
             className="btn btn-primary btn-sm"
             disabled={enviando}
-            onClick={() => enviar(() => db.responderDocumento(d.id))}
+            onClick={() => enviar(() => db.responderDocumento(d.id, null, 'confirmar', msg.trim() || null))}
           >
             <Check size={13} /> {enviando ? 'Enviando…' : 'Aprovo'}
           </button>

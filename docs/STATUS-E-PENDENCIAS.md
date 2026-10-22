@@ -578,3 +578,26 @@ A visão do cliente vem numa rodada separada, depois desta.
 - O PDF é gerado no navegador (biblioteca pdf-lib, carregada só no clique).
 
 Sem mudança no banco nesta rodada.
+
+## Rodada 8 — visão do cliente (revisão de 22/10/2026)
+
+- **Topo do projeto:** o cliente não vê mais o código do projeto (só o
+  studio vê).
+- **Documentos:**
+  - Ao aprovar (ou assinar) uma ata ou outro documento, o cliente tem um
+    campo "Comentário (opcional)".
+  - Se o cliente escreve e clica em "Pedir ajustes", o mesmo texto vira o
+    pedido de ajustes, que continua obrigatório.
+  - O comentário aparece para o studio e para o cliente embaixo de
+    "Aprovado por …".
+- **Envios do Cliente:**
+  - Texto novo de abertura: "Aqui ficam todos os arquivos que solicitamos a
+    você…".
+  - "O studio já conferiu este pedido." virou o balãozinho verde "Envio
+    validado pelo studio.".
+
+**Banco** (aplicado em 22/10, antes do código):
+`supabase/sql/2026-10-22-rodada8-comentario-na-aprovacao.sql`, também no fim
+do `schema.sql`. A função `confirmar_documento` mantém os mesmos parâmetros;
+agora grava o comentário também na aprovação. Foram testados 7 cenários num
+banco local.

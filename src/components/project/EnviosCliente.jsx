@@ -32,7 +32,7 @@ export function EnviosCliente({ db, project, isStudio, abrir = () => {} }) {
       <p className="hint envios-intro">
         {isStudio
           ? 'Peça aqui os arquivos que o cliente precisa mandar (plantas, fotos, referências). Ele envia vários de uma vez e, no fim, conclui a entrega.'
-          : 'Aqui ficam os arquivos que o studio pediu. Em cada pedido, mande quantos arquivos precisar e, quando terminar, clique em "Concluir entrega".'}
+          : 'Aqui ficam todos os arquivos que solicitamos a você. Em cada pedido, faça o upload de quantos arquivos forem necessários e, quando finalizar, conclua a entrega.'}
       </p>
       {isStudio && criando && <NovoPedido db={db} project={project} stages={stages} onFechar={() => setCriando(false)} />}
       {isStudio && !stages.length && <p className="hint">Crie as etapas do projeto antes de pedir arquivos.</p>}
@@ -347,7 +347,11 @@ function Pedido({ db, projectId, b, s, isStudio, arquivos, abrir }) {
               <RotateCcw size={13} /> Reabrir pedido
             </button>
           ))}
-        {!isStudio && !aberto && <span className="micro">O studio já conferiu este pedido.</span>}
+        {!isStudio && !aberto && (
+          <span className="envio-validado">
+            <Check size={12} /> Envio validado pelo studio.
+          </span>
+        )}
       </div>
       {clienteMexe && arquivos.length > 0 && (
         <div className="envio-concluir">
