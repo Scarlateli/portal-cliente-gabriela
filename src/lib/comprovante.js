@@ -39,6 +39,7 @@ export function textosComprovante({
   agora = new Date(),
 }) {
   const assinatura = metodoDe(c) === 'portal';
+  const daEtapa = !!c.stageId; // gerado quando o cliente aprovou a etapa (rodada 11)
   const tipo = c.kind === 'contrato' ? 'Contrato' : 'Termo';
   const quem = (c.signer || cliente || '').trim();
   const { data, hora } = dataHoraBR(c.respondedAt || c.signedAt);
@@ -47,23 +48,28 @@ export function textosComprovante({
     ? ' em ' + data + (hora ? ', às ' + hora + ' (horário de Brasília)' : '')
     : '';
   return {
-    titulo: assinatura ? 'Comprovante de assinatura' : 'Comprovante de aprovação',
+    titulo: assinatura
+      ? 'Comprovante de assinatura'
+      : daEtapa
+        ? 'Comprovante de aprovação de etapa'
+        : 'Comprovante de aprovação',
     campos: [
       ['Documento', c.name || tipo],
       ['Tipo', tipo],
       ['Projeto', [p.code, p.name].filter(Boolean).join(' · ')],
       ['Endereço', enderecoCurto(p)],
       ['Cliente', cliente],
+      ['Comentário', daEtapa ? c.responseNote || '' : ''],
     ].filter(([, v]) => v),
     corpo: String(c.body || '').trim(),
     declaracao:
       (assinatura ? 'Assinado eletronicamente por ' : 'Aprovado por ') +
       quem +
       quando +
-      ', por meio do Portal do Cliente Gabriela Lendecker (portal.gabrielalendecker.com), com o acesso pessoal do cliente' +
-      (assinatura
-        ? ', digitando o nome completo e confirmando a assinatura.'
-        : ', pelo botão "Aprovar" do documento.'),
+      (daEtapa
+        ? ', na Linha do Tempo do Portal do Cliente Gabriela Lendecker (portal.gabrielalendecker.com), com o acesso pessoal do cliente, digitando o nome completo e confirmando a aprovação da etapa.'
+        : ', por meio do Portal do Cliente Gabriela Lendecker (portal.gabrielalendecker.com), com o acesso pessoal do cliente' +
+          (assinatura ? ', digitando o nome completo e confirmando a assinatura.' : ', pelo botão "Aprovar" do documento.')),
     rodape:
       'Comprovante gerado em ' +
       gerado.data +

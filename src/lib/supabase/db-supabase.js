@@ -20,7 +20,7 @@ const PROJECT_COLS =
 const QUOTE_COLS =
   'id, projectId:project_id, segment, supplier, amount, fileName:file_name, status, studioNote:studio_note, decidedAt:decided_at, contact, deadline, payment, contractStatus:contract_status, notes, storagePath:storage_path, comments:quote_comments(author, body, at)';
 const CONTRACT_COLS =
-  'id, projectId:project_id, name, sigStatus:sig_status, provider, signer, signedAt:signed_at, kind, storagePath:storage_path, providerDocId:provider_doc_id, studioSignLink:studio_sign_link, method, body, responseNote:response_note, respondedAt:responded_at';
+  'id, projectId:project_id, name, sigStatus:sig_status, provider, signer, signedAt:signed_at, kind, storagePath:storage_path, providerDocId:provider_doc_id, studioSignLink:studio_sign_link, method, body, responseNote:response_note, respondedAt:responded_at, stageId:stage_id';
 
 const fornecedorRow = (d) => ({
   name: String(d.name || '').trim(),

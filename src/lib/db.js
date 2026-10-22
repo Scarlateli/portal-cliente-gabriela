@@ -164,6 +164,18 @@ export function makeDb(state, set) {
         patch = { approval: 'ajustes', approvalAt: new Date().toISOString(), approvalName: cliente, approvalNote: msg };
       } else throw new Error('Decisão inválida.');
       set((s) => ({ ...s, stages: s.stages.map((x) => (x.id === sid ? { ...x, ...patch } : x)) }));
+      // espelha o banco (rodada 11): aprovar a etapa cria o termo dela, já aprovado
+      if (decisao === 'aprovar') {
+        const proj = state.projects.find((p) => p.id === st.projectId) || {};
+        const termo = {
+          id: uid('c'), projectId: st.projectId, stageId: st.id, kind: 'termo', method: 'aceite',
+          name: 'Termo de Aprovação – ' + st.title,
+          body: 'O cliente declara que a etapa "' + st.title + '" do projeto "' + (proj.name || '') + '" foi concluída e aprovada.',
+          sigStatus: 'assinado', provider: 'Portal', signer: patch.approvalName, signedAt: patch.approvalAt.slice(0, 10),
+          respondedAt: patch.approvalAt, responseNote: patch.approvalNote,
+        };
+        set((s) => ({ ...s, contracts: [...s.contracts, termo] }));
+      }
     },
     enviarArquivos: (pid, bid, files, sentBy) => {
       const sub = state.stages.flatMap((x) => x.subs || []).find((b) => b.id === bid);

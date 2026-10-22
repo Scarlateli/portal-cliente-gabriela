@@ -251,6 +251,7 @@ function ContractDoc({ db, c, isStudio, clientName, project }) {
           <span className="sig-line">
             {(c.kind === 'termo' ? 'Termo' : 'Contrato') + ' · '}
             {situacao(c)}
+            {c.stageId ? ' · gerado na aprovação da etapa' : ''}
           </span>
         </div>
       </div>
@@ -330,7 +331,8 @@ function ContractDoc({ db, c, isStudio, clientName, project }) {
               <RotateCcw size={12} /> Liberar novamente
             </button>
           )}
-          {isStudio && !signed && (
+          {/* termo gerado pela aprovação da etapa: editável mesmo aprovado (rodada 11) */}
+          {isStudio && (!signed || c.stageId) && (
             <button type="button" className="link sm" onClick={() => setEditando(true)}>
               <Pencil size={12} /> Editar
             </button>
@@ -530,6 +532,9 @@ function EditarContrato({ db, c, onFechar }) {
       {aviso && <p className="micro aviso-upload">{aviso}</p>}
       {c.sigStatus === 'enviado' && (
         <p className="hint">Este documento já está com o cliente. Ele passa a ver a versão editada.</p>
+      )}
+      {c.sigStatus === 'assinado' && c.stageId && (
+        <p className="hint">Termo gerado pela aprovação da etapa. A aprovação (nome, data e hora) continua registrada; o comprovante passa a mostrar o texto editado.</p>
       )}
       <div className="row">
         <button type="button" className="btn btn-primary btn-sm" disabled={!nome.trim() || salvando} onClick={salvar}>

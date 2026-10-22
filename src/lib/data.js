@@ -61,7 +61,8 @@ export function invalidationsFor(method, pid) {
     updateDocument: [qk.documents(pid)],
     replaceDocumentFile: [qk.documents(pid)],
     pedirAprovacaoEtapa: [qk.stages(pid)],
-    responderEtapa: [qk.stages(pid)],
+    // aprovar a etapa cria o termo dela em Contratos e Termos (rodada 11)
+    responderEtapa: [qk.stages(pid), qk.contracts(pid)],
     enviarArquivos: [qk.subArquivos(pid), qk.stages(pid)],
     removerArquivo: [qk.subArquivos(pid)],
     setNotaPedido: [qk.stages(pid)],
