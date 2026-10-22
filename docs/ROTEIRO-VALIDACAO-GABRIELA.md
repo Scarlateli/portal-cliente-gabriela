@@ -308,3 +308,27 @@ Exclua uma sub-etapa e use "Desfazer" no aviso que aparece embaixo.
 
 ### 48. Celular
 Navegue pela barra de baixo (Início, Documentos, Agenda, Mais).
+
+---
+
+## Rodada 11 — validação (22/10, à tarde)
+
+### 49. Cores
+Confira o fundo e os cartões nos códigos enviados, e o texto como era antes.
+
+### 50. Um vê o que o outro fez
+1. Abra o portal como studio num navegador e como cliente em outro.
+2. Faça uma mudança de um lado e espere até 45 s, ou troque de aba e volte:
+   ela aparece do outro lado.
+
+### 51. Termo da etapa
+1. Peça a aprovação de uma etapa.
+2. Como cliente, aprove na Linha do Tempo.
+3. Em Contratos e Termos, confira o "Termo de Aprovação – …" e baixe o
+   comprovante.
+4. Como studio, teste Editar e Excluir nesse termo.
+
+### 52. Linha do Tempo
+- Topo da etapa e INÍCIO/ENTREGA.
+- Tamanho do tipo da sub-etapa.
+- Setas e lápis: aparecem e somem com o mouse.

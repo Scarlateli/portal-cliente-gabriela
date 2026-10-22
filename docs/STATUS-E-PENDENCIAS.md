@@ -728,3 +728,54 @@ Títulos:
 
 Commits mais antigos podem conflitar com os que vieram depois; nesse caso,
 é mais fácil pedir ao Claude.
+
+## Rodada 11 — validação da Gabriela (22/10/2026, à tarde)
+
+**Cores**
+- Os fundos não batiam com os códigos: a textura de papel por cima do fundo
+  fazia o #ECE9E3 aparecer como #E8E7E2 (medido no print dela). A textura
+  saiu. Agora a tela renderizada mede exatamente #ECE9E3 (fundo) e #FBFAF8
+  (cartões).
+- A cor do texto volta a ser a de antes da rodada 9: principal em #210909,
+  secundário na mesma cor mais clara e o vinho da marca onde era vinho.
+- Documentos, parcelas, orçamentos, envios e contratos voltam a ser cartões
+  com contorno fino. A rodada 10 tinha trocado por um fundo #F5F3EF, que não
+  é da paleta.
+- Envios: os arquivos ficam numa lista única e compacta, uma linha por
+  arquivo.
+
+**O que um mudava e o outro não via**
+- Uma tela aberta nunca buscava dados de novo. Por isso a aprovação da
+  cliente não aparecia para a Gabriela até recarregar a página, e
+  vice-versa.
+- Agora o portal busca de novo ao voltar para a aba, a cada 45 s com a aba
+  visível e ao reconectar.
+- Os dados no banco estavam certos o tempo todo.
+
+**Termo automático ao aprovar etapa**
+- O cliente aprova a etapa na Linha do Tempo e nasce na hora o "Termo de
+  Aprovação – <etapa>" em Contratos e Termos, já aprovado, com nome, data,
+  hora e comentário.
+- O comprovante em PDF diz que a aprovação foi feita na Linha do Tempo, com
+  nome completo.
+- O studio pode editar e excluir esse termo; os outros termos continuam
+  sendo criados à mão.
+- A etapa BRIEFING do CASA TESTE, aprovada antes desta rodada, já ganhou o
+  termo dela.
+
+**Linha do Tempo**
+- Topo da etapa em duas colunas (título e status / prazos e ⋯).
+- INÍCIO e ENTREGA em caixa alta, sem aumentar.
+- Voltam os tamanhos que ela tinha pedido e que a escala da rodada 10 tinha
+  aumentado.
+- Setas, lápis e X controlados pelo app: aparecem com o mouse em cima e
+  somem ao sair ou depois do clique (no Safari ficavam presos).
+
+**Em espera, por decisão dela:**
+- o quadro "Aguardando a aprovação do cliente";
+- ajustes nas fases do projeto.
+
+**Banco** (aplicado em 22/10, antes do código):
+`supabase/sql/2026-10-22-rodada11-termo-da-etapa.sql` (coluna
+`contracts.stage_id`; `responder_etapa` passa a criar o termo). Também está
+no fim do `schema.sql`; foram testados 7 cenários num banco local.
