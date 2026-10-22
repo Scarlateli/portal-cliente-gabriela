@@ -694,7 +694,7 @@ export function makeSupabaseDb() {
       must(error);
     },
     attachSubFile: async (pid, sid, bid, file) => {
-      const path = pid + '/subetapas/' + Date.now() + '-' + file.name;
+      const path = pid + '/subetapas/' + Date.now() + '-' + nomeSeguro(file.name);
       const { error: upErr } = await supabase.storage.from('documentos').upload(path, file);
       if (upErr) throw upErr;
       const { error } = await supabase
@@ -744,7 +744,7 @@ export function makeSupabaseDb() {
     addDocument: async (pid, d, file) => {
       let storage_path = null;
       if (file) {
-        const path = pid + '/' + Date.now() + '-' + file.name;
+        const path = pid + '/' + Date.now() + '-' + nomeSeguro(file.name);
         const { error: upErr } = await supabase.storage.from('documentos').upload(path, file);
         if (upErr) throw upErr;
         storage_path = path;
@@ -938,7 +938,7 @@ export function makeSupabaseDb() {
     addContractDoc: async (pid, d, file) => {
       let storage_path = null;
       if (file) {
-        const path = pid + '/contratos/' + Date.now() + '-' + file.name;
+        const path = pid + '/contratos/' + Date.now() + '-' + nomeSeguro(file.name);
         const { error: upErr } = await supabase.storage.from('documentos').upload(path, file);
         if (upErr) throw upErr;
         storage_path = path;
@@ -1013,7 +1013,7 @@ export function makeSupabaseDb() {
     addQuote: async (pid, d, file) => {
       let storage_path = null;
       if (file) {
-        const path = pid + '/quotes/' + Date.now() + '-' + file.name;
+        const path = pid + '/quotes/' + Date.now() + '-' + nomeSeguro(file.name);
         const { error: upErr } = await supabase.storage.from('documentos').upload(path, file);
         if (upErr) throw upErr;
         storage_path = path;
