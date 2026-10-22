@@ -1187,3 +1187,11 @@ button{color:inherit}
 .cp .empty svg{opacity:.5}
 @media (max-width:720px){.cp .fase{min-width:128px}}
 .cp #aba-conteudo{display:block;scroll-margin-top:76px}
+/* toques de 44px: o que ainda ficava pequeno no iPad */
+@media (pointer:coarse){
+  .cp .topbar .icon-btn,.cp .menu-mais-btn{width:44px;height:44px}
+  .cp .proximo-resto button,.cp .tl-abrir,.cp .fale-conosco,.cp .meet-link,.cp .gp-acoes .btn,.cp .mini-select,.cp .doc-nome{min-height:44px}
+  .cp .pill-select select{padding-top:10px;padding-bottom:10px}
+  .cp button.sub-no{position:relative}
+  .cp button.sub-no::after{content:'';position:absolute;inset:-12px}
+}
