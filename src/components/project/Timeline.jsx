@@ -35,6 +35,7 @@ import {
   quandoSub,
   subCompletaVazia,
 } from '../../lib/etapas.js';
+import { useAvisos } from '../../lib/avisosContexto.js';
 
 const etapaNova = () => ({
   title: '',
@@ -60,6 +61,7 @@ const FILTERS = [
 export function Timeline({ db, project, isStudio, alvo = null, abrir = () => {} }) {
   const stages = db.stages(project.id);
   const arquivos = (db.subArquivos && db.subArquivos(project.id)) || [];
+  const { avisar } = useAvisos();
   const [adding, setAdding] = useState(false);
   const [salvandoEtapa, setSalvandoEtapa] = useState(false);
   const [nf, setNf] = useState(etapaNova);
@@ -209,6 +211,7 @@ export function Timeline({ db, project, isStudio, alvo = null, abrir = () => {} 
                 setSalvandoEtapa(true);
                 try {
                   await db.addStage(project.id, nf);
+                  avisar('Etapa adicionada');
                   setNf(etapaNova());
                   setAdding(false);
                 } finally {
@@ -470,6 +473,8 @@ function SubPrazo({ b }) {
    tem caixinha para marcar; o studio conclui clicando na bolinha. */
 function SubItem({ db, s, b, i, total, isStudio, atual = false, arquivos = [], abrir }) {
   const [editando, setEditando] = useState(false);
+  const { avisar, excluirComDesfazer, ocultos } = useAvisos();
+  if (ocultos.has(b.id)) return null;
   if (editando)
     return (
       <li className="sub sub-editando">
@@ -480,6 +485,7 @@ function SubItem({ db, s, b, i, total, isStudio, atual = false, arquivos = [], a
           onSalvar={async (d) => {
             setEditando(false);
             await db.updateSub(s.id, b.id, d);
+            avisar('Sub-etapa salva');
           }}
         />
       </li>
@@ -571,7 +577,7 @@ function SubItem({ db, s, b, i, total, isStudio, atual = false, arquivos = [], a
           <button
             className="icon-x"
             onClick={() => {
-              if (window.confirm('Excluir a sub-etapa "' + b.title + '"?')) db.deleteSub(s.id, b.id);
+              excluirComDesfazer({ id: b.id, texto: 'Sub-etapa "' + b.title + '" excluída', executar: () => db.deleteSub(s.id, b.id) });
             }}
             aria-label={'Excluir ' + b.title}
           >
@@ -605,6 +611,7 @@ function DatasEtapa({ s }) {
 
 function StageItem({ db, s, isStudio, arquivos, abrir, projectId, inicialAberta = true, alvo = null }) {
   const [editing, setEditing] = useState(false);
+  const { excluirComDesfazer, ocultos } = useAvisos();
   const [aberta, setAberta] = useState(inicialAberta);
   // vindo do sino ou do "próximo passo": abre a etapa do item pedido
   useEffect(() => {
@@ -642,6 +649,7 @@ function StageItem({ db, s, isStudio, arquivos, abrir, projectId, inicialAberta 
     setEditing(false);
   };
 
+  if (ocultos.has(s.id)) return null;
   if (editing) {
     return (
       <li className="tl-item tl-edit">
@@ -706,7 +714,7 @@ function StageItem({ db, s, isStudio, arquivos, abrir, projectId, inicialAberta 
                   Icone: Trash2,
                   perigo: true,
                   acao: () => {
-                    if (window.confirm('Excluir a etapa "' + s.title + '"?')) db.deleteStage(s.id);
+                    excluirComDesfazer({ id: s.id, texto: 'Etapa "' + s.title + '" excluída', executar: () => db.deleteStage(s.id) });
                   },
                 },
               ]}

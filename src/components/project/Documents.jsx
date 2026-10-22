@@ -7,6 +7,7 @@ import { Empty } from '../atoms.jsx';
 import { DOC_TYPES } from '../../lib/constants.js';
 import { fmt, validarArquivo } from '../../lib/helpers.js';
 import { IS_SUPABASE } from '../../lib/data.js';
+import { useAvisos } from '../../lib/avisosContexto.js';
 
 /* Documentos do projeto, em duas partes:
    - Documentos: o que o studio publica (atas, plantas, briefing…), com
@@ -66,7 +67,8 @@ const textoAviso = (d, approval) =>
   (approval === 'assinatura' ? 'Assinar o documento "' : 'Aprovar o documento "') + d.name + '"';
 
 function DocumentosStudio({ db, project, isStudio }) {
-  const docs = db.documents(project.id);
+  const { avisar: avisarOk, excluirComDesfazer, ocultos } = useAvisos();
+  const docs = db.documents(project.id).filter((d) => !ocultos.has(d.id));
   const [filter, setFilter] = useState('');
   const [type, setType] = useState('geral');
   // o que a Gabriela pede ao cliente ao enviar: nada, uma confirmação, ou assinatura
@@ -112,6 +114,7 @@ function DocumentosStudio({ db, project, isStudio }) {
         f,
       );
       if (pedido !== 'nenhuma') await avisarCliente(textoAviso({ name: f.name }, pedido));
+      avisarOk('Documento enviado');
       fecharNovo();
     } finally {
       setEnviando(false);
@@ -243,7 +246,7 @@ function DocumentosStudio({ db, project, isStudio }) {
                     title="Excluir"
                     aria-label={'Excluir ' + d.name}
                     onClick={() => {
-                      if (window.confirm('Excluir "' + d.name + '"?')) db.deleteDocument(d.id);
+                      excluirComDesfazer({ id: d.id, texto: '"' + d.name + '" excluído', executar: () => db.deleteDocument(d.id) });
                     }}
                   >
                     <Trash2 size={16} />
@@ -381,17 +384,19 @@ function SituacaoDoc({ d }) {
 
 /* Resposta do cliente: confirmar (ou assinar) ou pedir ajustes. */
 function RespostaCliente({ db, d }) {
+  const { avisar } = useAvisos();
   const [modo, setModo] = useState(null); // 'assinar' | 'ajustes' | null
   const [msg, setMsg] = useState('');
   const [enviando, setEnviando] = useState(false);
   const [erro, setErro] = useState('');
   if (!d.approval || d.approval === 'nenhuma' || d.response) return null;
 
-  const enviar = async (fn) => {
+  const enviar = async (fn, ok) => {
     setErro('');
     setEnviando(true);
     try {
       await fn();
+      if (ok) avisar(ok);
       setModo(null);
     } catch (e) {
       setErro(erroAmigavel(e).texto);
@@ -407,6 +412,7 @@ function RespostaCliente({ db, d }) {
           titulo={d.name}
           onAssinar={async (nome) => {
             await db.responderDocumento(d.id, nome, 'confirmar', msg.trim() || null);
+            avisar('Documento assinado');
             setModo(null);
           }}
           onCancelar={() => setModo(null)}
@@ -426,7 +432,7 @@ function RespostaCliente({ db, d }) {
             type="button"
             className="btn btn-primary btn-sm"
             disabled={!msg.trim() || enviando}
-            onClick={() => enviar(() => db.responderDocumento(d.id, null, 'ajustes', msg.trim()))}
+            onClick={() => enviar(() => db.responderDocumento(d.id, null, 'ajustes', msg.trim()), 'Pedido de ajustes enviado')}
           >
             {enviando ? 'Enviando…' : 'Enviar pedido de ajustes'}
           </button>
@@ -468,7 +474,7 @@ function RespostaCliente({ db, d }) {
             type="button"
             className="btn btn-primary btn-sm"
             disabled={enviando}
-            onClick={() => enviar(() => db.responderDocumento(d.id, null, 'confirmar', msg.trim() || null))}
+            onClick={() => enviar(() => db.responderDocumento(d.id, null, 'confirmar', msg.trim() || null), 'Aprovação registrada')}
           >
             <Check size={13} /> {enviando ? 'Enviando…' : 'Aprovo'}
           </button>

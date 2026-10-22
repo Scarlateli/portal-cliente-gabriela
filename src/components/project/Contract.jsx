@@ -7,6 +7,7 @@ import { fmt, todayISO, validarArquivo } from '../../lib/helpers.js';
 import { erroAmigavel } from '../../lib/erros.js';
 import { AssinaturaPortal } from './Assinatura.jsx';
 import { metodoDe } from '../../lib/contratos.js';
+import { useAvisos } from '../../lib/avisosContexto.js';
 
 const KINDS = [
   ['contrato', 'Contratos'],
@@ -16,7 +17,8 @@ const KINDS = [
 const novoVazio = () => ({ name: '', kind: 'termo', method: 'autentique', body: '' });
 
 export function Contract({ db, project, isStudio }) {
-  const all = db.contracts(project.id) || [];
+  const { ocultos } = useAvisos();
+  const all = (db.contracts(project.id) || []).filter((c) => !ocultos.has(c.id));
 
   // Autentique sem depender do webhook: ao abrir a aba, consulta o status
   // real dos contratos "enviados" e marca como assinado quando for o caso.
@@ -184,6 +186,7 @@ function situacao(c) {
 }
 
 function ContractDoc({ db, c, isStudio, clientName, project }) {
+  const { avisar, excluirComDesfazer } = useAvisos();
   const metodo = metodoDe(c);
   const [provider, setProvider] = useState(c.provider || SIG_PROVIDERS[0]);
   const [redir, setRedir] = useState(false);
@@ -220,6 +223,7 @@ function ContractDoc({ db, c, isStudio, clientName, project }) {
     setOcupado(true);
     try {
       await db.responderContrato(c.id, acao, nome, mot);
+      avisar(acao === 'recusar' ? 'Recusa enviada ao studio' : acao === 'assinar' ? 'Documento assinado' : 'Documento aprovado');
       setRecusando(false);
       setAssinando(false);
     } catch (e) {
@@ -329,10 +333,9 @@ function ContractDoc({ db, c, isStudio, clientName, project }) {
             <button
               type="button"
               className="link sm danger"
-              onClick={() => {
-                if (window.confirm('Excluir "' + c.name + '"? O PDF anexado também será removido.'))
-                  db.deleteContractDoc(c.projectId, c.id);
-              }}
+              onClick={() =>
+                excluirComDesfazer({ id: c.id, texto: '"' + c.name + '" excluído', executar: () => db.deleteContractDoc(c.projectId, c.id) })
+              }
             >
               <Trash2 size={12} /> Excluir
             </button>

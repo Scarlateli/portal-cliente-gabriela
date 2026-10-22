@@ -4,6 +4,7 @@ import { Empty } from '../atoms.jsx';
 import { fmt, validarArquivo } from '../../lib/helpers.js';
 import { prazoSub } from '../../lib/etapas.js';
 import { IS_SUPABASE } from '../../lib/data.js';
+import { useAvisos } from '../../lib/avisosContexto.js';
 
 /* Envios do cliente (rodada 4): o studio cria pedidos de arquivo (são
    sub-etapas com "pedir arquivos" marcado) e o cliente manda quantos
@@ -13,7 +14,8 @@ import { IS_SUPABASE } from '../../lib/data.js';
    devolve ao cliente. */
 export function EnviosCliente({ db, project, isStudio, abrir = () => {} }) {
   const stages = db.stages(project.id);
-  const arquivos = (db.subArquivos && db.subArquivos(project.id)) || [];
+  const { ocultos } = useAvisos();
+  const arquivos = ((db.subArquivos && db.subArquivos(project.id)) || []).filter((a) => !ocultos.has(a.id));
   const pedidos = stages.flatMap((s) => (s.subs || []).filter((b) => b.pedeArquivos).map((b) => ({ b, s })));
   // abertos primeiro, pelo prazo; concluídos no fim
   pedidos.sort((x, y) => Number(x.b.done) - Number(y.b.done) || String(x.b.due || '9999').localeCompare(String(y.b.due || '9999')));
@@ -138,6 +140,7 @@ function NovoPedido({ db, project, stages, onFechar }) {
 const LIMITE_LISTA = 6;
 
 function Pedido({ db, projectId, b, s, isStudio, arquivos, abrir }) {
+  const { avisar, excluirComDesfazer } = useAvisos();
   const input = useRef(null);
   const [enviando, setEnviando] = useState(false);
   const [aviso, setAviso] = useState('');
@@ -173,6 +176,7 @@ function Pedido({ db, projectId, b, s, isStudio, arquivos, abrir }) {
     setConcluindo(true);
     try {
       await db.concluirEntrega(s.id, b.id);
+      avisar('Entrega concluída. O studio foi avisado.');
       setConfirmando(false);
     } catch (e) {
       setAviso((e && e.message) || 'Não foi possível concluir a entrega. Tente de novo.');
@@ -192,6 +196,7 @@ function Pedido({ db, projectId, b, s, isStudio, arquivos, abrir }) {
     setEnviando(true);
     try {
       await db.enviarArquivos(projectId, b.id, ok, isStudio ? 'studio' : 'client');
+      avisar(ok.length === 1 ? 'Arquivo enviado' : ok.length + ' arquivos enviados');
     } finally {
       setEnviando(false);
     }
@@ -257,7 +262,7 @@ function Pedido({ db, projectId, b, s, isStudio, arquivos, abrir }) {
                     className="icon-x"
                     aria-label={'Remover ' + a.name}
                     onClick={() => {
-                      if (window.confirm('Remover "' + a.name + '"?')) db.removerArquivo(projectId, a.id);
+                      excluirComDesfazer({ id: a.id, texto: '"' + a.name + '" removido', executar: () => db.removerArquivo(projectId, a.id) });
                     }}
                   >
                     <Trash2 size={12} />

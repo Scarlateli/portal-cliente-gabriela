@@ -1,4 +1,5 @@
 import { PendenciasCtx, pedirAba, CHAVE_JANELA } from './lib/pendenciasContexto.js';
+import { AvisosProvider } from './components/Avisos.jsx';
 import { useState, useEffect } from 'react';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { seed } from './lib/seed.js';
@@ -169,7 +170,9 @@ function AppInner() {
 
   return (
     <PendenciasCtx.Provider value={ctxPendencias}>
-      <div className="cp">{body}</div>
+      <div className="cp">
+        <AvisosProvider>{body}</AvisosProvider>
+      </div>
     </PendenciasCtx.Provider>
   );
 }

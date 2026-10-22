@@ -4,6 +4,7 @@ import { erroAmigavel } from '../../lib/erros.js';
 import { Empty } from '../atoms.jsx';
 import { SEGMENTS, STUDIO } from '../../lib/constants.js';
 import { money } from '../../lib/helpers.js';
+import { useAvisos } from '../../lib/avisosContexto.js';
 
 export function Quotes({ db, project, isStudio }) {
   const quotes = db.quotes(project.id);
@@ -236,9 +237,11 @@ export function Quotes({ db, project, isStudio }) {
 }
 
 function QuoteCard({ db, q, isStudio }) {
+  const { excluirComDesfazer, ocultos } = useAvisos();
   const [note, setNote] = useState(q.studioNote);
   const [editNote, setEditNote] = useState(false);
   const [comment, setComment] = useState('');
+  if (ocultos.has(q.id)) return null;
   const badge = {
     pendente: ['pill-next', 'Pendente'],
     aprovado: ['pill-done', 'Aprovado'],
@@ -259,8 +262,7 @@ function QuoteCard({ db, q, isStudio }) {
               className="icon-btn icon-del sm-del"
               title="Excluir orçamento"
               onClick={() => {
-                if (window.confirm('Excluir o orçamento de "' + q.supplier + '"?'))
-                  db.deleteQuote(q.id);
+                excluirComDesfazer({ id: q.id, texto: 'Orçamento de "' + q.supplier + '" excluído', executar: () => db.deleteQuote(q.id) });
               }}
             >
               <Trash2 size={14} />

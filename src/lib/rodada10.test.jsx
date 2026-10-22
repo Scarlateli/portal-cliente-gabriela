@@ -130,3 +130,36 @@ describe('etapa no studio: status no balão e ações no menu ⋯', () => {
     expect(screen.getByLabelText('Título da etapa')).toBeTruthy();
   });
 });
+
+describe('avisos com desfazer', async () => {
+  const { AvisosProvider } = await import('../components/Avisos.jsx');
+  const { useAvisos } = await import('./avisosContexto.js');
+  function Lista({ executar }) {
+    const { excluirComDesfazer, ocultos } = useAvisos();
+    return ['a', 'b'].filter((id) => !ocultos.has(id)).map((id) => (
+      <button key={id} onClick={() => excluirComDesfazer({ id, texto: 'Item ' + id + ' excluído', executar: () => executar(id) })}>
+        excluir {id}
+      </button>
+    ));
+  }
+  it('some na hora, "Desfazer" traz de volta e nada vai ao banco', async () => {
+    const executar = vi.fn();
+    render(<AvisosProvider><Lista executar={executar} /></AvisosProvider>);
+    await userEvent.click(screen.getByText('excluir a'));
+    expect(screen.queryByText('excluir a')).toBeNull();
+    expect(screen.getByText('Item a excluído')).toBeTruthy();
+    await userEvent.click(screen.getByRole('button', { name: /Desfazer/ }));
+    expect(screen.getByText('excluir a')).toBeTruthy();
+    expect(executar).not.toHaveBeenCalled();
+  });
+  it('sem desfazer, exclui depois de alguns segundos', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    const executar = vi.fn();
+    render(<AvisosProvider><Lista executar={executar} /></AvisosProvider>);
+    await userEvent.click(screen.getByText('excluir b'));
+    expect(executar).not.toHaveBeenCalled();
+    await vi.advanceTimersByTimeAsync(6100);
+    expect(executar).toHaveBeenCalledWith('b');
+    vi.useRealTimers();
+  });
+});

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Pencil, Trash2 } from 'lucide-react';
 import { CamposEndereco } from './CamposEndereco.jsx';
+import { useAvisos } from '../../lib/avisosContexto.js';
 
 /* Editar os dados do projeto e excluir o projeto (só o studio vê). A exclusão
    pede o código do projeto digitado: apaga etapas, documentos, contratos,
@@ -8,6 +9,7 @@ import { CamposEndereco } from './CamposEndereco.jsx';
    `acoes`: outros botões do studio (reenviar acesso, finalizar), que entram
    na mesma linha e no mesmo tamanho. */
 export function GerenciarProjeto({ db, project, onExcluido, acoes = null }) {
+  const { avisar } = useAvisos();
   const nomeCliente = db.clientName ? db.clientName(project.id) : '';
   const [aberto, setAberto] = useState(null); // 'editar' | 'excluir' | null
   const [f, setF] = useState(null);
@@ -39,6 +41,7 @@ export function GerenciarProjeto({ db, project, onExcluido, acoes = null }) {
     setSalvando(true);
     try {
       await db.updateProject(project.id, { ...f, code: f.code.trim(), name: f.name.trim() });
+      avisar('Dados do projeto salvos');
       setAberto(null);
     } catch {
       /* erro exibido pelo ErrorBanner do contêiner */

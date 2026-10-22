@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { BadgeCheck, MessageSquareWarning, Send, X } from 'lucide-react';
 import { erroAmigavel } from '../../lib/erros.js';
 import { IS_SUPABASE } from '../../lib/data.js';
+import { useAvisos } from '../../lib/avisosContexto.js';
 
 /* Aprovação de etapa pelo portal (rodada 4): ao fim de uma etapa, o studio
    pede a aprovação; o cliente aprova (com o nome completo, que fica
@@ -102,6 +103,7 @@ function LadoStudio({ db, s, projectId }) {
 }
 
 function LadoCliente({ db, s }) {
+  const { avisar } = useAvisos();
   const [modo, setModo] = useState(null); // 'aprovar' | 'ajustes' | null
   const [nome, setNome] = useState('');
   const [li, setLi] = useState(false);
@@ -133,6 +135,7 @@ function LadoCliente({ db, s }) {
     setEnviando(true);
     try {
       await db.responderEtapa(s.id, decisao, decisao === 'aprovar' ? nome.trim() : null, msg.trim() || null);
+      avisar(decisao === 'aprovar' ? 'Etapa aprovada' : 'Pedido de ajustes enviado');
       setModo(null);
     } catch (e) {
       setErro(erroAmigavel(e).texto);

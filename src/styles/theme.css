@@ -1100,3 +1100,15 @@ button{color:inherit}
 .cp .hoje-vazio{display:flex;align-items:center;gap:8px;font-size:var(--fs-14);padding:12px;border-radius:var(--raio);background:var(--fundo-item)}
 .cp .hoje-vazio svg{color:var(--ok)}
 @media (max-width:820px){.cp .hoje-grade{grid-template-columns:1fr}}
+
+/* ===================== Rodada 10 — avisos com "Desfazer" ===================== */
+.cp .avisos{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:60;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none;width:min(560px,calc(100vw - 32px))}
+.cp .aviso{pointer-events:auto;display:flex;align-items:center;gap:10px;padding:10px 10px 10px 16px;border-radius:999px;background:var(--gl-dark);color:#FBFAF8;font-size:var(--fs-14);box-shadow:0 14px 34px -14px rgba(33,9,9,.55);animation:aviso-entra .22s ease both;max-width:100%}
+.cp .aviso>span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cp .aviso svg{flex:none}
+.cp .aviso-desfazer{display:inline-flex;align-items:center;gap:5px;border:0;background:rgba(251,250,248,.14);color:#FBFAF8;border-radius:999px;padding:6px 12px;font-size:var(--fs-14);font-weight:500;cursor:pointer}
+.cp .aviso-desfazer:hover{background:rgba(251,250,248,.24)}
+.cp .aviso-fechar{display:grid;place-items:center;width:28px;height:28px;border:0;border-radius:50%;background:none;color:rgba(251,250,248,.7);cursor:pointer}
+@keyframes aviso-entra{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.cp .aviso{animation:none}}
+@media (max-width:720px){.cp .avisos{bottom:calc(84px + env(safe-area-inset-bottom))}}
