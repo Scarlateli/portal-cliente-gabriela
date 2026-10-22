@@ -479,6 +479,10 @@ function SubPrazo({ b }) {
    tem caixinha para marcar; o studio conclui clicando na bolinha. */
 function SubItem({ db, s, b, i, total, isStudio, atual = false, arquivos = [], abrir }) {
   const [editando, setEditando] = useState(false);
+  // rodada 11: setas/lápis/X controlados pelo app (não só pelo CSS): aparecem
+  // com o mouse em cima e somem ao sair ou depois de usar uma delas — no
+  // Safari o ":hover" ficava preso depois de um clique
+  const [acoesVisiveis, setAcoesVisiveis] = useState(false);
   const { avisar, excluirComDesfazer, ocultos } = useAvisos();
   if (ocultos.has(b.id)) return null;
   if (editando)
@@ -529,7 +533,14 @@ function SubItem({ db, s, b, i, total, isStudio, atual = false, arquivos = [], a
     );
   const classe = 'sub' + (b.done ? ' done' : '') + (atual ? ' sub-atual' : '') + (doCliente && !b.done ? ' sub-do-cliente' : '');
   return (
-    <li className={classe} id={'alvo-sub-' + b.id}>
+    <li
+      className={classe}
+      id={'alvo-sub-' + b.id}
+      onMouseEnter={() => setAcoesVisiveis(true)}
+      onMouseLeave={() => setAcoesVisiveis(false)}
+      onFocus={(e) => e.target.matches && e.target.matches(':focus-visible') && setAcoesVisiveis(true)}
+      onBlur={(e) => !e.currentTarget.contains(e.relatedTarget) && setAcoesVisiveis(false)}
+    >
       {isStudio ? (
         <button className="sub-no" onClick={() => db.toggleSub(s.id, b.id)} aria-label={(b.done ? 'Desmarcar ' : 'Concluir ') + b.title}>
           <Check size={11} />
@@ -570,7 +581,7 @@ function SubItem({ db, s, b, i, total, isStudio, atual = false, arquivos = [], a
         </div>
       )}
       {isStudio && (
-        <span className="sub-acoes">
+        <span className={'sub-acoes' + (acoesVisiveis ? ' visivel' : '')} onClick={() => setAcoesVisiveis(false)}>
           <button className="icon-x" disabled={i === 0} onClick={() => db.moveSub(s.id, b.id, -1)} aria-label={'Subir ' + b.title}>
             <ArrowUp size={12} />
           </button>
@@ -685,67 +696,72 @@ function StageItem({ db, s, isStudio, arquivos, abrir, projectId, inicialAberta 
         {s.status === 'concluida' ? <Check size={13} /> : s.status === 'em_andamento' ? <span className="tl-dot" /> : null}
       </span>
       <div className={'tl-body' + (aberta ? '' : ' tl-recolhida')}>
-        <div className="tl-top">
-          {isStudio ? (
-            <h3>{s.title}</h3>
-          ) : (
-            <button type="button" className="tl-abrir" aria-expanded={aberta} onClick={() => setAberta(!aberta)}>
-              <ChevronDown size={16} className="tl-seta" aria-hidden />
+        {/* rodada 11: título e status à esquerda; prazos e "⋯" à direita */}
+        <div className="tl-top tl-cab">
+          <div className="tl-cab-esq">
+            {isStudio ? (
               <h3>{s.title}</h3>
-            </button>
-          )}
-          <DatasEtapa s={s} />
-        </div>
-        <div className="tl-meta">
-          {/* rodada 5: na etapa macro não se repete "Etapa" nem o studio
-              como responsável; aparece só o que acrescenta */}
-          {s.category && s.category !== 'Etapa' && <span className="tag">{s.category}</span>}
-          {s.category === 'Reunião' && (
-            <span className="tag tag-loc">
-              {s.presencial ? <MapPin size={11} /> : <Video size={11} />} {s.presencial ? 'Presencial' : 'Online'}
-            </span>
-          )}
-          {s.owner === 'client' && (
-            <span className="tag tag-owner owner-client">
-              <User size={11} /> Responsável: Cliente
-            </span>
-          )}
-          {isStudio && (
-            <MenuMais
-              rotulo={'Mais ações da etapa ' + s.title}
-              itens={[
-                { rotulo: 'Editar etapa', Icone: PenLine, acao: startEdit },
-                {
-                  rotulo: 'Excluir etapa',
-                  Icone: Trash2,
-                  perigo: true,
-                  acao: () => {
-                    excluirComDesfazer({ id: s.id, texto: 'Etapa "' + s.title + '" excluída', executar: () => db.deleteStage(s.id) });
+            ) : (
+              <button type="button" className="tl-abrir" aria-expanded={aberta} onClick={() => setAberta(!aberta)}>
+                <ChevronDown size={16} className="tl-seta" aria-hidden />
+                <h3>{s.title}</h3>
+              </button>
+            )}
+          <div className="tl-meta">
+            {/* rodada 5: na etapa macro não se repete "Etapa" nem o studio
+                como responsável; aparece só o que acrescenta */}
+            {s.category && s.category !== 'Etapa' && <span className="tag">{s.category}</span>}
+            {s.category === 'Reunião' && (
+              <span className="tag tag-loc">
+                {s.presencial ? <MapPin size={11} /> : <Video size={11} />} {s.presencial ? 'Presencial' : 'Online'}
+              </span>
+            )}
+            {s.owner === 'client' && (
+              <span className="tag tag-owner owner-client">
+                <User size={11} /> Responsável: Cliente
+              </span>
+            )}
+            {s.rescheduledFrom && (
+              <span className="tag tag-resched">
+                <CalendarClock size={11} /> Reagendada de {fmt(s.rescheduledFrom)}
+              </span>
+            )}
+            {/* studio: o status é um seletor no próprio balão (rodada 10) */}
+            {isStudio && (
+              <StatusSelect status={s.status} opcoes={STAGE_STATUS} onChange={(v) => db.setStageStatus(s.id, v)} />
+            )}
+            {late ? (
+              <span className="pill pill-late">
+                <AlertTriangle size={12} /> Em atraso
+              </span>
+            ) : isStudio ? null : novaData ? (
+              <span className="pill pill-next">
+                <CalendarClock size={12} /> Nova data em definição
+              </span>
+            ) : (
+              <StatusPill status={s.status} />
+            )}
+          </div>
+          </div>
+          <div className="tl-cab-dir">
+            <DatasEtapa s={s} />
+            {isStudio && (
+              <MenuMais
+                rotulo={'Mais ações da etapa ' + s.title}
+                itens={[
+                  { rotulo: 'Editar etapa', Icone: PenLine, acao: startEdit },
+                  {
+                    rotulo: 'Excluir etapa',
+                    Icone: Trash2,
+                    perigo: true,
+                    acao: () => {
+                      excluirComDesfazer({ id: s.id, texto: 'Etapa "' + s.title + '" excluída', executar: () => db.deleteStage(s.id) });
+                    },
                   },
-                },
-              ]}
-            />
-          )}
-          {s.rescheduledFrom && (
-            <span className="tag tag-resched">
-              <CalendarClock size={11} /> Reagendada de {fmt(s.rescheduledFrom)}
-            </span>
-          )}
-          {/* studio: o status é um seletor no próprio balão (rodada 10) */}
-          {isStudio && (
-            <StatusSelect status={s.status} opcoes={STAGE_STATUS} onChange={(v) => db.setStageStatus(s.id, v)} />
-          )}
-          {late ? (
-            <span className="pill pill-late">
-              <AlertTriangle size={12} /> Em atraso
-            </span>
-          ) : isStudio ? null : novaData ? (
-            <span className="pill pill-next">
-              <CalendarClock size={12} /> Nova data em definição
-            </span>
-          ) : (
-            <StatusPill status={s.status} />
-          )}
+                ]}
+              />
+            )}
+          </div>
         </div>
 
         {aberta && (

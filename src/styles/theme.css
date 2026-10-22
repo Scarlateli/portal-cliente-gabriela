@@ -1202,3 +1202,35 @@ button{color:inherit}
 .cp .envio-arquivos-bloco .mini{width:32px;height:32px}
 .cp .envio-arquivos-topo{margin-bottom:4px}
 @media (max-width:640px){.cp .envio-arquivos-bloco .envio-arquivos li{grid-template-columns:32px minmax(0,1fr) auto}.cp .envio-arquivos-bloco .envio-arquivos .micro{grid-column:2;grid-row:2}}
+
+/* ===================== Rodada 11 — Linha do Tempo (validação da Gabriela) ===================== */
+/* topo da etapa: título e status à esquerda; prazos e "⋯" à direita */
+.cp .tl-cab{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
+.cp .tl-cab-esq{display:flex;flex-direction:column;gap:6px;min-width:0}
+.cp .tl-cab-esq .tl-meta{margin:0}
+.cp .tl-cab-dir{display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex:none}
+.cp .tl-cab .tl-meta .menu-mais{margin-left:0;order:0}
+/* Início e Entrega em caixa alta, sem aumentar */
+.cp .tl-datas-tit{font-size:11px}
+.cp .tl-datas span:not(.tl-datas-tit){font-size:11px;letter-spacing:.05em;text-transform:uppercase}
+/* tamanhos que a Gabriela tinha pedido (a escala da rodada 10 tinha
+   aumentado): tipo da sub-etapa levemente menor, status e títulos menores */
+.cp .sub-tipo-tag{font-size:9.5px;padding:1px 6px;letter-spacing:.06em}
+.cp .tl-meta .pill,.cp .pill-select select{font-size:10.5px}
+.cp .tl-meta .pill{padding:2px 8px}
+.cp .pill-select select{padding:2px 22px 2px 9px}
+.cp .sub-linha1 .sub-title{font-size:14.5px}
+.cp .tl-cab h3{font-size:16px}
+.cp .proj-client,.cp .proj-addr{font-size:11.5px}
+.cp .sub-data,.cp .sub-data-hoje,.cp .sub-data-feito,.cp .sub-hora{font-size:13px}
+.cp .sub-hora-prevista{font-size:11px}
+/* setas/lápis/X: só com o mouse em cima (controle pelo app) */
+@media (hover:hover){
+  .cp .sub-list .sub .sub-acoes{opacity:0;pointer-events:none}
+  .cp .sub-list .sub .sub-acoes.visivel{opacity:1;pointer-events:auto}
+}
+@media (max-width:640px){
+  .cp .tl-cab{flex-direction:column;gap:8px}
+  .cp .tl-cab-dir{align-items:flex-start;flex-direction:row;justify-content:space-between;width:100%}
+  .cp .tl-cab-dir .tl-datas{align-items:flex-start;text-align:left}
+}
