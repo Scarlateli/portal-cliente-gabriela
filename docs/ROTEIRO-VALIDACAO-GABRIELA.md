@@ -274,3 +274,37 @@ Como cliente:
 - confira o texto novo no topo dos Envios;
 - num pedido já conferido pelo studio, confira o balão "Envio validado pelo
   studio.".
+
+---
+
+## Rodada 10 — melhorias de design (22/10)
+
+Diga, para cada item, se fica ou se volta.
+
+### 42. Visual geral
+Tamanho dos textos, menos molduras e cantos iguais. No iPad, botões
+maiores.
+
+### 43. Cliente — topo do projeto
+- **Fases:** a linha com a fase atual.
+- **Seu próximo passo:** o cartão com "Resolver". Ele substitui a janela
+  que abria ao entrar.
+
+### 44. Cliente — Linha do Tempo
+Só a etapa atual aberta; toque nas outras para abrir. Uma etapa atrasada
+pelo studio aparece como "Nova data em definição".
+
+### 45. Studio — aba "Hoje"
+- **Hoje:** pendências, atrasados e os próximos 7 dias.
+- **Etapa:** o status é um seletor no balão; editar e excluir ficam no "⋯".
+
+### 46. Desfazer
+Exclua uma sub-etapa e use "Desfazer" no aviso que aparece embaixo.
+
+### 47. Documentos
+- Toque no nome de um documento: ele abre no portal.
+- Como cliente, aprove ali mesmo.
+- Em Envios, arraste arquivos para a área tracejada.
+
+### 48. Celular
+Navegue pela barra de baixo (Início, Documentos, Agenda, Mais).

@@ -638,3 +638,93 @@ No topo do projeto, quando a fase está atrasada, o nome fica em #210909 e só
 - barra de edição só com o mouse em cima, inclusive depois de um clique.
 
 Sem mudança no banco.
+
+## Rodada 10 — melhorias de design (22/10/2026)
+
+Sugestões do Claude aprovadas pelo JP, para a Gabriela validar. Vai um
+commit por grupo, para dá para desfazer só a parte que ela não gostar (ver
+"Como voltar atrás" no fim).
+
+**0. Correção:** envio de arquivo com acento no nome. O "Contrato de
+Serviço_….pdf" falhou em 22/10 porque o armazenamento recusa acentos. Contrato
+novo, troca do PDF, orçamento e o anexo antigo de sub-etapa agora limpam o
+nome antes de subir; o nome exibido continua o original.
+
+**1. Sistema visual**
+- Tipografia em seis tamanhos (12 · 14 · 16 · 20 · 28 · 44): texto corrido
+  em 16px, interface em 14px. Antes eram uns 20 tamanhos soltos.
+- Cantos de 6px em tudo.
+- Etiquetas sem borda; documentos, parcelas, orçamentos, envios e contratos
+  são separados por fundo, não por moldura.
+- Em telas de toque (iPad, celular), botões e links com pelo menos 44px.
+
+**2. Cliente**
+- **Seu próximo passo:** cartão fixo com a ação principal ("Resolver") e
+  até 3 outras, mais "ver mais". Sem pendências, mostra "Tudo em dia". A
+  janela que abria por cima ao entrar saiu (para cliente e studio); o sino
+  continua.
+- **Fases do projeto:** linha no topo com a fase atual marcada; no celular,
+  rola de lado e começa na atual.
+- **Atraso do studio não assusta o cliente:** ele vê "Nova data em
+  definição", em tom neutro (na etapa e no topo), e a sub-etapa do studio
+  vencida não aparece como "Vencido". O atraso que é do cliente continua em
+  vermelho.
+- **Linha do Tempo do cliente sem filtros:** todas as etapas, só a atual
+  aberta; as outras abrem ao tocar.
+
+**3. Studio**
+- **Aba "Hoje"**, onde o painel abre. Junta, de todos os projetos:
+  - o que espera pela Gabriela;
+  - os atrasados;
+  - os próximos 7 dias (reuniões, com "Entrar" nas online; visitas; prazos;
+    eventos).
+
+  Cada item leva ao lugar certo do projeto.
+- **Etapa:** o status virou um seletor no próprio balão; "Editar etapa" e
+  "Excluir etapa" foram para o menu "⋯". Sai a fileira de botões embaixo de
+  cada etapa.
+
+**4. "Desfazer" e avisos**
+- Excluir sub-etapa, etapa, documento, contrato ou termo, arquivo enviado
+  ou orçamento: o item some na hora e aparece "… excluído · Desfazer" por
+  6 s. Só depois disso a exclusão vai para o banco.
+- Continuam pedindo confirmação: excluir ou finalizar projeto, reenviar
+  acesso e envio para a Autentique.
+- Aviso de sucesso nas ações principais: documento enviado, arquivos
+  enviados, entrega concluída, aprovação, ajustes, dados salvos etc.
+
+**5. Documentos e envios**
+- **Visualizador:** PDF e foto abrem dentro do portal, com "Abrir em nova
+  aba" e "Baixar". Para o cliente, "Aprovar / Pedir ajustes" fica ao lado
+  do documento.
+- **Envio arrastando:** área "Arraste os arquivos aqui" ou "Escolher
+  arquivos". Os arquivos sobem um a um, com a situação de cada um, e as
+  fotos enviadas ganham miniatura.
+- **Segurança (CSP):** ganhou `frame-src 'self' blob:` para mostrar o PDF.
+
+**6. Celular, carregamento, telas vazias**
+- No celular, barra fixa embaixo: Início, Documentos, Agenda e Mais, com
+  o número de pendências de cada parte.
+- Enquanto carrega, aparece o desenho da tela em tons claros.
+- Telas vazias explicam o que vai aparecer ali.
+
+**Banco:** sem mudança nesta rodada.
+
+### Como voltar atrás (se a Gabriela não gostar de algo)
+Cada grupo é um commit. No repositório:
+```bash
+git log --oneline -12        # acha o commit pelo título
+git revert <código-do-commit>
+git push
+```
+Títulos:
+- "Sistema visual: escala de tipografia…" (item 1)
+- "Cliente: próximo passo, fases…" (2)
+- "Studio: tela Hoje e menu ⋯…" (3)
+- "Desfazer no lugar de Tem certeza?…" (4)
+- "Visualizador de documentos e envio arrastando…" (5)
+- "Celular: navegação embaixo…" (6)
+- "Toques de 44px no iPad…" (ajuste do 1)
+
+Commits mais antigos podem conflitar com os que vieram depois; nesse caso,
+é mais fácil pedir ao Claude.
