@@ -519,25 +519,30 @@ function SubItem({ db, s, b, i, total, isStudio, atual = false, arquivos = [], a
       <div className="sub-corpo">
         <div className="sub-linha1">
           <span className="sub-title">{b.title}</span>
-          {doCliente && !b.done && <span className="sub-sua">{isStudio ? 'Tarefa do cliente' : 'Essa é uma tarefa sua'}</span>}
-          {b.responsible === 'fornecedor' && <span className="sub-forn">Fornecedor</span>}
+          {/* no studio, quem faz vai junto do tipo (rodada 7) */}
+          {!isStudio && doCliente && !b.done && <span className="sub-sua">Essa é uma tarefa sua</span>}
         </div>
         <div className="sub-linha2">
-          <span className="sub-tipo-tag">{rotuloTipoSub(b)}</span>
+          <span className={'sub-tipo-tag' + (isStudio && doCliente ? ' sub-tipo-cliente' : '')}>
+            {rotuloTipoSub(b)}
+            {isStudio && ROTULO_RESP[b.responsible] && b.responsible !== 'studio' ? ' – ' + ROTULO_RESP[b.responsible] : ''}
+          </span>
           {b.kind === 'reuniao' && b.format === 'presencial' && <span className="sub-desc">Presencial ·</span>}
           {b.instructions && <span className="sub-desc">{b.instructions}</span>}
-          {isStudio && b.pedeArquivos && (
+        </div>
+        {isStudio && b.pedeArquivos && (
+          <div className="sub-linha3">
             <button type="button" className="link sm" onClick={irEnvio}>
               <FolderUp size={11} />{' '}
               {enviados ? enviados + (enviados === 1 ? ' arquivo enviado' : ' arquivos enviados') : 'Nenhum arquivo ainda'}
             </button>
-          )}
-        </div>
+          </div>
+        )}
       </div>
       {(q || acao) && (
         <div className="sub-quando">
           {q && <span className={'sub-data sub-data-' + q.estado}>{q.data}</span>}
-          {q && q.hora && <span className="sub-hora">{q.hora}</span>}
+          {q && q.hora && <span className={'sub-hora' + (q.estado === 'atrasado' ? ' sub-hora-prevista' : '')}>{q.hora}</span>}
           {acao}
         </div>
       )}
@@ -567,15 +572,19 @@ function SubItem({ db, s, b, i, total, isStudio, atual = false, arquivos = [], a
   );
 }
 
-/* Datas da etapa, uma por linha, à direita (desenho da Gabriela) */
+/* Datas da etapa à direita: "Prazos Previstos", com Início e Entrega
+   embaixo (rodada 7) */
 function DatasEtapa({ s }) {
   const reuniao = s.category === 'Reunião';
   const linhas = [];
-  if (s.start) linhas.push((reuniao ? 'Data – ' : 'Data de Início – ') + fmt(s.start) + (s.time ? ' às ' + s.time : ''));
-  if (s.end && s.end !== s.start) linhas.push('Previsão de Entrega – ' + fmt(s.end));
+  if (s.start) linhas.push((reuniao ? 'Data – ' : 'Início – ') + fmt(s.start) + (s.time ? ' às ' + s.time : ''));
+  if (s.end && s.end !== s.start) linhas.push('Entrega – ' + fmt(s.end));
   if (!linhas.length) linhas.push('Sem datas definidas');
   return (
     <span className="tl-datas">
+      <span className="tl-datas-tit">
+        <CalendarDays size={12} /> {reuniao ? 'Data Prevista' : 'Prazos Previstos'}
+      </span>
       {linhas.map((l) => (
         <span key={l}>{l}</span>
       ))}

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { IS_SUPABASE } from '../../lib/data.js';
-import { ShieldCheck, PenLine, Plus, FileText, Trash2, Send, Check, X, RotateCcw, Pencil } from 'lucide-react';
+import { ShieldCheck, PenLine, Plus, FileText, Trash2, Send, Check, X, RotateCcw, Pencil, Download } from 'lucide-react';
 import { Empty } from '../atoms.jsx';
 import { SIG_PROVIDERS } from '../../lib/constants.js';
 import { fmt, todayISO, validarArquivo } from '../../lib/helpers.js';
@@ -160,7 +160,7 @@ export function Contract({ db, project, isStudio }) {
       {shown.length === 0 ? (
         <Empty text="Nenhum documento por aqui ainda." />
       ) : (
-        shown.map((c) => <ContractDoc key={c.id} db={db} c={c} isStudio={isStudio} clientName={clientName} />)
+        shown.map((c) => <ContractDoc key={c.id} db={db} c={c} isStudio={isStudio} clientName={clientName} project={project} />)
       )}
     </section>
   );
@@ -183,7 +183,7 @@ function situacao(c) {
   return m === 'autentique' ? 'Aguardando envio para assinatura' : 'Ainda não liberado para o cliente';
 }
 
-function ContractDoc({ db, c, isStudio, clientName }) {
+function ContractDoc({ db, c, isStudio, clientName, project }) {
   const metodo = metodoDe(c);
   const [provider, setProvider] = useState(c.provider || SIG_PROVIDERS[0]);
   const [redir, setRedir] = useState(false);
@@ -196,6 +196,23 @@ function ContractDoc({ db, c, isStudio, clientName }) {
   const [editando, setEditando] = useState(false);
   const signed = c.sigStatus === 'assinado';
   const recusado = c.sigStatus === 'recusado';
+  // comprovante em PDF do que foi aprovado/assinado dentro do portal (a
+  // Autentique tem o próprio certificado)
+  const temComprovante = signed && metodo !== 'autentique';
+  const [gerando, setGerando] = useState(false);
+  const baixarComprovante = async () => {
+    setErro('');
+    setGerando(true);
+    try {
+      const { gerarComprovantePdf, baixarBlob, nomeArquivo } = await import('../../lib/comprovante.js');
+      const bytes = await gerarComprovantePdf({ contrato: c, projeto: project, cliente: clientName });
+      baixarBlob(bytes, 'Comprovante-' + nomeArquivo(c.name) + '.pdf', 'application/pdf');
+    } catch {
+      setErro('Não foi possível gerar o comprovante. Tente de novo.');
+    } finally {
+      setGerando(false);
+    }
+  };
   if (editando) return <EditarContrato db={db} c={c} onFechar={() => setEditando(false)} />;
 
   const responder = async (acao, nome, mot) => {
@@ -235,8 +252,13 @@ function ContractDoc({ db, c, isStudio, clientName }) {
         </p>
       )}
 
-      {(c.storagePath || isStudio) && (
+      {(c.storagePath || isStudio || temComprovante) && (
         <div className="row contract-actions">
+          {temComprovante && (
+            <button type="button" className="btn btn-ghost btn-sm" disabled={gerando} onClick={baixarComprovante}>
+              <Download size={12} /> {gerando ? 'Gerando…' : 'Baixar comprovante (PDF)'}
+            </button>
+          )}
           {IS_SUPABASE && isStudio && metodo === 'autentique' && c.sigStatus === 'enviado' && c.studioSignLink && (
             <a className="btn btn-ghost btn-sm" href={c.studioSignLink} target="_blank" rel="noreferrer">
               <Send size={12} /> Assinar como studio

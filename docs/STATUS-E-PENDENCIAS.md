@@ -533,3 +533,48 @@ já contava o dia seguinte.
 **Banco** (aplicado em 20/10, antes do código):
 `supabase/sql/2026-10-20-rodada6-concluir-entrega.sql`, também no fim do
 `schema.sql`. Foram testados 15 cenários num banco local.
+
+## Rodada 7 — visão do studio (revisão de 22/10/2026)
+
+A visão do cliente vem numa rodada separada, depois desta.
+
+**Cores e topo**
+- Fundo #ECE9E3; cartões e barra do topo #FBFAF8. A barra do topo ficou
+  mais fina (62px).
+- Texto em #210909. O texto secundário (datas, dicas) usa a mesma cor, um
+  pouco mais clara, para manter a hierarquia. Vermelho de atraso e verde de
+  concluído continuam como sinais.
+- Cartão de projeto: cliente e endereço um pouco menores.
+- Topo do projeto: o nome da fase usa a mesma fonte do "0/5".
+
+**Linha do Tempo**
+- Datas da etapa: ícone de calendário e "Prazos Previstos", com "Início –"
+  e "Entrega –" embaixo. Em reunião, "Data Prevista".
+- Status da etapa, título, nome e tipo das sub-etapas ficaram um pouco
+  menores.
+- Tarefa do cliente no studio: sai a etiqueta "Tarefa do cliente". O tipo
+  vira "Tarefa – Cliente", na cor do botão "Em andamento". A visão do
+  cliente continua com "Essa é uma tarefa sua".
+- "N arquivos enviados" desceu para uma linha própria.
+- Datas à direita, todas na mesma fonte: concluída não mostra texto;
+  vencida mostra "Vencido" e, embaixo, pequena, a data prevista.
+- Setas, lápis e X aparecem só com o mouse em cima. Antes, depois de um
+  clique, ficavam presos na tela.
+
+**Envios do Cliente**
+- A lista mostra os primeiros 6 arquivos, em colunas, com "Ver todos os N
+  arquivos".
+- "Baixar todos (.zip)" junta os arquivos do pedido num .zip, montado no
+  navegador.
+
+**Contratos e Termos**
+- "Baixar comprovante (PDF)" em termo aprovado ou contrato assinado pelo
+  portal. Fora disso, o botão não aparece: na Autentique, o comprovante é o
+  certificado dela.
+- O PDF traz o logo, o documento, o projeto, o endereço, o cliente, o texto
+  do termo e a declaração "Aprovado por … em dd/mm/aaaa, às hh:mm (horário
+  de Brasília), por meio do Portal do Cliente…". No rodapé, o código do
+  documento no portal.
+- O PDF é gerado no navegador (biblioteca pdf-lib, carregada só no clique).
+
+Sem mudança no banco nesta rodada.

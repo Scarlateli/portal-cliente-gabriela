@@ -6,9 +6,11 @@
      vira o fundo; vinho é a cor do logo e vira o acento. */
   --gl-bege:#D9D4C9; --gl-areia:#AA9B83; --gl-vermelho:#5D1D18; --gl-terra:#70463A;
   --gl-marrom:#45271F; --gl-vinho:#391312; --gl-dark:#210B0B;
-  /* derivados: o fundo é o bege oficial; superfícies são um tom mais claro dele */
-  --gl-bg:var(--gl-bege); --gl-surface:#EFECE6; --gl-surface-2:rgba(239,236,230,.6);
-  --gl-ink:var(--gl-dark); --gl-ink-60:rgba(33,11,11,.62); --gl-ink-50:rgba(33,11,11,.5); --gl-ink-45:rgba(33,11,11,.45);
+  /* fundo e superfícies (rodada 7, cores escolhidas pela Gabriela):
+     fundo #ECE9E3, cartões e topo #FBFAF8 */
+  --gl-bg:#ECE9E3; --gl-surface:#FBFAF8; --gl-surface-2:rgba(251,250,248,.6);
+  /* texto em #210909 (rodada 7); o secundário é a mesma cor, mais clara */
+  --gl-ink:#210909; --gl-ink-60:rgba(33,9,9,.7); --gl-ink-50:rgba(33,9,9,.56); --gl-ink-45:rgba(33,9,9,.5);
   --gl-vinho-dark:var(--gl-dark); --gl-vinho-10:rgba(57,19,18,.1);
   --gl-hairline:rgba(57,19,18,.12); --gl-hairline-2:rgba(57,19,18,.2); --gl-cream:#EFECE6;
 }
@@ -728,7 +730,7 @@ button{color:inherit}
 .cp .login-split .login-brand,.cp .login-split .login-panel{background:transparent}
 .cp .login-split.com-capa::before{content:"";position:absolute;inset:0;z-index:-2;background:var(--capa) center/cover no-repeat}
 .cp .login-split.com-capa::after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(180deg,rgba(217,212,201,.80),rgba(217,212,201,.72));-webkit-backdrop-filter:blur(2px) saturate(.7);backdrop-filter:blur(2px) saturate(.7)}
-.cp .login-split .login-card{background:rgba(239,236,230,.94)}
+.cp .login-split .login-card{background:rgba(251,250,248,.94)}
 
 /* cadastro: respiro antes de "Etapas do projeto" e dicas dos campos */
 .cp .form-sec-bloco{margin-top:30px;padding-top:20px;border-top:1px solid var(--gl-hairline);margin-bottom:10px}
@@ -945,3 +947,42 @@ button{color:inherit}
 .cp .envio-entregue{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--ok);margin-top:10px}
 .cp .envio-concluir{display:flex;flex-direction:column;gap:6px;margin-top:12px;padding:12px 14px;border:1px solid var(--gl-hairline-2);border-radius:5px;background:var(--paper)}
 .cp .envio-concluir p{font-size:12.5px;color:var(--muted);line-height:1.5}
+
+/* ===================== Rodada 7 — visão do studio (22/10) ===================== */
+/* topo mais fino e na cor dos cartões */
+.cp .topbar{min-height:62px;padding:0 28px;background:rgba(251,250,248,.92)}
+.cp .topbar .icon-btn{width:32px;height:32px}
+.cp .forgot{color:var(--muted)}
+/* fase no topo do projeto com a mesma fonte do "0/5" */
+.cp .hstat-fase strong{font-weight:300}
+/* cartão de projeto: cliente e endereço um pouco menores */
+.cp .proj-client,.cp .proj-addr{font-size:11.5px}
+/* etapa: status e título um pouco menores, chamando menos atenção */
+.cp .tl-top h3{font-size:16px}
+.cp .tl-meta .pill{font-size:10.5px;padding:2px 8px}
+.cp .tl-meta .pill svg{width:11px;height:11px}
+.cp .tl-datas-tit{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink);margin-bottom:2px}
+/* sub-etapa: nome e tipo um pouquinho menores */
+.cp .sub-linha1 .sub-title{font-size:14.5px}
+.cp .sub-tipo-tag{font-size:9.5px}
+/* tarefa do cliente: o tipo leva "– Cliente", na cor do botão "Em andamento" */
+.cp .sub-tipo-cliente{background:var(--brand);border-color:var(--brand);color:#fff}
+.cp .sub-linha3{margin-top:5px}
+/* datas à direita: todas na mesma fonte (a do "Hoje") */
+.cp .sub-data,.cp .sub-data-hoje,.cp .sub-data-feito{font-family:var(--font-display);font-size:13px;font-weight:700;letter-spacing:.04em}
+.cp .sub-hora{font-family:var(--font-display);font-size:13px;font-weight:700;letter-spacing:.04em}
+.cp .sub-hora-prevista{font-size:11px;font-weight:400;letter-spacing:0;color:var(--muted)}
+/* lápis e setas só com o mouse em cima; somem quando ele sai (antes o
+   clique deixava o foco "preso" e a barra ficava aparecendo) */
+@media (hover:hover){
+  .cp .sub-acoes,.cp .sub:focus-within .sub-acoes{opacity:0}
+  .cp .sub:hover .sub-acoes,.cp .sub:has(:focus-visible) .sub-acoes{opacity:1}
+}
+/* Envios: lista curta, em colunas, com "Baixar todos" */
+.cp .envio-arquivos-bloco{margin-top:10px}
+.cp .envio-arquivos-bloco .envio-arquivos{margin-top:0}
+.cp .envio-arquivos-topo{display:flex;align-items:center;gap:14px;margin-bottom:6px}
+.cp .envio-arquivos-bloco .envio-arquivos{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:4px 18px}
+.cp .envio-arquivos-bloco .envio-arquivos li{min-width:0}
+.cp .envio-arquivos-bloco .envio-arquivos .link{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cp .envio-ver-todos{margin-top:6px}

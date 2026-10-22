@@ -135,6 +135,8 @@ function NovoPedido({ db, project, stages, onFechar }) {
   );
 }
 
+const LIMITE_LISTA = 6;
+
 function Pedido({ db, projectId, b, s, isStudio, arquivos, abrir }) {
   const input = useRef(null);
   const [enviando, setEnviando] = useState(false);
@@ -143,6 +145,23 @@ function Pedido({ db, projectId, b, s, isStudio, arquivos, abrir }) {
   const [editandoNota, setEditandoNota] = useState(false);
   const [confirmando, setConfirmando] = useState(false);
   const [concluindo, setConcluindo] = useState(false);
+  const [verTodos, setVerTodos] = useState(false);
+  const [baixando, setBaixando] = useState('');
+  // rodada 7: lista curta (os primeiros arquivos) e "Baixar todos" num .zip
+  const visiveis = verTodos ? arquivos : arquivos.slice(0, LIMITE_LISTA);
+  const baixaveis = arquivos.filter((a) => a.storagePath);
+  const baixarZip = async () => {
+    setAviso('');
+    setBaixando('Preparando…');
+    try {
+      const { baixarTodos } = await import('../../lib/baixarTodos.js');
+      await baixarTodos(db, baixaveis, b.title, (i, n) => setBaixando('Baixando ' + i + ' de ' + n + '…'));
+    } catch (e) {
+      setAviso((e && e.message) || 'Não foi possível baixar os arquivos.');
+    } finally {
+      setBaixando('');
+    }
+  };
   const aberto = !b.done;
   const entregue = aberto && !!b.entregueEm;
   // entregue, o prazo já não pesa: mostra só a data, sem "atrasada"
@@ -212,32 +231,47 @@ function Pedido({ db, projectId, b, s, isStudio, arquivos, abrir }) {
       {b.instructions && <p className="envio-instrucoes">{b.instructions}</p>}
 
       {arquivos.length > 0 && (
-        <ul className="envio-arquivos">
-          {arquivos.map((a) => (
-            <li key={a.id}>
-              <button type="button" className="link sm" onClick={() => abrirArquivo(a)} disabled={!a.storagePath}>
-                <Download size={12} /> {a.name}
+        <div className="envio-arquivos-bloco">
+          <div className="envio-arquivos-topo">
+            <span className="micro">{arquivos.length + (arquivos.length === 1 ? ' arquivo' : ' arquivos')}</span>
+            {baixaveis.length > 1 && (
+              <button type="button" className="link sm" disabled={!!baixando} onClick={baixarZip}>
+                <Download size={12} /> {baixando || 'Baixar todos (.zip)'}
               </button>
-              <span className="micro">
-                {a.size ? a.size + ' · ' : ''}
-                {a.createdAt ? fmt(String(a.createdAt).slice(0, 10)) : ''}
-                {a.sentBy === 'studio' ? ' · enviado pelo studio' : ''}
-              </span>
-              {(isStudio || (clienteMexe && a.sentBy === 'client')) && (
-                <button
-                  type="button"
-                  className="icon-x"
-                  aria-label={'Remover ' + a.name}
-                  onClick={() => {
-                    if (window.confirm('Remover "' + a.name + '"?')) db.removerArquivo(projectId, a.id);
-                  }}
-                >
-                  <Trash2 size={12} />
+            )}
+          </div>
+          <ul className="envio-arquivos">
+            {visiveis.map((a) => (
+              <li key={a.id}>
+                <button type="button" className="link sm" onClick={() => abrirArquivo(a)} disabled={!a.storagePath}>
+                  <Download size={12} /> {a.name}
                 </button>
-              )}
-            </li>
-          ))}
-        </ul>
+                <span className="micro">
+                  {a.size ? a.size + ' · ' : ''}
+                  {a.createdAt ? fmt(String(a.createdAt).slice(0, 10)) : ''}
+                  {a.sentBy === 'studio' ? ' · enviado pelo studio' : ''}
+                </span>
+                {(isStudio || (clienteMexe && a.sentBy === 'client')) && (
+                  <button
+                    type="button"
+                    className="icon-x"
+                    aria-label={'Remover ' + a.name}
+                    onClick={() => {
+                      if (window.confirm('Remover "' + a.name + '"?')) db.removerArquivo(projectId, a.id);
+                    }}
+                  >
+                    <Trash2 size={12} />
+                  </button>
+                )}
+              </li>
+            ))}
+          </ul>
+          {arquivos.length > LIMITE_LISTA && (
+            <button type="button" className="link sm envio-ver-todos" onClick={() => setVerTodos(!verTodos)}>
+              {verTodos ? 'Mostrar menos' : 'Ver todos os ' + arquivos.length + ' arquivos'}
+            </button>
+          )}
+        </div>
       )}
 
       {(b.clientNote || clienteMexe) && (

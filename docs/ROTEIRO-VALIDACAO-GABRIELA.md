@@ -232,3 +232,27 @@ Como cliente, em Documentos → Envios do Cliente:
 Como studio:
 - veja a pendência "Entrega do cliente para conferir";
 - teste "Devolver ao cliente" e "Conferido, concluir pedido".
+
+---
+
+## Rodada 7 — visão do studio (22/10)
+
+### 35. Cores e topo
+Confira o fundo, os cartões, a barra do topo mais fina e o texto. No topo
+do projeto, o nome da fase está na mesma fonte do "0/5".
+
+### 36. Linha do Tempo
+Confira:
+- "Prazos Previstos";
+- "Tarefa – Cliente";
+- "Vencido" com a data embaixo;
+- a sub-etapa concluída sem texto à direita.
+
+Passe o mouse numa sub-etapa e tire: as setas e o lápis somem.
+
+### 37. Envios do Cliente
+Num pedido com vários arquivos, use "Ver todos" e "Baixar todos (.zip)".
+
+### 38. Comprovante
+Em Contratos e Termos, num termo aprovado, clique em "Baixar comprovante
+(PDF)".

@@ -148,8 +148,10 @@ describe('linha do tempo', () => {
     expect(within(l1).queryByText('Studio')).toBeNull();
     expect(within(l1).queryByText('Sem prazo')).toBeNull();
     expect(within(l1).getByText('Entrega')).toBeTruthy();
-    expect(within(l2).getByText('Tarefa do cliente')).toBeTruthy();
-    expect(within(l2).getByText(/^Venceu 10\/01/)).toBeTruthy();
+    expect(within(l1).queryByText(/Studio/)).toBeNull();
+    expect(within(l2).getByText('Entrega – Cliente')).toBeTruthy();
+    expect(within(l2).getByText('Vencido')).toBeTruthy();
+    expect(within(l2).getByText('10/01')).toBeTruthy();
   });
 
   it('edita uma sub-etapa existente (não cria outra)', async () => {

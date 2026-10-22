@@ -70,10 +70,11 @@ export function prazoSub(b, hoje = todayISO()) {
 
 /* Coluna da direita na lista de sub-etapas (rodada 6, desenho da
    Gabriela): a data em destaque ("Hoje", "Amanhã", "Até 30/10") e, embaixo,
-   o horário quando é reunião ou visita. null quando não há o que mostrar.
-   estado: 'feito' | 'ok' | 'hoje' | 'atrasado' */
+   o horário (reunião ou visita) ou a data prevista (tarefa vencida).
+   null quando não há o que mostrar; concluída não mostra nada (rodada 7).
+   estado: 'ok' | 'hoje' | 'atrasado' */
 export function quandoSub(b, hoje = todayISO()) {
-  if (b.done) return { estado: 'feito', data: 'Concluída', hora: '' };
+  if (b.done) return null;
   if (!b.due) return null;
   const marcado = SUB_COM_HORARIO.includes(b.kind);
   const ddmm = b.due.slice(8, 10) + '/' + b.due.slice(5, 7) + (b.due.slice(0, 4) !== hoje.slice(0, 4) ? '/' + b.due.slice(2, 4) : '');
@@ -81,7 +82,7 @@ export function quandoSub(b, hoje = todayISO()) {
   d.setUTCDate(d.getUTCDate() + 1);
   const amanha = d.toISOString().slice(0, 10);
   const hora = marcado && b.time ? b.time : '';
-  if (b.due < hoje) return { estado: 'atrasado', data: marcado ? ddmm : 'Venceu ' + ddmm, hora };
+  if (b.due < hoje) return marcado ? { estado: 'atrasado', data: ddmm, hora } : { estado: 'atrasado', data: 'Vencido', hora: ddmm };
   if (b.due === hoje) return { estado: 'hoje', data: 'Hoje', hora };
   if (b.due === amanha) return { estado: 'ok', data: 'Amanhã', hora };
   return { estado: 'ok', data: marcado ? ddmm : 'Até ' + ddmm, hora };

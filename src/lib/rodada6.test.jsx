@@ -17,11 +17,13 @@ describe('data à direita da sub-etapa', () => {
     expect(quandoSub({ kind: 'entrega', due: HOJE }, HOJE)).toEqual({ estado: 'hoje', data: 'Hoje', hora: '' });
     expect(quandoSub({ kind: 'tarefa', due: '2026-10-21' }, HOJE).data).toBe('Amanhã');
     expect(quandoSub({ kind: 'tarefa', due: '2026-10-30' }, HOJE).data).toBe('Até 30/10');
-    expect(quandoSub({ kind: 'tarefa', due: '2026-10-01' }, HOJE)).toMatchObject({ estado: 'atrasado', data: 'Venceu 01/10' });
+    // rodada 7: "Vencido" e, embaixo, a data que era prevista
+    expect(quandoSub({ kind: 'tarefa', due: '2026-10-01' }, HOJE)).toEqual({ estado: 'atrasado', data: 'Vencido', hora: '01/10' });
     expect(quandoSub({ kind: 'reuniao', due: HOJE, time: '15:00' }, HOJE)).toEqual({ estado: 'hoje', data: 'Hoje', hora: '15:00' });
     expect(quandoSub({ kind: 'tarefa', due: '2027-01-05' }, HOJE).data).toBe('Até 05/01/27');
     expect(quandoSub({ kind: 'tarefa', due: '' }, HOJE)).toBeNull();
-    expect(quandoSub({ kind: 'tarefa', due: '2026-10-01', done: true }, HOJE).data).toBe('Concluída');
+    // rodada 7: concluída não mostra texto
+    expect(quandoSub({ kind: 'tarefa', due: '2026-10-01', done: true }, HOJE)).toBeNull();
   });
 });
 
@@ -48,14 +50,16 @@ describe('linha do tempo no desenho da Gabriela', () => {
     expect(abrir).toHaveBeenCalledWith('docs', 'pedido-b2');
     expect(within(itens[2]).getByRole('link', { name: /Entrar na reunião/ }).getAttribute('href')).toBe('https://meet.google.com/abc');
     // datas da etapa, uma por linha
-    expect(screen.getByText('Data de Início – 20/10/2026')).toBeTruthy();
-    expect(screen.getByText('Previsão de Entrega – 30/10/2026')).toBeTruthy();
+    expect(screen.getByText('Prazos Previstos')).toBeTruthy();
+    expect(screen.getByText('Início – 20/10/2026')).toBeTruthy();
+    expect(screen.getByText('Entrega – 30/10/2026')).toBeTruthy();
   });
 
-  it('studio: conclui pela bolinha e vê "Tarefa do cliente"', async () => {
+  it('studio: conclui pela bolinha; tarefa do cliente vai junto do tipo', async () => {
     const db = dbTimeline();
     render(<Timeline db={db} project={{ id: 'p1' }} isStudio />);
-    expect(screen.getByText('Tarefa do cliente')).toBeTruthy();
+    expect(screen.getByText('Tarefa – Cliente')).toBeTruthy();
+    expect(screen.queryByText('Tarefa do cliente')).toBeNull();
     await userEvent.click(screen.getByRole('button', { name: 'Concluir Escopo de Projeto' }));
     expect(db.toggleSub).toHaveBeenCalledWith('s1', 'b1');
   });
