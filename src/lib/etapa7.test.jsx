@@ -85,16 +85,36 @@ describe('sino de pendências', () => {
     return irPara;
   }
 
-  it('não abre janela ao entrar (rodada 10); o sino leva direto ao item', async () => {
+  it('cliente vê a janela ao entrar (rodada 12) e vai direto ao item', async () => {
     const irPara = montar({ id: 'u1', role: 'client', name: 'Vanessa' });
-    expect(screen.queryByRole('dialog')).toBeNull();
-    await userEvent.click(screen.getByRole('button', { name: /pendência/i }));
+    expect(screen.getByRole('dialog', { name: /^Você tem \d+ pendências?$/i })).toBeTruthy();
     await userEvent.click(screen.getByText(/Assinar: Planta/));
     // aba e item: o portal rola até o documento e o destaca
     expect(irPara).toHaveBeenCalledWith('p1', 'docs', 'doc-d3');
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
+  it('a janela abre uma vez por acesso, mesmo sem novidade; o studio não tem janela', async () => {
+    montar({ id: 'u1', role: 'client', name: 'Vanessa' });
+    await userEvent.click(screen.getByText('Ver depois'));
+    expect(screen.queryByRole('dialog')).toBeNull();
+    // outra tela no mesmo acesso: não volta
+    cleanup();
+    montar({ id: 'u1', role: 'client', name: 'Vanessa' });
+    expect(screen.queryByRole('dialog')).toBeNull();
+    // novo acesso (o login limpa a marca): volta, com as que ainda faltam
+    cleanup();
+    sessionStorage.clear();
+    montar({ id: 'u1', role: 'client', name: 'Vanessa' });
+    expect(screen.getByRole('dialog', { name: /^Você tem/i })).toBeTruthy();
+    cleanup();
+    sessionStorage.clear();
+    montar({ id: 'studio', role: 'studio', name: 'Gabriela' });
+    expect(screen.queryByRole('dialog')).toBeNull();
   });
 
   it('o número do sino conta só as novas; depois de vistas, a lista continua', async () => {
+    sessionStorage.setItem('gl-pendencias-vistas', '1'); // janela já vista neste acesso
     montar({ id: 'u1', role: 'client', name: 'Vanessa' });
     const sino = () => screen.getByRole('button', { name: /pendência/i });
     expect(Number(sino().textContent)).toBeGreaterThan(0);

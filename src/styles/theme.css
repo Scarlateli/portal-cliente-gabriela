@@ -1257,3 +1257,11 @@ button{color:inherit}
 .cp .sub-do-cliente .btn-mini{border-color:transparent;color:var(--brand)}
 .cp .sub-do-cliente .btn-mini:hover{background:transparent;color:var(--ink)}
 .cp .btn-mini:disabled{opacity:.6;cursor:default}
+/* Rodada 12: "Seu próximo passo" como faixa baixa na cor vinho, só título e botão */
+.cp .proximo{margin-top:14px;background:var(--gl-vinho);color:#FBFAF8;border:0;border-radius:var(--raio);padding:10px 12px 10px 18px;display:flex;align-items:center;justify-content:space-between;gap:14px}
+.cp .proximo p{margin:0;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;min-width:0}
+.cp .proximo .proximo-rot{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;font-weight:500;color:rgba(251,250,248,.7)}
+.cp .proximo strong{font-weight:500;font-size:15px;line-height:1.35;color:#FBFAF8}
+.cp .proximo .proximo-btn{flex:none;background:#FBFAF8;color:var(--gl-vinho);border:0}
+.cp .proximo .proximo-btn:hover{background:#EFECE6}
+@media (max-width:560px){.cp .proximo{flex-direction:column;align-items:stretch;gap:8px}.cp .proximo p{flex-direction:column;gap:2px}}

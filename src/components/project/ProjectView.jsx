@@ -22,7 +22,6 @@ import {
   MessageCircle,
   Check,
   ArrowRight,
-  ChevronRight,
   House,
   Menu,
 } from 'lucide-react';
@@ -481,45 +480,21 @@ export function Fases({ stages }) {
 /* Seu próximo passo (rodada 10): no lugar da janela que abria por cima ao
    entrar, um cartão fixo com a ação mais importante e as demais embaixo. */
 export function ProximoPasso({ lista, abrir }) {
-  const [primeiro, ...resto] = lista;
-  const [todas, setTodas] = useState(false);
-  const visiveis = todas ? resto : resto.slice(0, 3);
-  if (!primeiro)
-    return (
-      <section className="proximo proximo-ok" aria-label="Seu próximo passo">
-        <Check size={18} aria-hidden /> <span>Tudo em dia. Não há nada esperando por você agora.</span>
-      </section>
-    );
+  /* Rodada 12 (pedido da Gabriela): uma faixa baixa, na cor vinho, só com a
+     pendência principal e o botão. Sem "Tudo em dia": se não há nada
+     esperando pelo cliente, a faixa não aparece. As demais ficam no sino e
+     na janela ao entrar. */
+  const primeiro = lista[0];
+  if (!primeiro) return null;
   return (
     <section className="proximo" aria-label="Seu próximo passo">
-      <div className="proximo-topo">
+      <p>
         <span className="proximo-rot">Seu próximo passo</span>
-        {lista.length > 1 && <span className="proximo-n">{lista.length} pendências</span>}
-      </div>
-      <div className="proximo-principal">
-        <p>{primeiro.texto}</p>
-        <button type="button" className="btn btn-primary btn-sm" onClick={() => abrir(primeiro.aba, primeiro.alvo)}>
-          Resolver <ArrowRight size={14} />
-        </button>
-      </div>
-      {resto.length > 0 && (
-        <ul className="proximo-resto">
-          {visiveis.map((p) => (
-            <li key={p.id}>
-              <button type="button" onClick={() => abrir(p.aba, p.alvo)}>
-                <span>{p.texto}</span> <ChevronRight size={14} aria-hidden />
-              </button>
-            </li>
-          ))}
-          {resto.length > 3 && (
-            <li>
-              <button type="button" className="proximo-mais" onClick={() => setTodas(!todas)}>
-                <span>{todas ? 'Mostrar menos' : 'Ver mais ' + (resto.length - 3) + (resto.length - 3 === 1 ? ' pendência' : ' pendências')}</span>
-              </button>
-            </li>
-          )}
-        </ul>
-      )}
+        <strong>{primeiro.texto}</strong>
+      </p>
+      <button type="button" className="btn btn-sm proximo-btn" onClick={() => abrir(primeiro.aba, primeiro.alvo)}>
+        Resolver <ArrowRight size={14} />
+      </button>
     </section>
   );
 }

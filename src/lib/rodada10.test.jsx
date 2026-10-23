@@ -9,20 +9,20 @@ import { proximaEtapa } from './pendencias.js';
 
 describe('seu próximo passo', () => {
   const lista = [1, 2, 3, 4, 5, 6].map((i) => ({ id: 'x' + i, pid: 'p1', aba: 'docs', alvo: 'doc-d' + i, texto: 'Aprovar: Ata ' + i }));
-  it('mostra a ação principal, 3 outras e "ver mais"', async () => {
+  it('rodada 12: faixa só com a ação principal e o botão', async () => {
     const abrir = vi.fn();
     render(<ProximoPasso lista={lista} abrir={abrir} />);
     expect(screen.getByText('Aprovar: Ata 1')).toBeTruthy();
-    expect(screen.queryByText('Aprovar: Ata 5')).toBeNull();
-    await userEvent.click(screen.getByText('Ver mais 2 pendências'));
-    expect(screen.getByText('Aprovar: Ata 6')).toBeTruthy();
+    expect(screen.queryByText('Aprovar: Ata 2')).toBeNull();
+    expect(screen.queryByText(/pendências/)).toBeNull();
     await userEvent.click(screen.getByRole('button', { name: /Resolver/ }));
     expect(abrir).toHaveBeenCalledWith('docs', 'doc-d1');
   });
-  it('sem pendências: tudo em dia', () => {
-    render(<ProximoPasso lista={[]} abrir={() => {}} />);
-    expect(screen.getByText(/Tudo em dia/)).toBeTruthy();
+  it('sem pendências: a faixa não aparece (sai o "Tudo em dia")', () => {
+    const { container } = render(<ProximoPasso lista={[]} abrir={() => {}} />);
+    expect(container.textContent).toBe('');
   });
+
 });
 
 describe('fases do projeto', () => {
