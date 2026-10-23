@@ -72,7 +72,7 @@ describe('linha do tempo do cliente', () => {
     expect(within(estudo).queryByText('Em atraso')).toBeNull();
     expect(within(estudo).queryByText(/Prazo venceu/)).toBeNull();
     // e a sub-etapa do studio vencida não mostra "Vencido" ao cliente
-    expect(within(estudo).queryByText('Vencido')).toBeNull();
+    expect(within(estudo).queryByText(/Venceu em/)).toBeNull();
   });
 
   it('o studio continua vendo o atraso', () => {

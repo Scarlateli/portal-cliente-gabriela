@@ -520,11 +520,11 @@ function SubItem({ db, s, b, i, total, isStudio, atual = false, arquivos = [], a
   let acao = null;
   if (b.pedeArquivos && !isStudio)
     acao = entregue ? (
-      <span className="sub-entregue">
+      <span className="sub-acao sub-entregue">
         <Check size={11} /> Entregue
       </span>
     ) : (
-      <button type="button" className="btn-mini" onClick={irEnvio}>
+      <button type="button" className="sub-acao" onClick={irEnvio}>
         <FolderUp size={12} /> {enviados ? 'Concluir entrega' : 'Fazer upload'}
       </button>
     );
@@ -533,7 +533,7 @@ function SubItem({ db, s, b, i, total, isStudio, atual = false, arquivos = [], a
     acao = (
       <button
         type="button"
-        className="btn-mini"
+        className="sub-acao"
         disabled={concluindo}
         onClick={async () => {
           setConcluindo(true);
@@ -550,13 +550,13 @@ function SubItem({ db, s, b, i, total, isStudio, atual = false, arquivos = [], a
     );
   else if (b.pedeArquivos && isStudio && b.entregueEm && !b.done)
     acao = (
-      <button type="button" className="btn-mini" onClick={irEnvio}>
+      <button type="button" className="sub-acao" onClick={irEnvio}>
         <FolderUp size={12} /> Conferir entrega
       </button>
     );
   else if (b.kind === 'reuniao' && b.format !== 'presencial' && b.link && !b.done)
     acao = (
-      <a className="btn-mini" href={b.link} target="_blank" rel="noreferrer">
+      <a className="sub-acao" href={b.link} target="_blank" rel="noreferrer">
         <Video size={12} /> Entrar na reunião
       </a>
     );
@@ -587,31 +587,31 @@ function SubItem({ db, s, b, i, total, isStudio, atual = false, arquivos = [], a
         <div className="sub-linha1">
           <span className="sub-title">{b.title}</span>
         </div>
-        <div className="sub-linha2">
+        {/* rodada 13: tipo, prazo e ação numa linha só, colados ao título
+            (antes o prazo ficava solto numa coluna à direita) */}
+        <div className="sub-linha2 sub-meta">
           {/* rodada 12: o cliente vê igual ao studio ("Tarefa – Cliente", em vinho) */}
           <span className={'sub-tipo-tag' + (doCliente ? ' sub-tipo-cliente' : '')}>
             {rotuloTipoSub(b)}
             {ROTULO_RESP[b.responsible] && b.responsible !== 'studio' ? ' – ' + ROTULO_RESP[b.responsible] : ''}
           </span>
-          {b.kind === 'reuniao' && b.format === 'presencial' && <span className="sub-desc">Presencial ·</span>}
-          {b.instructions && <span className="sub-desc sub-instrucoes">{b.instructions}</span>}
-        </div>
-        {isStudio && b.pedeArquivos && (
-          <div className="sub-linha3">
-            <button type="button" className="link sm" onClick={irEnvio}>
+          {q && (
+            <span className={'sub-prazo-txt sub-prazo-txt-' + q.estado}>
+              {q.estado === 'atrasado' ? <AlertTriangle size={11} aria-hidden /> : <CalendarDays size={11} aria-hidden />}
+              {textoQuando(q, b)}
+            </span>
+          )}
+          {b.kind === 'reuniao' && b.format === 'presencial' && <span className="sub-prazo-txt">Presencial</span>}
+          {isStudio && b.pedeArquivos && (
+            <button type="button" className="sub-acao" onClick={irEnvio}>
               <FolderUp size={11} />{' '}
               {enviados ? enviados + (enviados === 1 ? ' arquivo enviado' : ' arquivos enviados') : 'Nenhum arquivo ainda'}
             </button>
-          </div>
-        )}
-      </div>
-      {(q || acao) && (
-        <div className="sub-quando">
-          {q && <span className={'sub-data sub-data-' + q.estado}>{q.data}</span>}
-          {q && q.hora && <span className={'sub-hora' + (q.estado === 'atrasado' ? ' sub-hora-prevista' : '')}>{q.hora}</span>}
+          )}
           {acao}
         </div>
-      )}
+        {b.instructions && <p className="sub-desc sub-instrucoes">{b.instructions}</p>}
+      </div>
       {isStudio && (
         <span
           className={'sub-acoes' + (acoesVisiveis ? ' visivel' : '')}
@@ -640,6 +640,14 @@ function SubItem({ db, s, b, i, total, isStudio, atual = false, arquivos = [], a
       )}
     </li>
   );
+}
+
+/* Prazo da sub-etapa em texto curto, para a linha do tipo (rodada 13):
+   "Venceu em 10/06", "Hoje · 15:00", "Até 30/10", "12/11 · 10:00". */
+function textoQuando(q, b) {
+  const marcado = SUB_COM_HORARIO.includes(b.kind);
+  if (q.estado === 'atrasado' && !marcado) return 'Venceu em ' + q.hora;
+  return q.data + (q.hora ? ' · ' + q.hora : '');
 }
 
 /* Datas da etapa à direita: "Prazos Previstos", com Início e Entrega
@@ -799,14 +807,16 @@ function StageItem({ db, s, isStudio, arquivos, abrir, projectId, inicialAberta 
           </a>
         )}
 
+        {s.desc && <p className="tl-desc-inline">{s.desc}</p>}
+
         {late && (
           <div className="late-box">
             <div className="late-msg">
-              <AlertTriangle size={15} />{' '}
+              <AlertTriangle size={13} />{' '}
               <span>
                 Prazo venceu em {fmt(s.end)}.{' '}
                 {isStudio
-                  ? 'Defina a nova data de entrega abaixo.'
+                  ? ''
                   : s.owner === 'client'
                     ? 'Anexe as documentações em Documentos. Depois disso, o studio define uma nova data de entrega.'
                     : 'Uma nova análise de prazo será feita pelo studio.'}
@@ -815,7 +825,7 @@ function StageItem({ db, s, isStudio, arquivos, abrir, projectId, inicialAberta 
             {isStudio && (
               <div className="reschedule">
                 <label className="inline-lab">
-                  <CalendarClock size={13} /> Nova data de entrega
+                  Nova data de entrega
                   <input type="date" value={newEnd} onChange={(e) => setNewEnd(e.target.value)} />
                 </label>
                 <button className="btn btn-primary btn-sm" disabled={!newEnd} onClick={() => db.rescheduleStage(s.id, newEnd)}>
@@ -863,8 +873,6 @@ function StageItem({ db, s, isStudio, arquivos, abrir, projectId, inicialAberta 
               ))}
           </div>
         )}
-
-        {s.desc && <p className="tl-desc-inline">{s.desc}</p>}
 
         <AprovacaoEtapa db={db} s={s} isStudio={isStudio} projectId={projectId} />
 

@@ -1293,3 +1293,58 @@ button{color:inherit}
 .cp .ee-sub-pede{grid-column:1/-1;display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)}
 .cp .ee .ee-sub-pede input[type="checkbox"]{width:16px;height:16px;min-height:0;padding:0;margin:0;flex:none;appearance:auto;accent-color:var(--gl-vinho)}
 .cp .sub-linha2 .sub-instrucoes{flex-basis:100%}
+
+/* ===================== Rodada 13 — Linha do Tempo mais leve (23/10) =====================
+   Feedback: caixas grossas, "Vencido" solto à direita, letras de tamanhos
+   desencontrados. Uma escala só para a etapa:
+   título da etapa 17 · título da sub-etapa 14,5 · texto 13 · detalhes 12 ·
+   etiquetas 10. Contornos de 1px; atraso só em texto, sem caixa. */
+.cp .tl-item .tl-body,.cp .tl-em_andamento .tl-body,.cp .tl-late .tl-body{border:1px solid var(--gl-hairline-2);border-left-width:1px;padding:14px 18px 12px}
+.cp .tl-em_andamento .tl-body{border-color:rgba(57,19,18,.35)}
+.cp .tl-a_fazer .tl-body{background:var(--card)}
+.cp .tl-cab h3,.cp .tl-top h3{font-size:17px;font-weight:400;line-height:1.3}
+.cp .tl-cab-esq{gap:7px}
+.cp .tl-meta{gap:6px}
+.cp .tl-meta .tag,.cp .tl-meta .pill,.cp .pill-select select{font-size:11px;line-height:1.4;padding:2px 8px;border:0;border-radius:4px}
+.cp .tl-meta .tag svg,.cp .tl-meta .pill svg{width:11px;height:11px}
+.cp .tl-datas-tit,.cp .tl-datas-linha,.cp .tl-datas span:not(.tl-datas-tit){font-size:11px}
+.cp .tl-desc-inline{margin:10px 0 0;font-size:13px;line-height:1.5;color:var(--muted);max-width:720px}
+/* atraso: uma linha em vermelho, sem caixa; o studio reagenda na mesma linha */
+.cp .late-box{margin-top:10px;padding:0;border:0;background:none;display:flex;align-items:center;flex-wrap:wrap;gap:6px 16px}
+.cp .late-msg{font-size:13px;line-height:1.5;align-items:center;gap:6px}
+.cp .late-msg svg{flex:none}
+.cp .late-box .reschedule{margin:0;align-items:center;gap:8px}
+.cp .late-box .reschedule .inline-lab{display:inline-flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
+.cp .late-box .reschedule input[type="date"]{height:28px;min-height:28px;padding:2px 8px;font-size:12px}
+.cp .late-box .reschedule .btn-sm{padding:4px 10px;font-size:12px}
+/* sub-etapas */
+.cp .subs{margin-top:12px;padding-top:10px;border-top:1px solid var(--gl-hairline)}
+.cp .sub-list .sub{grid-template-columns:20px minmax(0,1fr) auto;column-gap:10px;padding:5px 0 12px}
+.cp .sub-linha1 .sub-title,.cp .sub-corpo .sub-title{font-family:var(--font-display);font-size:14.5px;font-weight:500;line-height:1.35}
+.cp .sub-meta{display:flex;flex-wrap:wrap;align-items:center;gap:4px 12px;margin-top:4px}
+.cp .sub-tipo-tag{font-size:10px;line-height:1.5;letter-spacing:.06em;padding:0 6px;border-width:1px}
+.cp .sub-prazo-txt{display:inline-flex;align-items:center;gap:4px;font-size:12px;color:var(--muted);white-space:nowrap}
+.cp .sub-prazo-txt-hoje{color:var(--ink);font-weight:500}
+.cp .sub-prazo-txt-atrasado{color:var(--late)}
+.cp .sub-acao{display:inline-flex;align-items:center;gap:4px;background:none;border:0;padding:0;margin:0;font:inherit;font-size:12px;font-weight:500;color:var(--brand);text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px;cursor:pointer;white-space:nowrap}
+.cp .sub-acao:disabled{opacity:.5;cursor:default}
+.cp .sub-acao.sub-entregue{color:var(--ok);text-decoration:none;cursor:default}
+.cp .sub-desc,.cp .sub-instrucoes{display:block;margin:4px 0 0;font-size:13px;line-height:1.5;color:var(--muted)}
+.cp .sub-list .sub-acoes{align-self:start;margin-top:-2px}
+.cp .subs > .link.sm{margin-left:0;font-size:12px}
+/* "⋯" da etapa no canto, sem ocupar uma linha vazia */
+.cp .tl-body{position:relative}
+.cp .tl-rodape{position:absolute;right:8px;bottom:6px;margin:0}
+.cp .tl-item:has(.tl-rodape) .tl-body:not(.tl-recolhida){padding-bottom:16px}
+@media (max-width:640px){
+  .cp .tl-item .tl-body{padding:12px 14px 12px}
+  .cp .sub-list .sub{grid-template-columns:20px minmax(0,1fr)}
+}
+.cp .pill-select select{padding:2px 20px 2px 8px}
+.cp .sub-meta,.cp .sub-meta .sub-tipo-tag{margin-left:0}
+.cp .tl-body .link.sm{margin-left:0;font-size:12px}
+.cp .late-msg{align-items:flex-start}
+.cp .late-msg svg{margin-top:3px}
+.cp .tl-body .meet-link{margin-top:10px;padding:3px 10px;font-size:12px;border-color:rgba(57,19,18,.35);background:transparent}
+.cp .tl-body .aprov,.cp .tl-body .aprov p{font-size:13px}
+.cp .tl-body .aprov{border-top-style:solid;border-top-color:var(--gl-hairline)}

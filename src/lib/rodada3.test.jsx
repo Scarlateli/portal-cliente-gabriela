@@ -150,8 +150,10 @@ describe('linha do tempo', () => {
     expect(within(l1).getByText('Entrega')).toBeTruthy();
     expect(within(l1).queryByText(/Studio/)).toBeNull();
     expect(within(l2).getByText('Entrega – Cliente')).toBeTruthy();
-    expect(within(l2).getByText('Vencido')).toBeTruthy();
-    expect(within(l2).getByText('10/01')).toBeTruthy();
+    // rodada 13: o prazo vencido fica na linha do tipo, junto do título
+    expect(within(l2).getByText('Venceu em 10/01')).toBeTruthy();
+    expect(within(l2).getByText('Venceu em 10/01').closest('.sub-meta')).toBeTruthy();
+    expect(l2.querySelector('.sub-quando')).toBeNull();
   });
 
   it('edita uma sub-etapa existente (não cria outra)', async () => {

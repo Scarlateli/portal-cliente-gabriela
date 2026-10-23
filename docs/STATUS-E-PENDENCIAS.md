@@ -829,3 +829,18 @@ no fim do `schema.sql`; foram testados 7 cenários num banco local.
 `supabase/sql/2026-10-23-rodada12-projeto-sem-email-e-tarefas.sql`
 (`projects.client_id` opcional, `sub_arquivos.nota`, RPCs `anotar_arquivo` e
 `concluir_tarefa`). Também está no fim do `schema.sql`.
+
+## Rodada 13 — Linha do Tempo mais leve (23/10/2026)
+
+Pedido da Gabriela: o "Vencido" vermelho ficava solto à direita, as caixas
+grossas e as letras em tamanhos desencontrados.
+- O prazo da sub-etapa saiu da coluna da direita e vai na linha do tipo,
+  colado ao título: "TAREFA – CLIENTE · ⚠ Venceu em 10/06 · Fazer upload".
+  A descrição vem logo embaixo.
+- Atraso da etapa sem caixa vermelha: uma linha de texto; o studio reagenda
+  na mesma linha.
+- Contorno de 1px em todas as etapas (sai a borda grossa da etapa em
+  andamento e o contorno vermelho da atrasada).
+- Uma escala só: título da etapa 17 · sub-etapa 14,5 · texto 13 ·
+  detalhes 12 · etiquetas 10–11.
+- Descrição da etapa logo abaixo do título; "⋯" no canto, sem linha vazia.
