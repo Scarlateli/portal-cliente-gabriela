@@ -5,7 +5,10 @@ import { SUB_TIPOS, SUB_RESPONSAVEIS, etapaVazia, subVazia, moverNaLista } from 
 /* Editor de etapas com sub-etapas, usado em dois lugares: no cadastro de
    templates (criar e editar) e no formulário de novo projeto, para ajustar o
    template antes de enviar o acesso ao cliente. Etapas e sub-etapas sobem e
-   descem com as setas, sem precisar apagar e criar de novo. */
+   descem com as setas, sem precisar apagar e criar de novo.
+   Rodada 12 (pedido da Gabriela): descrição da etapa e de cada sub-etapa
+   (o que aparece embaixo do título na Linha do Tempo) e, nas do cliente,
+   "Pedir arquivos" já marcado. */
 
 function Setas({ rotulo, i, total, onMover, onRemover, tamanho = 14 }) {
   return (
@@ -70,6 +73,15 @@ export function EtapasEditor({ itens, onChange }) {
               onRemover={() => onChange(itens.filter((_, k) => k !== i))}
             />
           </div>
+          <textarea
+            className="ee-desc"
+            rows={2}
+            maxLength={1000}
+            placeholder="Descrição da etapa (opcional): o que acontece nela"
+            aria-label={'Descrição da etapa ' + (i + 1)}
+            value={it.desc || ''}
+            onChange={(e) => mudarEtapa(i, 'desc', e.target.value)}
+          />
 
           {(it.subs || []).length > 0 && (
             <ul className="ee-subs">
@@ -92,7 +104,17 @@ export function EtapasEditor({ itens, onChange }) {
                   <select
                     aria-label="Responsável pela sub-etapa"
                     value={b.responsible}
-                    onChange={(e) => mudarSub(i, k, 'responsible', e.target.value)}
+                    onChange={(e) =>
+                      mudarEtapa(
+                        i,
+                        'subs',
+                        it.subs.map((s, j) =>
+                          j === k
+                            ? { ...s, responsible: e.target.value, pedeArquivos: e.target.value === 'cliente' }
+                            : s,
+                        ),
+                      )
+                    }
                   >
                     {SUB_RESPONSAVEIS.map(([v, r]) => (
                       <option key={v} value={v}>
@@ -117,6 +139,21 @@ export function EtapasEditor({ itens, onChange }) {
                       value={b.kindLabel || ''}
                       onChange={(e) => mudarSub(i, k, 'kindLabel', e.target.value)}
                     />
+                  )}
+                  <textarea
+                    className="ee-sub-desc"
+                    rows={1}
+                    maxLength={600}
+                    placeholder="Descrição (opcional): instruções que aparecem embaixo do título"
+                    aria-label={'Descrição da sub-etapa ' + (k + 1) + ' da etapa ' + (i + 1)}
+                    value={b.instructions || ''}
+                    onChange={(e) => mudarSub(i, k, 'instructions', e.target.value)}
+                  />
+                  {b.responsible === 'cliente' && (
+                    <label className="ee-sub-pede">
+                      <input type="checkbox" checked={!!b.pedeArquivos} onChange={(e) => mudarSub(i, k, 'pedeArquivos', e.target.checked)} /> Pedir
+                      arquivos ao cliente
+                    </label>
                   )}
                 </li>
               ))}

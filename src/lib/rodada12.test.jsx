@@ -35,6 +35,7 @@ import userEvent from '@testing-library/user-event';
 import { vi } from 'vitest';
 import { Timeline } from '../components/project/Timeline.jsx';
 import { EnviosCliente } from '../components/project/EnviosCliente.jsx';
+import { EtapasEditor } from '../components/admin/EtapasEditor.jsx';
 
 describe('Linha do Tempo igual para studio e cliente', () => {
   const etapa = {
@@ -125,5 +126,31 @@ describe('Envios: pasta, recado à vista e observação por arquivo', () => {
     await userEvent.click(screen.getByRole('button', { name: /1 arquivo enviado/ }));
     expect(screen.getByText('“Gosto da luz”')).toBeTruthy();
     expect(screen.queryByText(/Escrever sobre/)).toBeNull();
+  });
+});
+
+describe('template: descrição da etapa e das sub-etapas', () => {
+  it('escreve as descrições e, em tarefa do cliente, já pede arquivos', async () => {
+    let itens = [{ title: 'Briefing', category: 'Etapa', desc: '', subs: [{ title: 'Fotos', kind: 'tarefa', kindLabel: '', responsible: 'studio' }] }];
+    const { rerender } = render(<EtapasEditor itens={itens} onChange={(n) => (itens = n)} />);
+    const atualizar = () => rerender(<EtapasEditor itens={itens} onChange={(n) => (itens = n)} />);
+    await userEvent.type(screen.getByLabelText('Descrição da etapa 1'), 'C');
+    atualizar();
+    await userEvent.type(screen.getByLabelText('Descrição da sub-etapa 1 da etapa 1'), 'M');
+    atualizar();
+    await userEvent.selectOptions(screen.getByLabelText('Responsável pela sub-etapa'), 'cliente');
+    atualizar();
+    expect(itens[0].desc).toBe('C');
+    expect(itens[0].subs[0]).toMatchObject({ instructions: 'M', responsible: 'cliente', pedeArquivos: true });
+    expect(screen.getByLabelText(/Pedir arquivos ao cliente/).checked).toBe(true);
+  });
+  it('o banco de demonstração leva as descrições do template para o projeto', () => {
+    const db = harness();
+    db().addTemplate('T', [{ title: 'Etapa A', category: 'Etapa', desc: 'Sobre A', subs: [{ title: 'Sub', kind: 'tarefa', responsible: 'cliente', pedeArquivos: true, instructions: 'Como fazer' }] }]);
+    const t = db().templates().find((x) => x.name === 'T');
+    db().applyTemplate('p1', t.id);
+    const e = db().stages('p1').find((s) => s.title === 'Etapa A');
+    expect(e.desc).toBe('Sobre A');
+    expect(e.subs[0]).toMatchObject({ instructions: 'Como fazer', pedeArquivos: true });
   });
 });

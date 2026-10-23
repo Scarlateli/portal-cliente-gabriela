@@ -1287,3 +1287,11 @@ button{color:inherit}
 .cp .envio-recado .row{margin-top:8px}
 .cp .envio-recado-lido p{margin:0;font-size:14px;line-height:1.55}
 @media (max-width:640px){.cp .envio-arquivos-bloco .arq-linha{grid-template-columns:32px minmax(0,1fr) auto}.cp .arq-anotar{grid-column:2;grid-row:2;justify-self:start}.cp .arq-nota,.cp .arq-nota-form{margin-left:0}}
+/* Rodada 12: descrições no editor de templates */
+.cp .ee textarea{width:100%;border:1px solid var(--line);border-radius:6px;padding:7px 10px;font:inherit;font-size:14px;line-height:1.45;color:var(--ink);background:var(--card);resize:vertical;outline:none}
+.cp .ee textarea:focus{border-color:var(--brand)}
+.cp .ee-desc{margin-top:8px}
+.cp .ee-sub{padding-bottom:6px}
+.cp .ee-sub-desc{grid-column:1/-1;font-size:13px}
+.cp .ee-sub-pede{grid-column:1/-1;display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)}
+.cp .ee .ee-sub-pede input[type="checkbox"]{width:16px;height:16px;min-height:0;padding:0;margin:0;flex:none;appearance:auto;accent-color:var(--gl-vinho)}
