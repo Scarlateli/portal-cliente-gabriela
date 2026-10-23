@@ -843,4 +843,7 @@ grossas e as letras em tamanhos desencontrados.
   andamento e o contorno vermelho da atrasada).
 - Uma escala só: título da etapa 17 · sub-etapa 14,5 · texto 13 ·
   detalhes 12 · etiquetas 10–11.
-- Descrição da etapa logo abaixo do título; "⋯" no canto, sem linha vazia.
+- Tipo e responsável da etapa como texto simples ("Documentação ·
+  Responsável: Cliente"); só o status e o "Em atraso" ficam em balão.
+- O prazo da sub-etapa é só texto, sem ícone. "⋯" no canto, sem linha vazia.
+- A descrição da etapa continua no lugar de antes (depois das sub-etapas).

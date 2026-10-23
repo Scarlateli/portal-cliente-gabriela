@@ -596,10 +596,7 @@ function SubItem({ db, s, b, i, total, isStudio, atual = false, arquivos = [], a
             {ROTULO_RESP[b.responsible] && b.responsible !== 'studio' ? ' – ' + ROTULO_RESP[b.responsible] : ''}
           </span>
           {q && (
-            <span className={'sub-prazo-txt sub-prazo-txt-' + q.estado}>
-              {q.estado === 'atrasado' ? <AlertTriangle size={11} aria-hidden /> : <CalendarDays size={11} aria-hidden />}
-              {textoQuando(q, b)}
-            </span>
+            <span className={'sub-prazo-txt sub-prazo-txt-' + q.estado}>{textoQuando(q, b)}</span>
           )}
           {b.kind === 'reuniao' && b.format === 'presencial' && <span className="sub-prazo-txt">Presencial</span>}
           {isStudio && b.pedeArquivos && (
@@ -807,8 +804,6 @@ function StageItem({ db, s, isStudio, arquivos, abrir, projectId, inicialAberta 
           </a>
         )}
 
-        {s.desc && <p className="tl-desc-inline">{s.desc}</p>}
-
         {late && (
           <div className="late-box">
             <div className="late-msg">
@@ -873,6 +868,8 @@ function StageItem({ db, s, isStudio, arquivos, abrir, projectId, inicialAberta 
               ))}
           </div>
         )}
+
+        {s.desc && <p className="tl-desc-inline">{s.desc}</p>}
 
         <AprovacaoEtapa db={db} s={s} isStudio={isStudio} projectId={projectId} />
 

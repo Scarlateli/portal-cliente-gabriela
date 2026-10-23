@@ -1348,3 +1348,14 @@ button{color:inherit}
 .cp .tl-body .meet-link{margin-top:10px;padding:3px 10px;font-size:12px;border-color:rgba(57,19,18,.35);background:transparent}
 .cp .tl-body .aprov,.cp .tl-body .aprov p{font-size:13px}
 .cp .tl-body .aprov{border-top-style:solid;border-top-color:var(--gl-hairline)}
+/* rodada 13b — mais limpo: tipo e responsável da etapa como texto (sem caixa),
+   separados por "·"; só o status e o atraso continuam em balão */
+.cp .tl-meta .tag{background:none;border:0;padding:0;font-size:12px;font-weight:400;color:var(--muted)}
+.cp .tl-meta .tag svg{display:none}
+.cp .tl-meta .tag + .tag::before{content:'·';margin-right:6px;color:var(--gl-hairline-2)}
+.cp .tl-meta{gap:6px 10px}
+.cp .tl-meta .pill,.cp .pill-select select{border-radius:999px}
+.cp .sub-prazo-txt{gap:0}
+.cp .sub-acao svg{opacity:.8}
+.cp .subs{border-top-color:var(--gl-hairline)}
+.cp .tl-desc-inline{margin:4px 0 0}
