@@ -594,7 +594,7 @@ function SubItem({ db, s, b, i, total, isStudio, atual = false, arquivos = [], a
             {ROTULO_RESP[b.responsible] && b.responsible !== 'studio' ? ' – ' + ROTULO_RESP[b.responsible] : ''}
           </span>
           {b.kind === 'reuniao' && b.format === 'presencial' && <span className="sub-desc">Presencial ·</span>}
-          {b.instructions && <span className="sub-desc">{b.instructions}</span>}
+          {b.instructions && <span className="sub-desc sub-instrucoes">{b.instructions}</span>}
         </div>
         {isStudio && b.pedeArquivos && (
           <div className="sub-linha3">
