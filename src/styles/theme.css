@@ -1359,3 +1359,7 @@ button{color:inherit}
 .cp .sub-acao svg{opacity:.8}
 .cp .subs{border-top-color:var(--gl-hairline)}
 .cp .tl-desc-inline{margin:4px 0 0}
+/* checkbox do formulário na cor da marca (não o azul do navegador) */
+.cp .sub-form input[type="checkbox"],.cp .aprov-check input[type="checkbox"]{accent-color:var(--gl-vinho)}
+/* etapa em andamento: contorno fino mais escuro, como na visão do cliente que ela aprovou */
+.cp .tl-em_andamento .tl-body{border-color:rgba(57,19,18,.6)}
