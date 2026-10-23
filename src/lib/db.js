@@ -208,6 +208,20 @@ export function makeDb(state, set) {
       if (!(state.subArquivos || []).some((a) => a.subId === bid)) throw new Error('Envie pelo menos um arquivo antes de concluir a entrega.');
       set((s) => ({ ...s, stages: s.stages.map((x) => x.id === sid ? { ...x, subs: (x.subs || []).map((b) => b.id === bid ? { ...b, entregueEm: new Date().toISOString() } : b) } : x) }));
     },
+    // espelha concluir_tarefa e anotar_arquivo do banco (rodada 12)
+    concluirTarefa: (sid, bid) => {
+      const sub = state.stages.flatMap((x) => x.subs || []).find((b) => b.id === bid);
+      if (!sub || sub.responsible !== 'cliente' || sub.pedeArquivos) throw new Error('Esta tarefa não pode ser concluída por aqui.');
+      if (sub.done) throw new Error('Esta tarefa já foi concluída.');
+      set((s) => ({ ...s, stages: s.stages.map((x) => x.id === sid ? { ...x, subs: (x.subs || []).map((b) => b.id === bid ? { ...b, done: true } : b) } : x) }));
+    },
+    anotarArquivo: (pid, aid, nota) => {
+      const a = (state.subArquivos || []).find((x) => x.id === aid);
+      const sub = a && state.stages.flatMap((x) => x.subs || []).find((b) => b.id === a.subId);
+      if (!a) throw new Error('Arquivo não encontrado.');
+      if (sub && (sub.done || sub.entregueEm)) throw new Error('Esta entrega já foi concluída; a observação não pode mais mudar.');
+      set((s) => ({ ...s, subArquivos: (s.subArquivos || []).map((x) => (x.id === aid ? { ...x, nota: String(nota || '').trim().slice(0, 500) || null } : x)) }));
+    },
     reabrirPedido: (sid, bid) => set((s) => ({ ...s, stages: s.stages.map((x) => x.id === sid ? { ...x, subs: (x.subs || []).map((b) => b.id === bid ? { ...b, done: false, entregueEm: null } : b) } : x) })),
     setNotaPedido: (sid, bid, nota) => set((s) => ({ ...s, stages: s.stages.map((x) => x.id === sid ? { ...x, subs: (x.subs || []).map((b) => b.id === bid ? { ...b, clientNote: String(nota || '').trim().slice(0, 1000) } : b) } : x) })),
     // no modo demonstração não há e-mail: só confirma que "enviaria"

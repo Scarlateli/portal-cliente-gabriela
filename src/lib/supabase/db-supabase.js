@@ -902,7 +902,7 @@ export function makeSupabaseDb() {
     subArquivos: async (pid) => {
       const { data, error } = await supabase
         .from('sub_arquivos')
-        .select('id, subId:sub_id, projectId:project_id, name, storagePath:storage_path, size, sentBy:sent_by, createdAt:created_at')
+        .select('id, subId:sub_id, projectId:project_id, name, storagePath:storage_path, size, sentBy:sent_by, createdAt:created_at, nota')
         .eq('project_id', pid)
         .order('created_at');
       must(error);
@@ -936,6 +936,16 @@ export function makeSupabaseDb() {
     // o cliente avisa que mandou tudo; depois disso não mexe mais no pedido
     concluirEntrega: async (sid, bid) => {
       const { error } = await supabase.rpc('concluir_entrega', { p_sub: bid });
+      must(error);
+    },
+    // o cliente marca como feita uma tarefa dele que não pede arquivos (rodada 12)
+    concluirTarefa: async (sid, bid) => {
+      const { error } = await supabase.rpc('concluir_tarefa', { p_sub: bid });
+      must(error);
+    },
+    // observação do cliente num arquivo enviado (rodada 12)
+    anotarArquivo: async (pid, aid, nota) => {
+      const { error } = await supabase.rpc('anotar_arquivo', { p_arquivo: aid, p_nota: nota || '' });
       must(error);
     },
     // o studio devolve o pedido ao cliente (aberto de novo para envio)

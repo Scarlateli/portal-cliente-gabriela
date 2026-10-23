@@ -68,6 +68,8 @@ export function invalidationsFor(method, pid) {
     setNotaPedido: [qk.stages(pid)],
     concluirEntrega: [qk.stages(pid)],
     reabrirPedido: [qk.stages(pid)],
+    concluirTarefa: [qk.stages(pid)],
+    anotarArquivo: [qk.subArquivos(pid)],
     avisarCliente: [],
     applyTemplate: [qk.stages(pid), qk.calendar(pid)],
     addTemplate: [qk.templates()],

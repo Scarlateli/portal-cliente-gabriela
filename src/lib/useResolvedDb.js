@@ -91,6 +91,8 @@ const ALL_MUTATIONS = [
   'setNotaPedido',
   'concluirEntrega',
   'reabrirPedido',
+  'concluirTarefa',
+  'anotarArquivo',
   'avisarCliente',
 ];
 
@@ -117,6 +119,7 @@ const PID_FIRST = new Set([
   'replaceDocumentFile',
   'enviarArquivos',
   'removerArquivo',
+  'anotarArquivo',
   'avisarCliente',
 ]);
 

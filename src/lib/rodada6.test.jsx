@@ -45,14 +45,16 @@ describe('linha do tempo no desenho da Gabriela', () => {
     const itens = screen.getAllByRole('listitem').filter((li) => li.classList.contains('sub'));
     expect(within(itens[0]).getByText('Pequena descrição')).toBeTruthy();
     expect(within(itens[0]).getByText('Entrega')).toBeTruthy();
-    expect(within(itens[1]).getByText('Essa é uma tarefa sua')).toBeTruthy();
+    // rodada 12: o cliente vê igual ao studio
+    expect(within(itens[1]).getByText('Tarefa – Cliente')).toBeTruthy();
     await userEvent.click(within(itens[1]).getByRole('button', { name: /Fazer upload/ }));
     expect(abrir).toHaveBeenCalledWith('docs', 'pedido-b2');
     expect(within(itens[2]).getByRole('link', { name: /Entrar na reunião/ }).getAttribute('href')).toBe('https://meet.google.com/abc');
     // datas da etapa, uma por linha
     expect(screen.getByText('Prazos Previstos')).toBeTruthy();
-    expect(screen.getByText('Início – 20/10/2026')).toBeTruthy();
-    expect(screen.getByText('Entrega – 30/10/2026')).toBeTruthy();
+    // rodada 12: símbolos no lugar de "Início –" e "Entrega –"
+    expect(screen.getByTitle('Início').textContent).toMatch(/20\/10\/2026/);
+    expect(screen.getByTitle('Entrega').textContent).toMatch(/30\/10\/2026/);
   });
 
   it('studio: conclui pela bolinha; tarefa do cliente vai junto do tipo', async () => {

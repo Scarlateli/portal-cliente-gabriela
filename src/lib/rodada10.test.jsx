@@ -54,10 +54,12 @@ const etapas = [
 const db = { stages: () => etapas, templates: () => [] };
 
 describe('linha do tempo do cliente', () => {
-  it('sem filtros; só a etapa atual aberta; as outras abrem ao tocar', async () => {
+  it('abas Em andamento e Todas; em Todas só a atual aberta e as outras abrem ao tocar (rodada 12)', async () => {
     render(<Timeline db={db} project={{ id: 'p1' }} isStudio={false} />);
     expect(screen.queryByRole('button', { name: 'Futuras' })).toBeNull();
     expect(screen.getByText('Planta')).toBeTruthy();
+    expect(screen.queryByText('Projeto')).toBeNull();
+    await userEvent.click(screen.getByRole('button', { name: 'Todas' }));
     expect(screen.queryByText('Detalhes')).toBeNull();
     await userEvent.click(screen.getByRole('button', { name: /Projeto/ }));
     expect(screen.getByText('Detalhes')).toBeTruthy();

@@ -21,6 +21,8 @@ import {
   ArrowDown,
   FolderUp,
   ChevronDown,
+  Flag,
+  Play,
 } from 'lucide-react';
 import { StatusPill, Empty, MenuMais, StatusSelect } from '../atoms.jsx';
 import { STAGE_STATUS, STAGE_CATEGORIES } from '../../lib/constants.js';
@@ -51,10 +53,9 @@ const etapaNova = () => ({
 });
 
 // ordem pedida pela Gabriela: o presente primeiro, depois o futuro, o passado e tudo
+// rodada 12: as duas abas que a Gabriela pediu, iguais para studio e cliente
 const FILTERS = [
   ['em_andamento', 'Em andamento'],
-  ['a_fazer', 'Futuras'],
-  ['concluida', 'Concluídas'],
   ['todas', 'Todas'],
 ];
 
@@ -71,9 +72,10 @@ export function Timeline({ db, project, isStudio, alvo = null, abrir = () => {} 
   const [filter, setFilter] = useState('em_andamento');
   const templates = db.templates();
   const tplPreview = templates.find((t) => t.id === tplSel);
-  // rodada 10: o cliente vê todas as etapas, recolhidas, com a atual aberta;
-  // os filtros ficam só para o studio
-  const shown = !isStudio || filter === 'todas' ? stages : stages.filter((s) => s.status === filter);
+  // rodada 12: a mesma visualização para studio e cliente — etapas em
+  // cartões que abrem e fecham; "Em andamento" mostra as atuais abertas e
+  // "Todas" mostra tudo, com a atual aberta
+  const shown = filter === 'todas' ? stages : stages.filter((s) => s.status === filter);
   const foco = (stages.find((s) => s.status === 'em_andamento') || stages.find((s) => s.status !== 'concluida') || {}).id;
   // vindo do sino: se o item pedido está escondido pelo filtro, mostra todas
   useEffect(() => {
@@ -130,7 +132,7 @@ export function Timeline({ db, project, isStudio, alvo = null, abrir = () => {} 
         )}
       </header>
 
-      {isStudio && (
+      {(
       <div className="filter-row">
         {FILTERS.map(([f, label]) => (
           <button key={f} className={'filter' + (filter === f ? ' on' : '')} onClick={() => setFilter(f)}>
@@ -246,7 +248,7 @@ export function Timeline({ db, project, isStudio, alvo = null, abrir = () => {} 
         <Empty
           text={
             filter === 'em_andamento'
-              ? 'Nenhuma etapa em andamento agora. Veja as Futuras ou Todas.'
+              ? 'Nenhuma etapa em andamento agora. Veja em “Todas”.'
               : 'Nenhuma etapa neste filtro.'
           }
         />
@@ -261,7 +263,7 @@ export function Timeline({ db, project, isStudio, alvo = null, abrir = () => {} 
               arquivos={arquivos}
               abrir={abrir}
               projectId={project.id}
-              inicialAberta={isStudio || s.id === foco}
+              inicialAberta={filter === 'em_andamento' || s.id === foco}
               alvo={alvo}
             />
           ))}
@@ -369,7 +371,13 @@ function SubForm({ inicial, onSalvar, onCancelar, rotuloSalvar = 'Salvar', limpa
         )}
         <label className="inline-lab">
           Responsável
-          <select value={sd.responsible} onChange={(e) => setSd({ ...sd, responsible: e.target.value })}>
+          <select
+            value={sd.responsible}
+            onChange={(e) =>
+              // rodada 12: tarefa do cliente já nasce pedindo arquivos (dá para desmarcar)
+              setSd({ ...sd, responsible: e.target.value, pedeArquivos: e.target.value === 'cliente' ? true : sd.pedeArquivos })
+            }
+          >
             {SUB_RESPONSAVEIS.map(([v, r]) => (
               <option key={v} value={v}>
                 {r}
@@ -483,6 +491,7 @@ function SubItem({ db, s, b, i, total, isStudio, atual = false, arquivos = [], a
   // com o mouse em cima e somem ao sair ou depois de usar uma delas — no
   // Safari o ":hover" ficava preso depois de um clique
   const [acoesVisiveis, setAcoesVisiveis] = useState(false);
+  const [concluindo, setConcluindo] = useState(false);
   const { avisar, excluirComDesfazer, ocultos } = useAvisos();
   if (ocultos.has(b.id)) return null;
   if (editando)
@@ -519,6 +528,26 @@ function SubItem({ db, s, b, i, total, isStudio, atual = false, arquivos = [], a
         <FolderUp size={12} /> {enviados ? 'Concluir entrega' : 'Fazer upload'}
       </button>
     );
+  else if (!isStudio && doCliente && !b.pedeArquivos && !b.done)
+    // rodada 12: tarefa do cliente sem arquivos — ele mesmo marca como feita
+    acao = (
+      <button
+        type="button"
+        className="btn-mini"
+        disabled={concluindo}
+        onClick={async () => {
+          setConcluindo(true);
+          try {
+            await db.concluirTarefa(s.id, b.id);
+            avisar('Tarefa concluída');
+          } finally {
+            setConcluindo(false);
+          }
+        }}
+      >
+        <Check size={12} /> {concluindo ? 'Salvando…' : 'Marcar como feita'}
+      </button>
+    );
   else if (b.pedeArquivos && isStudio && b.entregueEm && !b.done)
     acao = (
       <button type="button" className="btn-mini" onClick={irEnvio}>
@@ -536,8 +565,12 @@ function SubItem({ db, s, b, i, total, isStudio, atual = false, arquivos = [], a
     <li
       className={classe}
       id={'alvo-sub-' + b.id}
-      onMouseEnter={() => setAcoesVisiveis(true)}
-      onMouseLeave={() => setAcoesVisiveis(false)}
+      // rodada 12: só eventos do ponteiro, sem depender de "(hover:hover)" do
+      // navegador — mouse: aparece ao entrar e some ao sair; toque (iPad):
+      // um toque na linha mostra, outro esconde
+      onPointerEnter={(e) => e.pointerType !== 'touch' && setAcoesVisiveis(true)}
+      onPointerLeave={(e) => e.pointerType !== 'touch' && setAcoesVisiveis(false)}
+      onPointerDown={(e) => e.pointerType === 'touch' && !e.target.closest('.sub-acoes') && setAcoesVisiveis((v) => !v)}
       onFocus={(e) => e.target.matches && e.target.matches(':focus-visible') && setAcoesVisiveis(true)}
       onBlur={(e) => !e.currentTarget.contains(e.relatedTarget) && setAcoesVisiveis(false)}
     >
@@ -553,13 +586,12 @@ function SubItem({ db, s, b, i, total, isStudio, atual = false, arquivos = [], a
       <div className="sub-corpo">
         <div className="sub-linha1">
           <span className="sub-title">{b.title}</span>
-          {/* no studio, quem faz vai junto do tipo (rodada 7) */}
-          {!isStudio && doCliente && !b.done && <span className="sub-sua">Essa é uma tarefa sua</span>}
         </div>
         <div className="sub-linha2">
-          <span className={'sub-tipo-tag' + (isStudio && doCliente ? ' sub-tipo-cliente' : '')}>
+          {/* rodada 12: o cliente vê igual ao studio ("Tarefa – Cliente", em vinho) */}
+          <span className={'sub-tipo-tag' + (doCliente ? ' sub-tipo-cliente' : '')}>
             {rotuloTipoSub(b)}
-            {isStudio && ROTULO_RESP[b.responsible] && b.responsible !== 'studio' ? ' – ' + ROTULO_RESP[b.responsible] : ''}
+            {ROTULO_RESP[b.responsible] && b.responsible !== 'studio' ? ' – ' + ROTULO_RESP[b.responsible] : ''}
           </span>
           {b.kind === 'reuniao' && b.format === 'presencial' && <span className="sub-desc">Presencial ·</span>}
           {b.instructions && <span className="sub-desc">{b.instructions}</span>}
@@ -581,7 +613,11 @@ function SubItem({ db, s, b, i, total, isStudio, atual = false, arquivos = [], a
         </div>
       )}
       {isStudio && (
-        <span className={'sub-acoes' + (acoesVisiveis ? ' visivel' : '')} onClick={() => setAcoesVisiveis(false)}>
+        <span
+          className={'sub-acoes' + (acoesVisiveis ? ' visivel' : '')}
+          style={{ visibility: acoesVisiveis ? 'visible' : 'hidden', opacity: 1 }}
+          onClick={() => setAcoesVisiveis(false)}
+        >
           <button className="icon-x" disabled={i === 0} onClick={() => db.moveSub(s.id, b.id, -1)} aria-label={'Subir ' + b.title}>
             <ArrowUp size={12} />
           </button>
@@ -610,18 +646,27 @@ function SubItem({ db, s, b, i, total, isStudio, atual = false, arquivos = [], a
    embaixo (rodada 7) */
 function DatasEtapa({ s }) {
   const reuniao = s.category === 'Reunião';
+  // rodada 12: símbolos no lugar de "Início –" e "Entrega –", para as datas
+  // caberem dentro da largura de "Prazos Previstos"
   const linhas = [];
-  if (s.start) linhas.push((reuniao ? 'Data – ' : 'Início – ') + fmt(s.start) + (s.time ? ' às ' + s.time : ''));
-  if (s.end && s.end !== s.start) linhas.push('Entrega – ' + fmt(s.end));
-  if (!linhas.length) linhas.push('Sem datas definidas');
+  if (s.start)
+    linhas.push({ I: reuniao ? Clock : Play, rot: reuniao ? 'Data' : 'Início', txt: fmt(s.start) + (s.time ? ' · ' + s.time : '') });
+  if (s.end && s.end !== s.start) linhas.push({ I: Flag, rot: 'Entrega', txt: fmt(s.end) });
   return (
     <span className="tl-datas">
       <span className="tl-datas-tit">
         <CalendarDays size={12} /> {reuniao ? 'Data Prevista' : 'Prazos Previstos'}
       </span>
-      {linhas.map((l) => (
-        <span key={l}>{l}</span>
-      ))}
+      {linhas.length === 0 ? (
+        <span className="tl-datas-linha">A definir</span>
+      ) : (
+        linhas.map(({ I, rot, txt }) => (
+          <span key={rot} className="tl-datas-linha" title={rot}>
+            <I size={10} aria-hidden /> <span className="sr-only">{rot}: </span>
+            {txt}
+          </span>
+        ))
+      )}
     </span>
   );
 }
@@ -699,14 +744,11 @@ function StageItem({ db, s, isStudio, arquivos, abrir, projectId, inicialAberta 
         {/* rodada 11: título e status à esquerda; prazos e "⋯" à direita */}
         <div className="tl-top tl-cab">
           <div className="tl-cab-esq">
-            {isStudio ? (
+            {/* rodada 12: studio e cliente abrem e fecham a etapa do mesmo jeito */}
+            <button type="button" className="tl-abrir" aria-expanded={aberta} onClick={() => setAberta(!aberta)}>
+              <ChevronDown size={16} className="tl-seta" aria-hidden />
               <h3>{s.title}</h3>
-            ) : (
-              <button type="button" className="tl-abrir" aria-expanded={aberta} onClick={() => setAberta(!aberta)}>
-                <ChevronDown size={16} className="tl-seta" aria-hidden />
-                <h3>{s.title}</h3>
-              </button>
-            )}
+            </button>
           <div className="tl-meta">
             {/* rodada 5: na etapa macro não se repete "Etapa" nem o studio
                 como responsável; aparece só o que acrescenta */}
@@ -745,22 +787,6 @@ function StageItem({ db, s, isStudio, arquivos, abrir, projectId, inicialAberta 
           </div>
           <div className="tl-cab-dir">
             <DatasEtapa s={s} />
-            {isStudio && (
-              <MenuMais
-                rotulo={'Mais ações da etapa ' + s.title}
-                itens={[
-                  { rotulo: 'Editar etapa', Icone: PenLine, acao: startEdit },
-                  {
-                    rotulo: 'Excluir etapa',
-                    Icone: Trash2,
-                    perigo: true,
-                    acao: () => {
-                      excluirComDesfazer({ id: s.id, texto: 'Etapa "' + s.title + '" excluída', executar: () => db.deleteStage(s.id) });
-                    },
-                  },
-                ]}
-              />
-            )}
           </div>
         </div>
 
@@ -841,6 +867,27 @@ function StageItem({ db, s, isStudio, arquivos, abrir, projectId, inicialAberta 
         {s.desc && <p className="tl-desc-inline">{s.desc}</p>}
 
         <AprovacaoEtapa db={db} s={s} isStudio={isStudio} projectId={projectId} />
+
+        {/* rodada 12: editar/excluir a etapa no rodapé, fora do topo (que fica
+            igual ao do cliente) */}
+        {isStudio && (
+          <div className="tl-rodape">
+            <MenuMais
+              rotulo={'Mais ações da etapa ' + s.title}
+              itens={[
+                { rotulo: 'Editar etapa', Icone: PenLine, acao: startEdit },
+                {
+                  rotulo: 'Excluir etapa',
+                  Icone: Trash2,
+                  perigo: true,
+                  acao: () => {
+                    excluirComDesfazer({ id: s.id, texto: 'Etapa "' + s.title + '" excluída', executar: () => db.deleteStage(s.id) });
+                  },
+                },
+              ]}
+            />
+          </div>
+        )}
 
         </>
         )}

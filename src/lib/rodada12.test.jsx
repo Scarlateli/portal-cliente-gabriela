@@ -29,3 +29,60 @@ describe('projeto sem e-mail, acesso liberado depois', () => {
     expect(() => db().liberarAcesso(p.id, 'outro@x.com')).toThrow(/já tem acesso/);
   });
 });
+
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { vi } from 'vitest';
+import { Timeline } from '../components/project/Timeline.jsx';
+
+describe('Linha do Tempo igual para studio e cliente', () => {
+  const etapa = {
+    id: 's1', projectId: 'p1', title: 'BRIEFING', category: 'Etapa', status: 'em_andamento', owner: 'studio', start: '2026-10-20', end: '2026-10-22',
+    subs: [
+      { id: 'b1', title: 'Catalogação', kind: 'tarefa', responsible: 'cliente', due: '', done: false, pedeArquivos: false },
+      { id: 'b2', title: 'Escopo', kind: 'entrega', responsible: 'studio', due: '', done: false },
+    ],
+  };
+  const montar = (isStudio, extra = {}) => {
+    const db = { stages: () => [etapa], templates: () => [], subArquivos: () => [], concluirTarefa: vi.fn(async () => {}), ...extra };
+    render(<Timeline db={db} project={{ id: 'p1' }} isStudio={isStudio} />);
+    return db;
+  };
+  for (const isStudio of [true, false]) {
+    it((isStudio ? 'studio' : 'cliente') + ': abas Em andamento/Todas, etapa que abre e fecha, datas com símbolo', async () => {
+      montar(isStudio);
+      expect(screen.getAllByRole('button', { name: /^(Em andamento|Todas)$/ })).toHaveLength(2);
+      expect(screen.getByRole('button', { name: 'BRIEFING' }).getAttribute('aria-expanded')).toBe('true');
+      expect(screen.getByTitle('Início').textContent).toMatch(/20\/10\/2026/);
+      expect(screen.getByTitle('Entrega').textContent).toMatch(/22\/10\/2026/);
+      expect(screen.getByText('Tarefa – Cliente')).toBeTruthy();
+      expect(screen.queryByText('Essa é uma tarefa sua')).toBeNull();
+    });
+  }
+  it('cliente marca como feita uma tarefa dele sem arquivos', async () => {
+    const db = montar(false);
+    await userEvent.click(screen.getByRole('button', { name: /Marcar como feita/ }));
+    expect(db.concluirTarefa).toHaveBeenCalledWith('s1', 'b1');
+  });
+  it('studio: setas e lápis só com o ponteiro em cima (sem depender do CSS)', async () => {
+    montar(true);
+    const linha = screen.getByText('Escopo').closest('li');
+    const acoes = linha.querySelector('.sub-acoes');
+    expect(acoes.style.visibility).toBe('hidden');
+    await userEvent.hover(linha);
+    expect(acoes.style.visibility).toBe('visible');
+    await userEvent.unhover(linha);
+    expect(acoes.style.visibility).toBe('hidden');
+  });
+  it('banco de demonstração: cliente conclui a tarefa e anota um arquivo', () => {
+    const db = harness();
+    db().addSub('s2', { title: 'Medidas', kind: 'tarefa', responsible: 'cliente', pedeArquivos: false });
+    const sub = db().stages('p1').find((s) => s.id === 's2').subs.find((b) => b.title === 'Medidas');
+    db().concluirTarefa('s2', sub.id);
+    expect(db().stages('p1').find((s) => s.id === 's2').subs.find((b) => b.id === sub.id).done).toBe(true);
+    db().enviarArquivos('p1', 'sb6', [{ name: 'a.jpg', size: 1 }], 'client');
+    const arq = db().subArquivos('p1')[0];
+    db().anotarArquivo('p1', arq.id, '  Parede da TV ');
+    expect(db().subArquivos('p1')[0].nota).toBe('Parede da TV');
+  });
+});

@@ -1238,3 +1238,22 @@ button{color:inherit}
 /* ===================== Rodada 12 (23/10) ===================== */
 .cp .sem-acesso{font-style:normal;font-size:11px;letter-spacing:.04em;margin-left:8px;padding:1px 8px;border-radius:999px;background:var(--now-soft);color:var(--ink)}
 .cp .liberar-acesso{margin-top:16px}
+/* formulário de sub-etapa: a caixinha "Pedir arquivos" estava herdando o
+   tamanho dos campos de texto (ficava enorme, com o texto lá na direita) */
+.cp .sub-form .sub-form-pede{display:flex;align-items:center;justify-content:flex-start;gap:8px;font-size:13px;line-height:1.4}
+.cp .sub-form .sub-form-pede input[type="checkbox"]{width:16px;height:16px;min-width:16px;min-height:0;padding:0;margin:0;flex:none;border:0;appearance:auto;-webkit-appearance:checkbox}
+/* Linha do Tempo igual para os dois: rodapé da etapa e datas com símbolos */
+.cp .tl-rodape{display:flex;justify-content:flex-end;margin-top:6px}
+.cp .tl-datas-linha{display:inline-flex;align-items:center;gap:5px;font-size:11px;letter-spacing:.04em;text-transform:uppercase}
+.cp .tl-datas-linha svg{opacity:.7}
+/* coluna da direita das sub-etapas mais discreta (estava "feia": negrito e
+   caixa alta) */
+.cp .sub-data,.cp .sub-data-hoje,.cp .sub-data-feito{font-family:var(--font-body);font-size:12px;font-weight:400;letter-spacing:0;text-transform:none;color:var(--muted)}
+.cp .sub-data-hoje{color:var(--ink);font-weight:500}
+.cp .sub-data-atrasado{color:var(--late);font-weight:500}
+.cp .sub-hora{font-family:var(--font-body);font-size:12px;font-weight:400;letter-spacing:0;color:var(--muted)}
+.cp .btn-mini{border-color:transparent;background:transparent;padding:2px 0;font-size:12px;color:var(--brand);text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px}
+.cp .btn-mini:hover{background:transparent;color:var(--ink)}
+.cp .sub-do-cliente .btn-mini{border-color:transparent;color:var(--brand)}
+.cp .sub-do-cliente .btn-mini:hover{background:transparent;color:var(--ink)}
+.cp .btn-mini:disabled{opacity:.6;cursor:default}
