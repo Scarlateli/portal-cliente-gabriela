@@ -89,6 +89,7 @@ export function invalidationsFor(method, pid) {
     updateContractDoc: [qk.contracts(pid)],
     deleteContractDoc: [qk.contracts(pid)],
     resendClientAccess: [],
+    liberarAcesso: [qk.project(pid), qk.projects(), qk.clientName(pid)],
     attachSubFile: [qk.stages(pid)],
     sendToAutentique: [qk.contracts(pid)],
     checkAutentique: [qk.contracts(pid)],

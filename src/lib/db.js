@@ -102,11 +102,13 @@ export function makeDb(state, set) {
 
     /* mutações — trocar por inserts/updates no Supabase */
     addProject: (data) => set((s) => {
-      const cid = uid('u');
+      // rodada 12: sem e-mail, o projeto nasce sem cliente (acesso liberado depois)
+      const email = String(data.clientEmail || '').trim().toLowerCase();
+      const cid = email ? uid('u') : null;
       const pid = uid('p');
       return {
         ...s,
-        users: [...s.users, { id: cid, role: 'client', name: data.clientName, email: data.clientEmail.trim().toLowerCase(), pass: data.pass }],
+        users: email ? [...s.users, { id: cid, role: 'client', name: data.clientName, email, pass: data.pass }] : s.users,
         projects: [...s.projects, {
           id: pid, code: data.code, name: data.name, clientId: cid, status: 'em_andamento',
           ...camposProjeto(data), completedAt: null, accessUntil: null,
@@ -114,6 +116,20 @@ export function makeDb(state, set) {
         stages: [...s.stages, ...etapasDeItens(s, pid, data.etapas)],
       };
     }),
+    liberarAcesso: (pid, emailDigitado) => {
+      const email = String(emailDigitado || '').trim().toLowerCase();
+      if (!email) throw new Error('Informe o e-mail do cliente.');
+      const p = state.projects.find((x) => x.id === pid);
+      if (!p || p.clientId) throw new Error('Este projeto já tem acesso liberado.');
+      const existente = state.users.find((u) => u.email === email && u.role === 'client');
+      const cid = existente ? existente.id : uid('u');
+      set((s) => ({
+        ...s,
+        users: existente ? s.users : [...s.users, { id: cid, role: 'client', name: p.clientName || email, email, pass: 'mudar123' }],
+        projects: s.projects.map((x) => (x.id === pid ? { ...x, clientId: cid } : x)),
+      }));
+      return { email, tempPassword: existente ? null : 'mudar123', emailSent: false, jaTinhaAcesso: !!existente };
+    },
     addStage: (pid, d) => set((s) => {
       const ord = (s.stages.filter((x) => x.projectId === pid).reduce((m, x) => Math.max(m, x.ord), 0)) + 1;
       return { ...s, stages: [...s.stages, { id: uid('s'), projectId: pid, ord, title: d.title, category: d.category, status: 'a_fazer', owner: d.owner || 'studio', start: d.start || '', end: d.end || '', time: d.time || '', link: d.link || '', presencial: !!d.presencial, desc: d.desc || '', subs: (d.subs || []).filter((it) => it && String(it.title || '').trim()).map(novaSub), rescheduledFrom: null }] };

@@ -1234,3 +1234,7 @@ button{color:inherit}
   .cp .tl-cab-dir{align-items:flex-start;flex-direction:row;justify-content:space-between;width:100%}
   .cp .tl-cab-dir .tl-datas{align-items:flex-start;text-align:left}
 }
+
+/* ===================== Rodada 12 (23/10) ===================== */
+.cp .sem-acesso{font-style:normal;font-size:11px;letter-spacing:.04em;margin-left:8px;padding:1px 8px;border-radius:999px;background:var(--now-soft);color:var(--ink)}
+.cp .liberar-acesso{margin-top:16px}

@@ -19,11 +19,8 @@ export const newProjectSchema = z.object({
   code: z.string().trim().min(1, 'Informe o código do projeto.'),
   name: z.string().trim().min(1, 'Informe o nome do projeto.'),
   clientName: z.string().trim().min(1, 'Informe o nome do cliente.'),
-  clientEmail: z
-    .string()
-    .trim()
-    .min(1, 'Informe o e-mail do cliente.')
-    .email('E-mail do cliente inválido.'),
+  // rodada 12: opcional — o projeto pode nascer sem acesso e ser liberado depois
+  clientEmail: z.union([z.literal(''), z.string().trim().email('E-mail do cliente inválido.')]).optional(),
   address: z.string().optional(),
   start: z.string().optional(),
   due: z.string().optional(),

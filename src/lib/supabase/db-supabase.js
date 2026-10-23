@@ -520,14 +520,14 @@ export function makeSupabaseDb() {
       // 1) cria o login do cliente via Edge Function (service_role no servidor)
       // reset: false — se o cliente já tem acesso (outro projeto), a senha
       // dele continua valendo; o projeto novo só aparece no portal dele.
-      const fn = await invocar('invite-client', {
-        email: data.clientEmail.trim().toLowerCase(),
-        name: data.clientName,
-        greeting: data.greeting || '',
-        reset: false,
-      });
-      const clientId = fn && fn.userId;
-      if (!clientId) throw new Error('Falha ao criar o usuário do cliente.');
+      // Rodada 12: sem e-mail, o projeto nasce sem cliente vinculado e o
+      // acesso é liberado depois (liberarAcesso).
+      const email = String(data.clientEmail || '').trim().toLowerCase();
+      const fn = email
+        ? await invocar('invite-client', { email, name: data.clientName, greeting: data.greeting || '', reset: false })
+        : null;
+      const clientId = fn ? fn.userId : null;
+      if (email && !clientId) throw new Error('Falha ao criar o usuário do cliente.');
       // 2) projeto
       const { data: proj, error: pErr } = await supabase
         .from('projects')
@@ -551,6 +551,33 @@ export function makeSupabaseDb() {
         tempPassword: (fn && fn.tempPassword) || null,
         inviteEmailSent: !!(fn && fn.emailSent),
         jaTinhaAcesso: !!(fn && fn.existing),
+      };
+    },
+    // libera o acesso de um projeto criado sem e-mail (rodada 12)
+    liberarAcesso: async (pid, emailDigitado) => {
+      const email = String(emailDigitado || '').trim().toLowerCase();
+      if (!email) throw new Error('Informe o e-mail do cliente.');
+      const { data: proj, error: e1 } = await supabase
+        .from('projects')
+        .select('client_id, client_name, greeting')
+        .eq('id', pid)
+        .single();
+      must(e1);
+      if (proj.client_id) throw new Error('Este projeto já tem acesso liberado.');
+      const fn = await invocar('invite-client', {
+        email,
+        name: proj.client_name || email,
+        greeting: proj.greeting || '',
+        reset: false,
+      });
+      if (!fn || !fn.userId) throw new Error('Falha ao criar o acesso do cliente.');
+      const { error: e2 } = await supabase.from('projects').update({ client_id: fn.userId }).eq('id', pid);
+      must(e2);
+      return {
+        email,
+        tempPassword: fn.tempPassword || null,
+        emailSent: !!fn.emailSent,
+        jaTinhaAcesso: !!fn.existing,
       };
     },
     resendClientAccess: async (pid) => {

@@ -173,6 +173,7 @@ function AdminProjectCard({ baseDb, p, onOpen }) {
       <h3>{p.name}</h3>
       <p className="proj-client">
         <User size={12} /> Cliente: {clientName}
+        {!p.clientId && <em className="sem-acesso">acesso não liberado</em>}
       </p>
       {enderecoCurto(p) && (
         <p className="proj-addr">
@@ -320,7 +321,7 @@ function NewProject({ db, onDone }) {
           {errors.clientName && <span className="error">{errors.clientName}</span>}
         </label>
         <label className="lab">
-          E-mail de acesso
+          E-mail de acesso (opcional)
           <input
             type="email"
             value={f.clientEmail}
@@ -328,6 +329,9 @@ function NewProject({ db, onDone }) {
             placeholder="email@cliente.com" aria-label="E-mail de acesso do cliente"
           />
           {errors.clientEmail && <span className="error">{errors.clientEmail}</span>}
+          <span className="hint lab-hint">
+            Pode deixar em branco: monte o projeto inteiro e libere o acesso depois, em “Liberar acesso ao cliente”.
+          </span>
         </label>
         <label className="lab full">
           Como o portal cumprimenta (opcional)
@@ -369,7 +373,7 @@ function NewProject({ db, onDone }) {
       <EtapasEditor itens={etapas} onChange={setEtapas} />
       <p className="hint">
         {IS_SUPABASE
-          ? 'Ao criar o projeto, uma senha provisória é gerada para o cliente — copie e envie por WhatsApp (ou deixe ir por e-mail, com o Resend ativo). No primeiro acesso, ele cria a senha definitiva.'
+          ? 'Com e-mail preenchido, ao criar o projeto uma senha provisória é gerada para o cliente — copie e envie por WhatsApp (ou deixe ir por e-mail, com o Resend ativo). No primeiro acesso, ele cria a senha definitiva.'
           : 'A senha inicial será usada pelo cliente no primeiro acesso (modo demonstração).'}
       </p>
       <div className="row">

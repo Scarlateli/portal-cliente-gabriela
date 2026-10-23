@@ -178,6 +178,9 @@ function ProjectInner({
   const [resent, setResent] = useState(null);
   const saudacao = vocativo(project.greeting, user && user.name);
   const [resending, setResending] = useState(false);
+  // rodada 12: projeto criado sem e-mail — libera o acesso depois
+  const [liberando, setLiberando] = useState(false);
+  const semAcesso = !project.clientId;
 
   return (
     <div className="shell">
@@ -221,6 +224,7 @@ function ProjectInner({
             {isStudio && (
               <span>
                 <User size={14} /> Cliente: {db.clientName(project.id)}
+                {semAcesso && <em className="sem-acesso">acesso ainda não liberado</em>}
               </span>
             )}
             <span>
@@ -273,7 +277,30 @@ function ProjectInner({
 
         <ErrorBanner error={mutationError} onClose={clearError} />
 
-        {resent && (
+        {isStudio && liberando && (
+          <LiberarAcesso
+            db={db}
+            project={project}
+            onFechar={() => setLiberando(false)}
+            onLiberado={(r) => {
+              setLiberando(false);
+              setResent(r);
+            }}
+          />
+        )}
+
+        {resent && resent.jaTinhaAcesso && (
+          <div className="invite-box">
+            <strong>Acesso liberado! Esse cliente já tinha acesso ao portal.</strong>
+            <p className="hint">O projeto já aparece para {resent.email}, com a senha que ele usa hoje.</p>
+            <div className="row">
+              <button className="btn btn-ghost btn-sm" onClick={() => setResent(null)}>
+                Fechar
+              </button>
+            </div>
+          </div>
+        )}
+        {resent && !resent.jaTinhaAcesso && (
           <div className="invite-box">
             <strong>
               {resent.emailSent
@@ -355,7 +382,12 @@ function ProjectInner({
             acoes={
               project.status !== 'concluido' && (
                 <>
-                  {IS_SUPABASE && !expired && (
+                  {semAcesso && (
+                    <button className="btn btn-primary btn-sm" onClick={() => setLiberando(true)} disabled={liberando}>
+                      <KeyRound size={14} /> Liberar acesso ao cliente
+                    </button>
+                  )}
+                  {IS_SUPABASE && !expired && !semAcesso && (
                     <button
                       className="btn btn-ghost btn-sm"
                       disabled={resending}
@@ -548,5 +580,49 @@ export function NavInferior({ tab, setTab, pendencias = [] }) {
       </nav>
     </>,
     document.querySelector('.cp') || document.body,
+  );
+}
+
+/* Liberar o acesso de um projeto criado sem e-mail (rodada 12) */
+function LiberarAcesso({ db, project, onFechar, onLiberado }) {
+  const [email, setEmail] = useState('');
+  const [erro, setErro] = useState('');
+  const [enviando, setEnviando] = useState(false);
+  const valido = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+  const liberar = async () => {
+    if (!valido || enviando) return;
+    setErro('');
+    setEnviando(true);
+    try {
+      onLiberado(await db.liberarAcesso(project.id, email));
+    } catch (e) {
+      setErro((e && e.message) || 'Não foi possível liberar o acesso.');
+    } finally {
+      setEnviando(false);
+    }
+  };
+  return (
+    <section className="panel liberar-acesso" aria-label="Liberar acesso ao cliente">
+      <header className="panel-head">
+        <h2>Liberar acesso ao cliente</h2>
+      </header>
+      <p className="hint">
+        O cliente recebe uma senha provisória (por e-mail, quando o envio está ativo) e passa a ver o projeto como
+        está agora.
+      </p>
+      <label className="lab">
+        E-mail do cliente
+        <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="email@cliente.com" aria-label="E-mail do cliente" />
+      </label>
+      {erro && <p className="error">{erro}</p>}
+      <div className="row">
+        <button type="button" className="btn btn-primary btn-sm" disabled={!valido || enviando} onClick={liberar}>
+          {enviando ? 'Liberando…' : 'Liberar acesso'}
+        </button>
+        <button type="button" className="btn btn-ghost btn-sm" onClick={onFechar}>
+          Cancelar
+        </button>
+      </div>
+    </section>
   );
 }
