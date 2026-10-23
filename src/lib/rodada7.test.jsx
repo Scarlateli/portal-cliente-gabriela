@@ -77,17 +77,16 @@ describe('baixar todos os arquivos de um pedido', () => {
     expect(strFromU8(arquivos['foto (2).jpg'])).toBe('dois');
   });
 
-  it('lista curta com "Ver todos" e botão "Baixar todos"', async () => {
+  it('arquivos numa pasta fechada (rodada 12) e botão "Baixar todos"', async () => {
     const arquivos = Array.from({ length: 9 }, (_, i) => ({ id: 'a' + i, subId: 'b1', name: 'foto-' + i + '.jpg', sentBy: 'client', storagePath: 'x/' + i }));
     const db = {
       stages: () => [{ id: 's1', title: 'Briefing', status: 'em_andamento', subs: [{ id: 'b1', title: 'Referências', responsible: 'cliente', done: true, pedeArquivos: true }] }],
       subArquivos: () => arquivos,
     };
     render(<EnviosCliente db={db} project={{ id: 'p1' }} isStudio />);
-    expect(screen.getByText('foto-5.jpg')).toBeTruthy();
-    expect(screen.queryByText('foto-6.jpg')).toBeNull();
+    expect(screen.queryByText('foto-0.jpg')).toBeNull();
     expect(screen.getByRole('button', { name: /Baixar todos/ })).toBeTruthy();
-    await userEvent.click(screen.getByText('Ver todos os 9 arquivos'));
+    await userEvent.click(screen.getByRole('button', { name: /9 arquivos enviados/ }));
     expect(screen.getByText('foto-8.jpg')).toBeTruthy();
   });
 });

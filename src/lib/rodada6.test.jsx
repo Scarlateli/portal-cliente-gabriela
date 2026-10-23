@@ -117,11 +117,14 @@ describe('Envios do Cliente', () => {
     expect(db.concluirEntrega).toHaveBeenCalledWith('s1', 'b1');
   });
 
-  it('entregue: o cliente não envia, não remove e não muda o recado', () => {
+  it('entregue: o cliente não envia, não remove e não muda o recado', async () => {
     montar({ ...pedido, entregueEm: '2026-10-20T12:00:00Z' });
-    expect(screen.queryByRole('button', { name: /Enviar mais arquivos/ })).toBeNull();
+    expect(screen.queryByRole('button', { name: /Escolher/ })).toBeNull();
+    await userEvent.click(screen.getByRole('button', { name: /1 arquivo enviado/ }));
+    expect(screen.getByText('foto.jpg')).toBeTruthy();
     expect(screen.queryByLabelText('Remover foto.jpg')).toBeNull();
-    expect(screen.queryByText('Deixar um recado para o studio')).toBeNull();
+    expect(screen.queryByText('Escrever sobre esta referência')).toBeNull();
+    expect(screen.queryByLabelText(/Recado para o studio/)).toBeNull();
     expect(screen.getByText(/Entrega concluída em 20\/10\/2026/)).toBeTruthy();
   });
 

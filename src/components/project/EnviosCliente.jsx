@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { FolderUp, Upload, Download, Trash2, Plus, Check, RotateCcw, CalendarDays, AlertTriangle, FileText } from 'lucide-react';
+import { FolderUp, Folder, FolderOpen, ChevronRight, Upload, Download, Trash2, Plus, Check, RotateCcw, CalendarDays, AlertTriangle, FileText, MessageSquare } from 'lucide-react';
 import { Empty } from '../atoms.jsx';
 import { fmt, validarArquivo } from '../../lib/helpers.js';
 import { prazoSub } from '../../lib/etapas.js';
@@ -145,8 +145,6 @@ function NovoPedido({ db, project, stages, onFechar }) {
   );
 }
 
-const LIMITE_LISTA = 6;
-
 function Pedido({ db, projectId, b, s, isStudio, arquivos, abrir }) {
   const { avisar, excluirComDesfazer } = useAvisos();
   const input = useRef(null);
@@ -156,14 +154,15 @@ function Pedido({ db, projectId, b, s, isStudio, arquivos, abrir }) {
   const [fila, setFila] = useState([]); // [{ nome, estado: 'esperando'|'enviando'|'ok'|'erro' }]
   const [vendo, setVendo] = useState(null);
   const [aviso, setAviso] = useState('');
+  // rodada 12: recado sempre à vista para o cliente (antes ficava escondido num link)
   const [nota, setNota] = useState(b.clientNote || '');
-  const [editandoNota, setEditandoNota] = useState(false);
+  const [salvandoNota, setSalvandoNota] = useState(false);
+  const notaMudou = nota.trim() !== String(b.clientNote || '').trim();
   const [confirmando, setConfirmando] = useState(false);
   const [concluindo, setConcluindo] = useState(false);
-  const [verTodos, setVerTodos] = useState(false);
+  // rodada 12: os arquivos enviados ficam numa "pasta" fechada; abre quando quiser ver
+  const [pastaAberta, setPastaAberta] = useState(false);
   const [baixando, setBaixando] = useState('');
-  // rodada 7: lista curta (os primeiros arquivos) e "Baixar todos" num .zip
-  const visiveis = verTodos ? arquivos : arquivos.slice(0, LIMITE_LISTA);
   const baixaveis = arquivos.filter((a) => a.storagePath);
   const baixarZip = async () => {
     setAviso('');
@@ -261,86 +260,89 @@ function Pedido({ db, projectId, b, s, isStudio, arquivos, abrir }) {
       {b.instructions && <p className="envio-instrucoes">{b.instructions}</p>}
 
       {arquivos.length > 0 && (
-        <div className="envio-arquivos-bloco">
+        <div className={'envio-arquivos-bloco' + (pastaAberta ? ' pasta-aberta' : '')}>
           <div className="envio-arquivos-topo">
-            <span className="micro">{arquivos.length + (arquivos.length === 1 ? ' arquivo' : ' arquivos')}</span>
+            <button type="button" className="pasta" aria-expanded={pastaAberta} onClick={() => setPastaAberta(!pastaAberta)}>
+              {pastaAberta ? <FolderOpen size={15} aria-hidden /> : <Folder size={15} aria-hidden />}
+              <span>{arquivos.length + (arquivos.length === 1 ? ' arquivo enviado' : ' arquivos enviados')}</span>
+              {arquivos.some((a) => a.nota) && <small>com observações</small>}
+              <ChevronRight size={14} className="pasta-seta" aria-hidden />
+            </button>
             {baixaveis.length > 1 && (
               <button type="button" className="link sm" disabled={!!baixando} onClick={baixarZip}>
                 <Download size={12} /> {baixando || 'Baixar todos (.zip)'}
               </button>
             )}
           </div>
-          <ul className="envio-arquivos">
-            {visiveis.map((a) => (
-              <li key={a.id}>
-                <Miniatura db={db} a={a} />
-                <button type="button" className="link sm" onClick={() => setVendo(a)} title="Ver o arquivo">
-                  {a.name}
-                </button>
-                <span className="micro">
-                  {a.size ? a.size + ' · ' : ''}
-                  {a.createdAt ? fmt(String(a.createdAt).slice(0, 10)) : ''}
-                  {a.sentBy === 'studio' ? ' · enviado pelo studio' : ''}
-                </span>
-                {(isStudio || (clienteMexe && a.sentBy === 'client')) && (
-                  <button
-                    type="button"
-                    className="icon-x"
-                    aria-label={'Remover ' + a.name}
-                    onClick={() => {
-                      excluirComDesfazer({ id: a.id, texto: '"' + a.name + '" removido', executar: () => db.removerArquivo(projectId, a.id) });
-                    }}
-                  >
-                    <Trash2 size={12} />
-                  </button>
-                )}
-              </li>
-            ))}
-          </ul>
-          {arquivos.length > LIMITE_LISTA && (
-            <button type="button" className="link sm envio-ver-todos" onClick={() => setVerTodos(!verTodos)}>
-              {verTodos ? 'Mostrar menos' : 'Ver todos os ' + arquivos.length + ' arquivos'}
-            </button>
+          {pastaAberta && (
+            <ul className="envio-arquivos">
+              {arquivos.map((a) => (
+                <ArquivoEnviado
+                  key={a.id}
+                  db={db}
+                  projectId={projectId}
+                  a={a}
+                  podeRemover={isStudio || (clienteMexe && a.sentBy === 'client')}
+                  podeAnotar={clienteMexe && a.sentBy === 'client'}
+                  onVer={() => setVendo(a)}
+                  onRemover={() =>
+                    excluirComDesfazer({ id: a.id, texto: '"' + a.name + '" removido', executar: () => db.removerArquivo(projectId, a.id) })
+                  }
+                />
+              ))}
+            </ul>
           )}
         </div>
       )}
 
-      {(b.clientNote || clienteMexe) && (
-        <div className="envio-nota">
-          {editandoNota ? (
-            <>
-              <textarea rows={2} maxLength={1000} value={nota} onChange={(e) => setNota(e.target.value)} aria-label="Recado para o studio" />
-              <div className="row">
-                <button
-                  type="button"
-                  className="btn btn-primary btn-sm"
-                  onClick={async () => {
+      {clienteMexe ? (
+        <div className="envio-recado">
+          <label htmlFor={'recado-' + b.id}>
+            <MessageSquare size={14} aria-hidden /> Recado para o studio <span>(opcional)</span>
+          </label>
+          <textarea
+            id={'recado-' + b.id}
+            rows={2}
+            maxLength={1000}
+            placeholder="Algo que o studio precisa saber sobre estes arquivos?"
+            value={nota}
+            onChange={(e) => setNota(e.target.value)}
+          />
+          {notaMudou && (
+            <div className="row">
+              <button
+                type="button"
+                className="btn btn-primary btn-sm"
+                disabled={salvandoNota}
+                onClick={async () => {
+                  setSalvandoNota(true);
+                  try {
                     await db.setNotaPedido(s.id, b.id, nota);
-                    setEditandoNota(false);
-                  }}
-                >
-                  Salvar recado
-                </button>
-                <button type="button" className="btn btn-ghost btn-sm" onClick={() => setEditandoNota(false)}>
-                  Cancelar
-                </button>
-              </div>
-            </>
-          ) : b.clientNote ? (
-            <p>
-              <strong>Recado do cliente:</strong> {b.clientNote}{' '}
-              {clienteMexe && (
-                <button type="button" className="link sm" onClick={() => setEditandoNota(true)}>
-                  Editar
-                </button>
-              )}
-            </p>
-          ) : (
-            <button type="button" className="link sm" onClick={() => setEditandoNota(true)}>
-              Deixar um recado para o studio
-            </button>
+                    avisar('Recado salvo');
+                  } catch (e) {
+                    setAviso((e && e.message) || 'Não foi possível salvar o recado.');
+                  } finally {
+                    setSalvandoNota(false);
+                  }
+                }}
+              >
+                {salvandoNota ? 'Salvando…' : 'Salvar recado'}
+              </button>
+              <button type="button" className="btn btn-ghost btn-sm" onClick={() => setNota(b.clientNote || '')}>
+                Desfazer
+              </button>
+            </div>
           )}
         </div>
+      ) : (
+        b.clientNote && (
+          <div className="envio-recado envio-recado-lido">
+            <span className="envio-recado-rot">
+              <MessageSquare size={14} aria-hidden /> {isStudio ? 'Recado do cliente' : 'Seu recado'}
+            </span>
+            <p>{b.clientNote}</p>
+          </div>
+        )
       )}
 
       {entregue && (
@@ -440,6 +442,88 @@ function Pedido({ db, projectId, b, s, isStudio, arquivos, abrir }) {
 
       {aviso && <p className="micro aviso-upload">{aviso}</p>}
       {vendo && <Visualizador db={db} arquivo={vendo} onFechar={() => setVendo(null)} />}
+    </li>
+  );
+}
+
+/* Um arquivo da pasta (rodada 12): nome (abre o visualizador), tamanho e
+   data em letra menor, e a observação do cliente sobre ele. O cliente
+   escreve a observação enquanto o pedido está aberto; o studio só lê. */
+function ArquivoEnviado({ db, projectId, a, podeRemover, podeAnotar, onVer, onRemover }) {
+  const { avisar } = useAvisos();
+  const [editando, setEditando] = useState(false);
+  const [texto, setTexto] = useState(a.nota || '');
+  const [salvando, setSalvando] = useState(false);
+  const [erro, setErro] = useState('');
+  const salvar = async () => {
+    setSalvando(true);
+    setErro('');
+    try {
+      await db.anotarArquivo(projectId, a.id, texto);
+      setEditando(false);
+      avisar('Observação salva');
+    } catch (e) {
+      setErro((e && e.message) || 'Não foi possível salvar.');
+    } finally {
+      setSalvando(false);
+    }
+  };
+  return (
+    <li>
+      <div className="arq-linha">
+        <Miniatura db={db} a={a} />
+        <span className="arq-info">
+          <button type="button" className="link sm arq-nome" onClick={onVer} title="Ver o arquivo">
+            {a.name}
+          </button>
+          <span className="arq-meta">
+            {a.size ? a.size + ' · ' : ''}
+            {a.createdAt ? fmt(String(a.createdAt).slice(0, 10)) : ''}
+            {a.sentBy === 'studio' ? ' · enviado pelo studio' : ''}
+          </span>
+        </span>
+        {podeAnotar && !editando && (
+          <button type="button" className="link sm arq-anotar" onClick={() => setEditando(true)}>
+            {a.nota ? 'Editar observação' : 'Escrever sobre esta referência'}
+          </button>
+        )}
+        {podeRemover && (
+          <button type="button" className="icon-x" aria-label={'Remover ' + a.name} onClick={onRemover}>
+            <Trash2 size={12} />
+          </button>
+        )}
+      </div>
+      {editando ? (
+        <div className="arq-nota-form">
+          <textarea
+            rows={2}
+            maxLength={500}
+            autoFocus
+            aria-label={'Observação sobre ' + a.name}
+            placeholder="Ex.: gosto da cor da parede, não do piso"
+            value={texto}
+            onChange={(e) => setTexto(e.target.value)}
+          />
+          <div className="row">
+            <button type="button" className="btn btn-primary btn-sm" disabled={salvando} onClick={salvar}>
+              {salvando ? 'Salvando…' : 'Salvar'}
+            </button>
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm"
+              onClick={() => {
+                setTexto(a.nota || '');
+                setEditando(false);
+              }}
+            >
+              Cancelar
+            </button>
+            {erro && <span className="micro aviso-upload">{erro}</span>}
+          </div>
+        </div>
+      ) : (
+        a.nota && <p className="arq-nota">“{a.nota}”</p>
+      )}
     </li>
   );
 }

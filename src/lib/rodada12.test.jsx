@@ -34,6 +34,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { vi } from 'vitest';
 import { Timeline } from '../components/project/Timeline.jsx';
+import { EnviosCliente } from '../components/project/EnviosCliente.jsx';
 
 describe('Linha do Tempo igual para studio e cliente', () => {
   const etapa = {
@@ -84,5 +85,45 @@ describe('Linha do Tempo igual para studio e cliente', () => {
     const arq = db().subArquivos('p1')[0];
     db().anotarArquivo('p1', arq.id, '  Parede da TV ');
     expect(db().subArquivos('p1')[0].nota).toBe('Parede da TV');
+  });
+});
+
+describe('Envios: pasta, recado à vista e observação por arquivo', () => {
+  const pedido = { id: 'b1', title: 'Referências', responsible: 'cliente', done: false, due: '', pedeArquivos: true, instructions: '' };
+  const montar = (b, isStudio = false, nota = null) => {
+    const db = {
+      stages: () => [{ id: 's1', title: 'Briefing', status: 'em_andamento', subs: [b] }],
+      subArquivos: () => [{ id: 'a1', subId: 'b1', name: 'sala.jpg', sentBy: 'client', storagePath: 'x', nota }],
+      anotarArquivo: vi.fn(async () => {}),
+      setNotaPedido: vi.fn(async () => {}),
+      enviarArquivos: vi.fn(),
+    };
+    render(<EnviosCliente db={db} project={{ id: 'p1' }} isStudio={isStudio} />);
+    return db;
+  };
+  it('cliente vê o campo de recado sem precisar procurar e salva', async () => {
+    const db = montar(pedido);
+    const campo = screen.getByLabelText(/Recado para o studio/);
+    await userEvent.type(campo, 'Fotos do quarto amanhã');
+    await userEvent.click(screen.getByRole('button', { name: 'Salvar recado' }));
+    expect(db.setNotaPedido).toHaveBeenCalledWith('s1', 'b1', 'Fotos do quarto amanhã');
+  });
+  it('cliente escreve uma observação em cada referência', async () => {
+    const db = montar(pedido);
+    await userEvent.click(screen.getByRole('button', { name: /1 arquivo enviado/ }));
+    await userEvent.click(screen.getByText('Escrever sobre esta referência'));
+    await userEvent.type(screen.getByLabelText('Observação sobre sala.jpg'), 'Gosto da luz');
+    await userEvent.click(screen.getByRole('button', { name: 'Salvar' }));
+    expect(db.anotarArquivo).toHaveBeenCalledWith('p1', 'a1', 'Gosto da luz');
+  });
+  it('studio lê a observação e o recado, sem editar', async () => {
+    montar({ ...pedido, clientNote: 'Vale a parede' }, true, 'Gosto da luz');
+    expect(screen.getByText('Recado do cliente')).toBeTruthy();
+    expect(screen.getByText('Vale a parede')).toBeTruthy();
+    expect(screen.queryByLabelText(/Recado para o studio/)).toBeNull();
+    expect(screen.getByText('com observações')).toBeTruthy();
+    await userEvent.click(screen.getByRole('button', { name: /1 arquivo enviado/ }));
+    expect(screen.getByText('“Gosto da luz”')).toBeTruthy();
+    expect(screen.queryByText(/Escrever sobre/)).toBeNull();
   });
 });

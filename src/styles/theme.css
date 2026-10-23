@@ -1265,3 +1265,25 @@ button{color:inherit}
 .cp .proximo .proximo-btn{flex:none;background:#FBFAF8;color:var(--gl-vinho);border:0}
 .cp .proximo .proximo-btn:hover{background:#EFECE6}
 @media (max-width:560px){.cp .proximo{flex-direction:column;align-items:stretch;gap:8px}.cp .proximo p{flex-direction:column;gap:2px}}
+/* Rodada 12: Envios — arquivos numa "pasta" que abre ao tocar, observação por arquivo e recado à vista */
+.cp .envio-arquivos-topo{justify-content:space-between;flex-wrap:wrap}
+.cp .pasta{display:inline-flex;align-items:center;gap:8px;background:var(--fundo-item);border:1px solid var(--gl-hairline);border-radius:var(--raio);padding:7px 12px;font:inherit;font-size:14px;color:var(--ink);cursor:pointer}
+.cp .pasta:hover{border-color:var(--gl-areia)}
+.cp .pasta small{font-size:12px;color:var(--muted)}
+.cp .pasta .pasta-seta{transition:transform .15s ease;color:var(--muted)}
+.cp .pasta[aria-expanded="true"] .pasta-seta{transform:rotate(90deg)}
+.cp .envio-arquivos-bloco .envio-arquivos li{display:block;padding:7px 0}
+.cp .envio-arquivos-bloco .arq-linha{display:grid;grid-template-columns:32px minmax(0,1fr) auto auto;align-items:center;gap:10px}
+.cp .arq-info{display:flex;flex-direction:column;min-width:0;gap:1px}
+.cp .arq-info .arq-nome{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left;font-size:14px}
+.cp .arq-meta{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cp .arq-anotar{font-size:12px;color:var(--muted);white-space:nowrap}
+.cp .arq-nota{margin:4px 0 0 42px;font-size:13px;line-height:1.5;color:var(--muted);font-style:italic}
+.cp .arq-nota-form{margin:6px 0 2px 42px}
+.cp .arq-nota-form textarea,.cp .envio-recado textarea{width:100%;border:1px solid var(--line);border-radius:var(--raio);padding:8px 11px;font:inherit;font-size:14px;background:var(--card)}
+.cp .envio-recado{margin-top:12px;background:var(--fundo-item);border-radius:var(--raio);padding:10px 12px}
+.cp .envio-recado label,.cp .envio-recado-rot{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:var(--ink);margin-bottom:6px}
+.cp .envio-recado label span{font-weight:400;color:var(--muted)}
+.cp .envio-recado .row{margin-top:8px}
+.cp .envio-recado-lido p{margin:0;font-size:14px;line-height:1.55}
+@media (max-width:640px){.cp .envio-arquivos-bloco .arq-linha{grid-template-columns:32px minmax(0,1fr) auto}.cp .arq-anotar{grid-column:2;grid-row:2;justify-self:start}.cp .arq-nota,.cp .arq-nota-form{margin-left:0}}
