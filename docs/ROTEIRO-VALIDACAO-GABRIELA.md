@@ -332,3 +332,26 @@ Confira o fundo e os cartões nos códigos enviados, e o texto como era antes.
 - Topo da etapa e INÍCIO/ENTREGA.
 - Tamanho do tipo da sub-etapa.
 - Setas e lápis: aparecem e somem com o mouse.
+
+## Rodada 12 — feedback de 23/10
+
+### 53. Projeto sem e-mail
+1. Crie um projeto sem e-mail do cliente, com template.
+2. Confira "acesso não liberado" no cartão.
+3. No projeto, use "Liberar acesso ao cliente" e informe o e-mail.
+
+### 54. Linha do Tempo
+- Abas "Em andamento" e "Todas", como studio e como cliente.
+- Datas com símbolos; setas e lápis só sob o mouse.
+- Crie uma tarefa do cliente direto no projeto: ela já pede arquivos.
+
+### 55. Cliente
+- Ao entrar, a janela de pendências aparece.
+- Faixa vinho "Seu próximo passo".
+
+### 56. Envios
+- Pasta de arquivos, observação em cada arquivo e recado para o studio.
+
+### 57. Templates
+- Escreva a descrição de uma etapa e de uma sub-etapa, aplique o template e
+  confira na Linha do Tempo.

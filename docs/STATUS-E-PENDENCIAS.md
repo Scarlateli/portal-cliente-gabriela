@@ -779,3 +779,53 @@ Commits mais antigos podem conflitar com os que vieram depois; nesse caso,
 `supabase/sql/2026-10-22-rodada11-termo-da-etapa.sql` (coluna
 `contracts.stage_id`; `responder_etapa` passa a criar o termo). Também está
 no fim do `schema.sql`; foram testados 7 cenários num banco local.
+
+## Rodada 12 — feedback da Gabriela (23/10/2026)
+
+**Projeto sem e-mail, acesso liberado depois**
+- O e-mail do cliente é opcional ao criar o projeto. Dá para lançar tudo
+  (etapas, documentos, prazos) e só depois liberar o acesso.
+- No projeto, o botão "Liberar acesso ao cliente" pede o e-mail e envia o
+  convite. No painel, o cartão do projeto mostra "acesso não liberado".
+- Os dados do projeto continuam editáveis depois de lançado ("Editar dados
+  do projeto", embaixo da Linha do Tempo).
+
+**Linha do Tempo igual para studio e cliente**
+- Abas "Em andamento" e "Todas" nas duas visões.
+- Datas da etapa menores, com símbolos: ▷ início, ⚑ entrega, relógio para
+  reunião.
+- Setas, lápis e X da sub-etapa: só com o mouse em cima daquela linha.
+- Etiqueta "Tarefa – Cliente" também para o cliente (sai o "Essa é uma
+  tarefa sua"). Data e ação à direita mais discretas.
+- Tarefa do cliente criada direto no projeto já vem com "Pedir arquivos".
+  Tarefa do cliente sem arquivos ganha "Marcar como feita" (antes virava
+  pendência sem ter o que fazer).
+- Checkbox "Pedir arquivos" no tamanho certo.
+
+**Cliente**
+- A janela com as pendências volta a abrir ao entrar (uma vez por acesso).
+- "Seu próximo passo" é uma faixa baixa, vinho, só com o título e o botão.
+  Sai o "Tudo em dia".
+
+**Envios**
+- Arquivos enviados numa pasta fechada, que abre ao tocar.
+- Observação do cliente em cada arquivo (o studio lê).
+- Recado para o studio num campo sempre visível.
+
+**Templates**
+- Descrição em cada etapa e em cada sub-etapa; vai para a Linha do Tempo ao
+  aplicar o template. Sub-etapa do cliente já marca "Pedir arquivos".
+
+**Textos**
+- Voltam os tamanhos menores e a cor suave das explicações, como antes da
+  rodada 10. Os tamanhos pedidos na rodada 11 continuam.
+
+**Cores**
+- Medido de novo: o portal desenha #ECE9E3 e #FBFAF8 exatos. O print do Mac
+  sai em outro espaço de cor (Display P3), por isso o conta-gotas lê
+  #EAE9E4 no print. É a mesma cor. Pendente: saber com o que ela compara.
+
+**Banco** (aplicado em 23/10, antes do código):
+`supabase/sql/2026-10-23-rodada12-projeto-sem-email-e-tarefas.sql`
+(`projects.client_id` opcional, `sub_arquivos.nota`, RPCs `anotar_arquivo` e
+`concluir_tarefa`). Também está no fim do `schema.sql`.
